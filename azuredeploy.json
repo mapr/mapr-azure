@@ -26,10 +26,9 @@
 			"defaultValue":"mapr-storage",
 			"metadata": {
 				"Description": "Storage account name pattern.The template will use this value and the resource group name for all the storage accounts."
-			}
+			},
 			"allowedValues": 
 				listKeys(resourceId('Microsoft.ClassicStorage/storageAccounts', parameters('storageName')), '2014-06-01').primaryKey
-			
 		},
 		"storageAccountType": {
 			"type": "string",
