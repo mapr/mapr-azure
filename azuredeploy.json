@@ -216,7 +216,7 @@
 				"count": "[parameters('numberOfNodes')]"
 			},
 			"dependsOn": [
-				"[concat(variables('storageRef'),copyIndex())]",
+				"[concat(variables('storageRef'),'-node',copyIndex())]",
 				"[concat(variables('NICRef'),copyIndex())]"
 			],
 			"properties": {
