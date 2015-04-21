@@ -26,9 +26,7 @@
 			"defaultValue":"mapr-storage",
 			"metadata": {
 				"Description": "Storage account name pattern.The template will use this value and the resource group name for all the storage accounts."
-			},
-			"allowedValues": 
-				"[listKeys(resourceId('Microsoft.ClassicStorage/storageAccounts', parameters('storageName')), '2014-06-01').primaryKey]"
+			}
 		},
 		"storageAccountType": {
 			"type": "string",
@@ -69,14 +67,14 @@
 				"Description": "A tag will be created with the provided value"
 			}
 		},
-		"numberOfVms": {
+		"numberOfNodes": {
 			"type": "int",
 			"defaultValue": 3,
 			"metadata": {
 				"Description": "Number of VMs.The template will create N number of identical VMs"
 			}
 		},
-		"adminPassword": {
+		"maprPassword": {
 			"type": "string",
 			"metadata": {
 				"Description": "MapR password"
@@ -108,20 +106,10 @@
 		"publicIPRef": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPName'))]",
 		"NICipconfig": "ipCnfgBE",
 		"NICRef": "[resourceId('Microsoft.Network/networkInterfaces',parameters('vmNICNamePattern'))]",
-		"DNSNameLB": "[concat(parameters('dnsNameLabel'))]",
+		"DNSNameLB": "[concat('mapr.com')]",
 		"vnetRef": "[resourceId('Microsoft.Network/virtualNetworks',variables('newVirtualNetworkName'))]",
-		"subnetBackEndRef": "[concat(variables('vnetRef'),'/subnets/',parameters('subnet2Name'))]",
-		"FrontEndRef": "[concat(variables('vnetRef'),'/subnets/',parameters('subnet1Name'))]",
-
-		"loadBalancerRef": "[resourceId('Microsoft.Network/loadBalancers',parameters('loadBalancerName'))]",
-		"lbRuleName": "lbRuleCbAdmin",
-		"lbRuleRef": "[concat(variables('loadBalancerRef'),'/loadBalancingRules/',variables('lbRuleName'))]",
-		"lbFEConfig": "LBcbaFrontConfg",
-
-		"lbFEConfigRef": "[concat(variables('loadBalancerRef'),'/frontendIPConfigurations/',variables('lbFEConfig'))]",
-		"lbBEConfig": "[concat('LBBEcbaFrontConfg')]",
-		"lbBEConfigRef": "[concat(variables('loadBalancerRef'),'/backendAddressPools/' ,variables('lbBEConfig'))]",
-				
+		"subnetBackEndRef": "[concat(variables('vnetRef'),'/subnets/private')]",
+		"FrontEndRef": "[concat(variables('vnetRef'),'/subnets/public')]",				
 
 		"storageAccountName": "[concat(resourceGroup().name,parameters('storageAccountName'))]",
 		"storageRef": "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]"
@@ -137,20 +125,20 @@
 			"properties": {
 				"addressSpace": {
 					"addressPrefixes": [
-						"[parameters('addressPrefix')]"
+						"10.0.0.0/16"
 					]
 				},
 				"subnets": [
 					{
-						"name": "[parameters('subnet1Name')]",
+						"name": "Public",
 						"properties": {
-							"addressPrefix": "[parameters('subnet1Prefix')]"
+							"addressPrefix": "10.0.1.0/24"
 						}
 					},
 					{
-						"name": "[parameters('subnet2Name')]",
+						"name": "Private",
 						"properties": {
-							"addressPrefix": "[parameters('subnet2Prefix')]"
+							"addressPrefix": "10.0.2.0/24"
 						}
 					}
 				]
@@ -161,80 +149,17 @@
 		{
 			"apiVersion": "2014-12-01-preview",
 			"type": "Microsoft.Network/publicIPAddresses",
-			"name": "[variables('publicIPName')]",
+			"name": "[parameters('clusterName')]",
 			"location": "[parameters('location')]",
 			"dependsOn": [
 				"[variables('vnetRef')]"
 
 			],
 			"properties": {
-				"publicIPAllocationMethod": "[parameters('publicIPType')]",
+				"publicIPAllocationMethod": "Static",
 				"dnsSettings": {
 					"domainNameLabel": "[variables('DNSNameLB')]"
 				}
-			}
-		},
-
-		{
-			"apiVersion": "2014-12-01-preview",
-			"type": "Microsoft.Network/loadBalancers",
-			"name": "[parameters('loadBalancerName')]",
-			"location": "[parameters('location')]",
-			"dependsOn": [
-				"[variables('publicIPRef')]"
-			],
-			"properties": {
-				
-				"frontendIPConfigurations": [
-					{
-					"name": "[variables('lbFEConfig')]",
-					"properties": {
-							"publicIPAddress": {
-								"id": "[variables('publicIPRef')]"
-							}
-						}
-
-					}
-				],
-				"backendAddressPools": [
-					{"name": "[variables('lbBEConfig')]"}
-				],
-				"inboundNatRules": [
-					{
-						"name": "sshToAnsibleControllerNAT",
-						"properties": {
-							"frontendIPConfiguration": {"id":"[variables('lbFEConfigRef')]"},		
-							"protocol": "tcp",
-							"frontendPort": "[concat(parameters('sshNatRuleFrontEndPort'),'0')]",
-							"backendPort": "[parameters('sshNatRuleBackEndPort')]",
-							"enableFloatingIP": false
-						}
-					},
-					{
-						"name": "couchbaseWebAdminConsoleNAT",
-						"properties": {
-							"frontendIPConfiguration": {"id":"[variables('lbFEConfigRef')]"},		
-							"protocol": "tcp",
-							"frontendPort": "[parameters('couchbaseWebConsolePort')]",
-							"backendPort": "[parameters('couchbaseWebConsolePort')]",
-							"enableFloatingIP": false
-						}
-					}					
-
-				]
-			}
-		},
-
-
-		{
-			"type": "Microsoft.Compute/availabilitySets",
-			"name": "[parameters('availabilitySetName')]",
-			"apiVersion": "2014-12-01-preview",
-			"location": "[parameters('location')]",
-			"properties": {
-					"PlatformFaultDomainCount":"[parameters('faultDomainCount')]",
-                    "PlatformUpdateDomainCount":"[parameters('updateDomainCount')]"
-
 			}
 		},
 
@@ -246,7 +171,7 @@
 			"location": "[parameters('location')]",
 			"copy": {
 				"name": "StorageAccountsLoop",
-				"count": "[parameters('numberOfVms')]"
+				"count": "[parameters('numberOfNodes')]"
 			},
 			"properties": {
 				"accountType": "[parameters('storageAccountType')]"
@@ -257,30 +182,25 @@
 		{
 			"apiVersion": "2014-12-01-preview",
 			"type": "Microsoft.Network/networkInterfaces",
-			"name": "[concat(parameters('vmNICNamePattern'),copyIndex())]",
+			"name": "[concat('mapr-nic-',copyIndex())]",
 			"location": "[parameters('location')]",
 			"copy": {
 				"name": "NICSLoop",
-				"count": "[parameters('numberOfVMS')]"
+				"count": "[parameters('numberOfNodes')]"
 			},
 			"dependsOn": [
-				"[variables('vnetRef')]",
-				"[variables('loadBalancerRef')]"
+				"[variables('vnetRef')]"
 			],
 			"properties": {
 				"ipConfigurations": [
 					{
 						"name": "[variables('NICipconfig')]",
 						"properties": {
-							"privateIPAllocationMethod": "Static ",
-							"privateIPAddress": "[concat(parameters('VMIPAddressStart'),copyindex())]",
+							"privateIPAllocationMethod": "Static",
+							"privateIPAddress": "[concat('10.0.2.2',copyindex())]",
 							"subnet": {
 								"id": "[variables('subnetBackEndRef')]"
 							},
-							"loadBalancerBackendAddressPools": 
-							[    
-			                    {"id": "[variables('lbBEConfigRef')]"}
-                			]
 						}
 
 					}
@@ -292,32 +212,27 @@
 		{
 			"apiVersion": "2014-12-01-preview",
 			"type": "Microsoft.Compute/virtualMachines",
-			"name": "[concat(parameters('vmName'),copyIndex())]",
+			"name": "[concat(parameters('clusterName'),'-',copyIndex())]",
 			"location": "[parameters('location')]",
 			"tags": {
-				"ServerRole": "[parameters('serversRole')]",
-				"ServerEnvironment" :"[parameters('serversPurpose')]"
+				"ServerRole": "[parameters('tags')]"
 				},
 			"copy": {
-				"name": "VMsLoop",
-				"count": "[parameters('numberOfVms')]"
+				"name": "NodessLoop",
+				"count": "[parameters('numberOfNodes')]"
 			},
 			"dependsOn": [
 				"[concat(variables('storageRef'),copyIndex())]",
-				"[concat(variables('NICRef'),copyIndex())]",
-				"[concat('Microsoft.Compute/availabilitySets/', parameters('availabilitySetName'))]",
+				"[concat(variables('NICRef'),copyIndex())]"
 			],
 			"properties": {
-				"availabilitySet": {
-					"id": "[resourceId('Microsoft.Compute/availabilitySets', parameters('availabilitySetName'))]"
-				},
 				"hardwareProfile": {
-					"vmSize": "[parameters('vmSize')]"
+					"vmSize": "Standard_A11"
 				},
 				"osProfile": {
-					"computername": "[concat(parameters('vmName'),copyIndex())]",
-					"adminUsername": "[parameters('adminUserName')]",
-					"adminPassword": "[parameters('adminPassword')]",
+					"computername": "[concat(parameters('clusterName'),copyIndex())]",
+					"adminUsername": "mapr",
+					"adminPassword": "[parameters('maprPassword')]",
 					"linuxConfiguration": {
 						"disablePasswordAuthentication": "false",
 						"ssh": {
@@ -337,32 +252,32 @@
 					"destinationVhdsContainer": "[concat('http://',variables('storageAccountName'),copyIndex(),'.blob.core.windows.net/',parameters('vmStorageAccountContainerName'),'/')]",
 					"dataDisks": [
 						{
-							"name": "[concat(parameters('vmName'),copyIndex(), 'Data_1')]",
-							"diskSizeGB": "[parameters('vmSizeDataDisks')]",
+							"name": "[concat(parameters('clusterName'),copyIndex(), 'Data_1')]",
+							"diskSizeGB": "[parameters('sizeOfDataDisks')]",
 							"lun": 0,
 							"vhd": {
 								"Uri": "[concat('http://',variables('storageAccountName'),copyIndex(),'.blob.core.windows.net/',parameters('vmStorageAccountContainerName'),'/Data_1.vhd')]"
 							}
 						},
 						{
-							"name": "[concat(parameters('vmName'),copyIndex(), 'Data_2')]",
-							"diskSizeGB": "[parameters('vmSizeDataDisks')]",
+							"name": "[concat(parameters('clusterName'),copyIndex(), 'Data_2')]",
+							"diskSizeGB": "[parameters('sizeOfDataDisks')]",
 							"lun": 1,
 							"vhd": {
 								"Uri": "[concat('http://',variables('storageAccountName'),copyIndex(),'.blob.core.windows.net/',parameters('vmStorageAccountContainerName'),'/Data_2.vhd')]"
 							}
 						},
 						{
-							"name": "[concat(parameters('vmName'),copyIndex(), 'Data_3')]",
-							"diskSizeGB": "[parameters('vmSizeDataDisks')]",
+							"name": "[concat(parameters('clusterName'),copyIndex(), 'Data_3')]",
+							"diskSizeGB": "[parameters('sizeOfDataDisks')]",
 							"lun": 2,
 							"vhd": {
 								"Uri": "[concat('http://',variables('storageAccountName'),copyIndex(),'.blob.core.windows.net/',parameters('vmStorageAccountContainerName'),'/Data_3.vhd')]"
 							}
 						},
 						{
-							"name": "[concat(parameters('vmName'),copyIndex(), 'Data_4')]",
-							"diskSizeGB": "[parameters('vmSizeDataDisks')]",
+							"name": "[concat(parameters('clusterName'),copyIndex(), 'Data_4')]",
+							"diskSizeGB": "[parameters('sizeOfDataDisks')]",
 							"lun": 3,
 							"vhd": {
 								"Uri": "[concat('http://',variables('storageAccountName'),copyIndex(),'.blob.core.windows.net/',parameters('vmStorageAccountContainerName'),'/Data_4.vhd')]"
@@ -383,12 +298,12 @@
 
 		{
 			"type": "Microsoft.Compute/virtualMachines/extensions",
-			"name": "[concat(parameters('vmName'),copyIndex(),'/configuressh')]",
+			"name": "[concat(parameters('clusterName'),copyIndex(),'/configuressh')]",
 			"apiVersion": "2014-12-01-preview",
 			"location": "[parameters('location')]",
 			"copy": {
 				"name": "VMExtensionsLoop",
-				"count": "[parameters('numberOfVms')]"
+				"count": "[parameters('numberOfNodes')]"
 			},
 			"dependsOn": [
 				"VMsLoop"
@@ -399,15 +314,10 @@
 				"typeHandlerVersion": "1.2",
 				"settings": {
 					"fileUris": [
-						"[variables('customScriptSSHRootUrl')]",
-						"[variables('sshRootPubBlobUrl')]"
+						"[variables('bootstrapUrl')]"
 					],
-					"commandToExecute": "[variables('customScriptSSHRootCommand')]",
+					"commandToExecute": "[variables('bootstrapCommand')]",
 
-				},
-				"protectedSettings":{
-					"storageAccountName":"[parameters('customScriptConfigStorageAccountName')]",
-					"storageAccountKey":"[parameters('customScriptConfigStorageAccountKey')]"
 				}
 			}
 		},
@@ -419,8 +329,7 @@
 			"name": "NICAnsibleController",
 			"location": "[parameters('location')]",
 			"dependsOn": [
-				"[variables('vnetRef')]",
-				"[variables('loadBalancerRef')]"
+				"[variables('vnetRef')]"
 			],
 			"properties": {
 				"ipConfigurations": [
@@ -428,13 +337,8 @@
 						"name": "[variables('NICipconfig')]",
 						"properties": {
 							"privateIPAllocationMethod": "Static",
-							"privateIPAddress": "[concat(parameters('VMIPAddressStart'),parameters('numberOfVms'))]",
-							"subnet": {	"id": "[variables('subnetBackEndRef')]"},
-                			"loadBalancerInboundNatRules":
-                			[
-                    			{"id": "[concat(variables('loadBalancerRef'),'/inboundNatRules/sshToAnsibleControllerNAT')]"},
-                    			{"id": "[concat(variables('loadBalancerRef'),'/inboundNatRules/couchbaseWebAdminConsoleNAT')]"}
-                			]
+							"privateIPAddress": "[concat('10.0.2.2',parameters('numberOfNodes'))]",
+							"subnet": {	"id": "[variables('subnetBackEndRef')]"}
 						}
 
 					}
@@ -442,106 +346,17 @@
 			}
 		},
 
-
-		{
-			"apiVersion": "2014-12-01-preview",
-			"type": "Microsoft.Compute/virtualMachines",
-			"name": "AnsibleController",
-			"location": "[parameters('location')]",
-			"tags": {
-				"ServerRole": "AnsibleController",
-				"ServerEnvironment" :"[parameters('serversPurpose')]"
-				},
-			"dependsOn": [
-				"[concat(variables('storageRef'),'0')]",
-				"[resourceId('Microsoft.Network/networkInterfaces','NICAnsibleController')]",
-				"[concat('Microsoft.Compute/availabilitySets/', parameters('availabilitySetName'))]",
-				"VMsLoop"
-			],
-			"properties": {
-				"availabilitySet": {
-					"id": "[resourceId('Microsoft.Compute/availabilitySets', parameters('availabilitySetName'))]"
-				},
-				"hardwareProfile": {
-					"vmSize": "Standard_A1"
-				},
-				"osProfile": {
-					"computername": "AnsibleController",
-					"adminUsername": "[parameters('adminUserName')]",
-					"adminPassword": "[parameters('adminPassword')]",
-					"linuxConfiguration": {
-						"disablePasswordAuthentication": "false",
-						"ssh": {
-							"publicKeys": [
-								{
-									"path": "[variables('sshKeyPath')]",
-									"keyData": "[parameters('sshKeyData')]"
-								}
-							]
-						}
-					}
-				},
-				"storageProfile": {
-					"sourceImage": {
-						"id": "[variables('vmSourceImageRef')]"
-					},
-					"destinationVhdsContainer": "[concat('http://',variables('storageAccountName'),'0.blob.core.windows.net/',parameters('vmStorageAccountContainerName'),'/')]",
-					"dataDisks": [
-					]
-				},
-				"networkProfile": {
-					"networkInterfaces": [
-						{
-							"id": "[resourceId('Microsoft.Network/networkInterfaces','NICAnsibleController')]"
-						}
-					]
-				}
-			}
-		},
-
-
-		{
-			"type": "Microsoft.Compute/virtualMachines/extensions",
-			"name": "AnsibleController/installansible",
-			"apiVersion": "2014-12-01-preview",
-			"location": "[parameters('location')]",
-			"dependsOn": [
-				"Microsoft.Compute/virtualMachines/AnsibleController"
-			],
-			"properties": {
-				"publisher": "Microsoft.OSTCExtensions",
-				"type": "CustomScriptForLinux",
-				"typeHandlerVersion": "1.2",
-				"settings": {
-					"fileUris": [
-						"[variables('customScriptAnsibleUrl')]",
-						"[variables('ansiblePlaybookUrl')]",
-						"[variables('couchbasePlaybookUrl')]",
-						"[variables('couchbaseParametersPlaybookUrl')]",
-						"[variables('sshRootPubBlobUrl')]",
-						"[variables('sshRootCerBlobUrl')]",
-						"[variables('nginxConfigTemplateUrl')]"
-					],
-					"commandToExecute": "[concat(variables('customScriptAnsibleCommand'),variables('customScriptAnsibleParameters'),' -q ',reference(variables('publicIPRef'),providers('Microsoft.Network', 'publicIPAddresses').apiVersions[0]).dnsSettings.fqdn ,' -o ', parameters('couchbaseWebConsolePort'))]",
-
-				},
-				"protectedSettings":{
-					"storageAccountName":"[parameters('customScriptConfigStorageAccountName')]",
-					"storageAccountKey":"[parameters('customScriptConfigStorageAccountKey')]"
-				}
-			}
-		}
 		
 	],
 
 	"outputs":
 	{
 		"sshResourceURL":{
-				"value":"[concat('SSH Url to Ansible Controller:',parameters('adminUserName'),'@', reference(variables('publicIPRef'),providers('Microsoft.Network', 'publicIPAddresses').apiVersions[0]).dnsSettings.fqdn,' -p ',parameters('sshNatRuleFrontEndPort'))]",
+				"value":"[concat('SSH Url to Ansible Controller:mapr@', reference(variables('publicIPRef'),providers('Microsoft.Network', 'publicIPAddresses').apiVersions[0]).dnsSettings.fqdn,' -p ',parameters('sshNatRuleFrontEndPort'))]",
 				"type":"string"
 		},
 		"couchbaseWebURL":{
-				"value":"[concat('URL To Couchbase Admin Console: https://', reference(variables('publicIPRef'),providers('Microsoft.Network', 'publicIPAddresses').apiVersions[0]).dnsSettings.fqdn,':',parameters('couchbaseWebConsolePort'))]",
+				"value":"[concat('URL To Couchbase Admin Console: https://', reference(variables('publicIPRef'),providers('Microsoft.Network', 'publicIPAddresses').apiVersions[0]).dnsSettings.fqdn,':8443')]",
 				"type":"string"
 		}
 	}
