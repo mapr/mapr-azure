@@ -2,6 +2,6 @@
   "itemDisplayName": "Deploy a Multi VM MapR Cluster",
   "description": "This template deploys N  Linux VMs and it configures a Multi VM MapR Cluster.",
   "summary": "This template deploys N  Linux VMs and it configures a Multi VM MapR Cluster.",
-  "githubUsername": "mape",
+  "githubUsername": "mapr",
   "dateUpdated": "2015-04-17"
 }

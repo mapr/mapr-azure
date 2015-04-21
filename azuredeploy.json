@@ -3,6 +3,8 @@
 	"$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json",
 	"contentVersion": "1.0.0.0",
 
+	/* listKeys(resourceId('Microsoft.ClassicStorage/storageAccounts', parameters('storageName')), '2014-06-01').primaryKey */
+
 	"parameters": {
 		"location": {
 			"type": "string",
@@ -37,14 +39,14 @@
 				"Description": "Type of storage account. Standard_LRS or Premium_LRS"
 			}
 		},
-		"vmNumberOfDataDisks": {
+		"numberOfDataDisksPerNode": {
 			"type": "int",
 			"defaultValue": 6,
 			"metadata": {
 				"Description": "Number of data disks (For future versions, currently 2 disks will be created)"
 			}
 		},
-		"vmSizeDataDisks": {
+		"sizeOfDataDisks": {
 			"type": "int",
 			"defaultValue": 120,
 			"metadata": {
@@ -60,6 +62,7 @@
 		},
 		"tags": {
 			"type": "string",
+			"defaultValue": "mapr",
 			"metadata": {
 				"Description": "A tag will be created with the provided value"
 			}
@@ -88,28 +91,18 @@
 
 	"variables": {
 
-		"vmSourceImageRef": "[concat('/',subscription().subscriptionId,'/services/images/',parameters('vmImageName'))]",
-		"sshKeyPath": "[concat('/home/',parameters('adminUsername'),'/.ssh/authorized_keys')]",
+		"vmSourceImageRef": "[concat('/',subscription().subscriptionId,'/services/images/','mapr-ubuntu-os-2015-04-21')]",
 
-		"customScriptAnsibleFile" :"couchbase_ansible.sh",
-		"customScriptAnsibleUrl": "[concat('https://',parameters('customScriptConfigStorageAccountName'),'.blob.core.windows.net/customscript/',variables('customScriptAnsibleFile'))]",
-		"customScriptAnsibleCommand": "[concat('bash ',variables('customScriptAnsibleFile'))]",
-		"customScriptAnsibleParameters": "[concat(' -i ',parameters('VMIPAddressStart'),' -n ',parameters('numberOfVms'),' -r ',parameters('createRAID'),' -f ',parameters('vmFileSystem'),' -u ',parameters('couchbaseAdminUser'),' -p ',parameters('couchbaseAdminPassword') ,' -m ',parameters('couchbaseMemoryAllocationPercentage') )]",
-		"sshRootCerBlobUrl" :"[concat('https://',parameters('customScriptConfigStorageAccountName'),'.blob.core.windows.net/',parameters('sshRootCerBlobLocation'))]",
-		
+		"bootstrapFile" :"install_mapr.sh",
+		"bootstrapUrl": "[concat('https://maprpublic.blob.core.windows.net/install/v1/',variables('bootstrapFile'))]",
+		"bootstrapCommand": "[concat('bash ',variables('bootstrapFile'))]",
+		"bootstrapParameters": "[concat(
+			' -i ',parameters('VMIPAddressStart'),
+			' -m ',parameters('couchbaseMemoryAllocationPercentage') )]",
+				
 
-		"customScriptSSHRootFile" :"configure_ssh_root.sh",
-		"customScriptSSHRootUrl": "[concat('https://',parameters('customScriptConfigStorageAccountName'),'.blob.core.windows.net/customscript/',variables('customScriptSSHRootFile'))]",
-		"customScriptSSHRootCommand": "[concat('bash ',variables('customScriptSSHRootFile'))]",
-		"sshRootPubBlobUrl" :"[concat('https://',parameters('customScriptConfigStorageAccountName'),'.blob.core.windows.net/',parameters('sshRootPubBlobLocation'))]",
-		"ansiblePlaybookUrl" :"[concat('https://',parameters('customScriptConfigStorageAccountName'),'.blob.core.windows.net/',parameters('ansiblePlaybookLocation'))]",
-		"couchbasePlaybookUrl" :"[concat('https://',parameters('customScriptConfigStorageAccountName'),'.blob.core.windows.net/',parameters('couchbasePlaybookLocation'))]",
-		"couchbaseParametersPlaybookUrl" :"[concat('https://',parameters('customScriptConfigStorageAccountName'),'.blob.core.windows.net/',parameters('couchbasePlaybookParamsLocation'))]",
-		"nginxConfigTemplateUrl" :"[concat('https://',parameters('customScriptConfigStorageAccountName'),'.blob.core.windows.net/',parameters('nginxConfigLocation'))]",		
-		
-
-		"newVirtualNetworkName": "[concat(parameters('virtualNetworkName'))]",
-		"publicIPName": "[concat(parameters('publicIPName'))]",
+		"newVirtualNetworkName": "[concat('virtual-network-',parameters('clusterName'))]",
+		"publicIPName": "[concat('public-ip-',parameters('clusterName'))]",
 		"publicIPRef": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPName'))]",
 		"NICipconfig": "ipCnfgBE",
 		"NICRef": "[resourceId('Microsoft.Network/networkInterfaces',parameters('vmNICNamePattern'))]",
