@@ -59,7 +59,7 @@
 			}
 		},
 		"tags": {
-			"type": "tag",
+			"type": "string",
 			"metadata": {
 				"Description": "A tag will be created with the provided value"
 			}
