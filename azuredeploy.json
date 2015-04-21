@@ -97,8 +97,8 @@
 		"bootstrapUrl": "[concat('https://maprpublic.blob.core.windows.net/install/v1/',variables('bootstrapFile'))]",
 		"bootstrapCommand": "[concat('bash ',variables('bootstrapFile'))]",
 		"bootstrapParameters": "[concat(
-			' -i ',parameters('VMIPAddressStart'),
-			' -m ',parameters('couchbaseMemoryAllocationPercentage') )]",
+			' -i ',parameters('numberOfNodes'),
+			' -m ',parameters('numberOfNodes') )]",
 				
 
 		"newVirtualNetworkName": "[concat('virtual-network-',parameters('clusterName'))]",
