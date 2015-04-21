@@ -21,7 +21,7 @@
 
 		"storageAccountName": {
 			"type": "string",
-			"defaultValue":"cbastg",
+			"defaultValue":"mapr-storage",
 			"metadata": {
 				"Description": "Storage account name pattern.The template will use this value and the resource group name for all the storage accounts."
 			}
@@ -37,16 +37,9 @@
 				"Description": "Type of storage account. Standard_LRS or Premium_LRS"
 			}
 		},
-		"vmStorageAccountContainerName": {
-			"type": "string",
-			"defaultValue": "cbavhds",
-			"metadata": {
-				"Description": "Container name in which you want to place the vhds"
-			}
-		},
 		"vmNumberOfDataDisks": {
 			"type": "int",
-			"defaultValue": 3,
+			"defaultValue": 6,
 			"metadata": {
 				"Description": "Number of data disks (For future versions, currently 2 disks will be created)"
 			}
@@ -58,85 +51,19 @@
 				"Description": "Data disks Size in GBs"
 			}
 		},
-		"vmFileSystem": {
+		"clusterName": {
 			"type": "string",
-			"allowedValues": [
-				"ext4",
-				"xfs"
-			],
-			"defaultValue": "ext4",
+			"defaultValue": "my.cluster.com",
 			"metadata": {
-				"Description": "Linux File systems"
+				"Description": "Name of this cluster. Used for storage an labels."
 			}
 		},
-		"createRAID": {
-			"type": "string",
-			"allowedValues": [
-				"true",
-				"false"
-			],
-			"defaultValue": "true",
+		"tags": {
+			"type": "tag",
 			"metadata": {
-				"Description": "Specify true if you want to RAID the data disks (For future versions)"
+				"Description": "A tag will be created with the provided value"
 			}
 		},
-		"availabilitySetName": {
-			"type": "string",
-			"defaultValue": "CbAvSet",
-			"metadata": {
-				"Description": "AvailabilitySet name"
-			}
-		},
-		"vmName": {
-			"type": "string",
-			"defaultValue": "VMCba",
-			"metadata": {
-				"Description": "VM Name Pattern; which it wil be concatenated with an incremental number"
-			}
-		},
-		"vmSize": {
-			"type": "string",
-			"defaultValue": "Standard_D2",
-			"allowedValues": [
-				"Standard_D2",
-				"Standard_D3",
-				"Standard_D4",
-				"Standard_D11",
-				"Standard_D12",
-				"Standard_D13",
-				"Standard_D14"
-			],
-			"metadata": {
-				"Description": "VM Size"
-			}
-		},
-		"serversRole": {
-			"type": "string",
-			"metadata": {
-				"Description": "Servers role, for instance webtier, database.A tag will be created with the provided value"
-			}
-		},
-		"serversPurpose": {
-			"type": "string",
-			"defaultValue": "DEV",
-			"metadata": {
-				"Description": "Servers purpose, for instance development, test, pre-production, production.A tag will be created with the provided value"
-			}
-		},
-		"vmImageName": {
-			"type": "string",
-			"defaultValue": "5112500ae3b842c8b9c604889f8753c3__OpenLogic-CentOS-65-20150325",
-			"allowedValues": [
-				"5112500ae3b842c8b9c604889f8753c3__OpenLogic-CentOS-65-20150325",
-				"5112500ae3b842c8b9c604889f8753c3__OpenLogic-CentOS-66-20150128",
-				"b39f27a8b8c64d52b05eac6a62ebad85__Ubuntu-12_04_5_LTS-amd64-server-20150309-en-us-30GB",
-				"b39f27a8b8c64d52b05eac6a62ebad85__Ubuntu-14_04_2_LTS-amd64-server-20150309-en-us-30GB"
-				],
-			"metadata": {
-				"Description": "Imange Name. Currently only CentOS 6.5 have been fully supported. Future versions will include CentOS 6.6 and Ubuntu "
-			}
-		},
-
 		"numberOfVms": {
 			"type": "int",
 			"defaultValue": 3,
@@ -144,36 +71,16 @@
 				"Description": "Number of VMs.The template will create N number of identical VMs"
 			}
 		},
-		"adminUserName": {
-			"type": "string",
-			"metadata": {
-				"Description": "Admin user name"
-			}
-		},
 		"adminPassword": {
 			"type": "string",
 			"metadata": {
-				"Description": "Admin password"
+				"Description": "MapR password"
 			}
 		},
 		"sshKeyData": {
 			"type": "string",
 			"metadata": {
 				"Description": "ssh public key for the admin user"
-			}
-		},
-		"faultDomainCount": {
-			"type": "int",
-			"defaultValue": 3,
-			"metadata": {
-				"Description": "Number of fault domains (Maximun supported value is 3)"
-			}
-		},
-		"updateDomainCount": {
-			"type": "int",
-			"defaultValue": 10,
-			"metadata": {
-				"Description": "Number of update domains (Maximun supported value is 20)"
 			}
 		},
 		"customScriptConfigStorageAccountName":{
@@ -195,21 +102,6 @@
 				"Description": "Specify the location of your certificate for ansible and SSH configuration"
 			}
 
-		},
-		"nginxConfigLocation":{
-			"type": "string",
-			"defaultValue":"customscript/nginx",
-			"metadata": {
-				"Description": "Specify the location of the nginx config template for the Couchbase Web Console"
-			}
-
-		},
-		"sshRootPubBlobLocation":{
-			"type": "string",
-			"defaultValue":"customscript/id_rsa.pub",
-			"metadata": {
-				"Description": "Specify the location of your public key for ansible and SSH configuration"
-			}
 		},
 		"ansiblePlaybookLocation":{
 			"type": "string",
