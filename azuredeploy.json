@@ -3,7 +3,6 @@
 	"$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json",
 	"contentVersion": "1.0.0.0",
 
-	/* listKeys(resourceId('Microsoft.ClassicStorage/storageAccounts', parameters('storageName')), '2014-06-01').primaryKey */
 
 	"parameters": {
 		"location": {
