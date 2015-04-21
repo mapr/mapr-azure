@@ -148,7 +148,7 @@
 		{
 			"apiVersion": "2014-12-01-preview",
 			"type": "Microsoft.Network/publicIPAddresses",
-			"name": "[parameters('clusterName')]",
+			"name": "[variables('publicIPName')]",
 			"location": "[parameters('location')]",
 			"dependsOn": [
 				"[variables('vnetRef')]"
@@ -313,30 +313,6 @@
 					"commandToExecute": "[variables('bootstrapCommand')]"
 
 				}
-			}
-		},
-
-
-		{
-			"apiVersion": "2014-12-01-preview",
-			"type": "Microsoft.Network/networkInterfaces",
-			"name": "NICAnsibleController",
-			"location": "[parameters('location')]",
-			"dependsOn": [
-				"[variables('vnetRef')]"
-			],
-			"properties": {
-				"ipConfigurations": [
-					{
-						"name": "[variables('NICipconfig')]",
-						"properties": {
-							"privateIPAllocationMethod": "Static",
-							"privateIPAddress": "[concat('10.0.2.2',parameters('numberOfNodes'))]",
-							"subnet": {	"id": "[variables('subnetBackEndRef')]"}
-						}
-
-					}
-				]
 			}
 		}
 
