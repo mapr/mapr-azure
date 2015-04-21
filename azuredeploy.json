@@ -22,7 +22,7 @@
 
 		"storageAccountName": {
 			"type": "string",
-			"defaultValue":"mapr-storage",
+			"defaultValue":"mapr",
 			"metadata": {
 				"Description": "Storage account name pattern.The template will use this value and the resource group name for all the storage accounts."
 			}
@@ -154,14 +154,14 @@
 				"[variables('vnetRef')]"
 			],
 			"properties": {
-				"publicIPAllocationMethod": "Static",
+				"publicIPAllocationMethod": "Static"
 			}
 		},
 
 
 		{
 			"type": "Microsoft.Storage/storageAccounts",
-			"name": "[concat(variables('storageAccountName'),copyIndex())]",
+			"name": "[concat(variables('storageAccountName'),'-node',copyIndex())]",
 			"apiVersion": "2014-12-01-preview",
 			"location": "[parameters('location')]",
 			"copy": {
@@ -172,7 +172,6 @@
 				"accountType": "[parameters('storageAccountType')]"
 			}
 		},
-
 		
 		{
 			"apiVersion": "2014-12-01-preview",
@@ -195,7 +194,7 @@
 							"privateIPAddress": "[concat('10.0.2.2',copyindex())]",
 							"subnet": {
 								"id": "[variables('subnetBackEndRef')]"
-							},
+							}
 						}
 
 					}
@@ -244,14 +243,14 @@
 					"sourceImage": {
 						"id": "[variables('vmSourceImageRef')]"
 					},
-					"destinationVhdsContainer": "[concat('http://',variables('storageAccountName'),copyIndex(),'.blob.core.windows.net/',parameters('vmStorageAccountContainerName'),'/')]",
+					"destinationVhdsContainer": "[concat('http://',variables('storageAccountName'),'-node',copyIndex(),'.blob.core.windows.net/',parameters('clusterName'),'/')]",
 					"dataDisks": [
 						{
 							"name": "[concat(parameters('clusterName'),copyIndex(), 'Data_1')]",
 							"diskSizeGB": "[parameters('sizeOfDataDisks')]",
 							"lun": 0,
 							"vhd": {
-								"Uri": "[concat('http://',variables('storageAccountName'),copyIndex(),'.blob.core.windows.net/',parameters('vmStorageAccountContainerName'),'/Data_1.vhd')]"
+								"Uri": "[concat('http://',variables('storageAccountName'),'-node',copyIndex(),'.blob.core.windows.net/',parameters('clusterName'),'/Data_1.vhd')]"
 							}
 						},
 						{
@@ -259,7 +258,7 @@
 							"diskSizeGB": "[parameters('sizeOfDataDisks')]",
 							"lun": 1,
 							"vhd": {
-								"Uri": "[concat('http://',variables('storageAccountName'),copyIndex(),'.blob.core.windows.net/',parameters('vmStorageAccountContainerName'),'/Data_2.vhd')]"
+								"Uri": "[concat('http://',variables('storageAccountName'),'-node',copyIndex(),'.blob.core.windows.net/',parameters('clusterName'),'/Data_2.vhd')]"
 							}
 						},
 						{
@@ -267,7 +266,7 @@
 							"diskSizeGB": "[parameters('sizeOfDataDisks')]",
 							"lun": 2,
 							"vhd": {
-								"Uri": "[concat('http://',variables('storageAccountName'),copyIndex(),'.blob.core.windows.net/',parameters('vmStorageAccountContainerName'),'/Data_3.vhd')]"
+								"Uri": "[concat('http://',variables('storageAccountName'),'-node',copyIndex(),'.blob.core.windows.net/',parameters('clusterName'),'/Data_3.vhd')]"
 							}
 						},
 						{
@@ -275,7 +274,7 @@
 							"diskSizeGB": "[parameters('sizeOfDataDisks')]",
 							"lun": 3,
 							"vhd": {
-								"Uri": "[concat('http://',variables('storageAccountName'),copyIndex(),'.blob.core.windows.net/',parameters('vmStorageAccountContainerName'),'/Data_4.vhd')]"
+								"Uri": "[concat('http://',variables('storageAccountName'),'-node',copyIndex(),'.blob.core.windows.net/',parameters('clusterName'),'/Data_4.vhd')]"
 							}
 						}
 					]
@@ -311,7 +310,7 @@
 					"fileUris": [
 						"[variables('bootstrapUrl')]"
 					],
-					"commandToExecute": "[variables('bootstrapCommand')]",
+					"commandToExecute": "[variables('bootstrapCommand')]"
 
 				}
 			}
@@ -339,7 +338,7 @@
 					}
 				]
 			}
-		},
+		}
 
 		
 	],
