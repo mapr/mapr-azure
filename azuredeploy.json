@@ -101,7 +101,7 @@
 				
 
 		"newVirtualNetworkName": "[concat('virtual-network-',parameters('clusterName'))]",
-		"publicIPName": "[concat('public-ip-',parameters('clusterName'))]",
+		"publicIPName": "[concat('public.',parameters('clusterName'))]",
 		"publicIPRef": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPName'))]",
 		"NICipconfig": "ipCnfgBE",
 		"NICRef": "[resourceId('Microsoft.Network/networkInterfaces','maprNIC')]",
