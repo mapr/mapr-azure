@@ -104,7 +104,7 @@
 		"publicIPName": "[concat('public-ip-',parameters('clusterName'))]",
 		"publicIPRef": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPName'))]",
 		"NICipconfig": "ipCnfgBE",
-		"NICRef": "[resourceId('Microsoft.Network/networkInterfaces',parameters('vmNICNamePattern'))]",
+		"NICRef": "[resourceId('Microsoft.Network/networkInterfaces','maprNIC')]",
 		"DNSNameLB": "[concat('mapr.com')]",
 		"vnetRef": "[resourceId('Microsoft.Network/virtualNetworks',variables('newVirtualNetworkName'))]",
 		"subnetBackEndRef": "[concat(variables('vnetRef'),'/subnets/private')]",
