@@ -217,7 +217,7 @@
 				"ServerRole": "[parameters('tags')]"
 				},
 			"copy": {
-				"name": "NodessLoop",
+				"name": "NodesLoop",
 				"count": "[parameters('numberOfNodes')]"
 			},
 			"dependsOn": [
@@ -305,7 +305,7 @@
 				"count": "[parameters('numberOfNodes')]"
 			},
 			"dependsOn": [
-				"VMsLoop"
+				"NodesLoop"
 			],
 			"properties": {
 				"publisher": "Microsoft.OSTCExtensions",
