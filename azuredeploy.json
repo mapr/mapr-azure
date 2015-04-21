@@ -181,7 +181,7 @@
 		{
 			"apiVersion": "2014-12-01-preview",
 			"type": "Microsoft.Network/networkInterfaces",
-			"name": "[concat('mapr-nic-',copyIndex())]",
+			"name": "[concat('maprNIC',copyIndex())]",
 			"location": "[parameters('location')]",
 			"copy": {
 				"name": "NICSLoop",
