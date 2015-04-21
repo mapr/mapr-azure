@@ -152,13 +152,9 @@
 			"location": "[parameters('location')]",
 			"dependsOn": [
 				"[variables('vnetRef')]"
-
 			],
 			"properties": {
 				"publicIPAllocationMethod": "Static",
-				"dnsSettings": {
-					"domainNameLabel": "[variables('DNSNameLB')]"
-				}
 			}
 		},
 
