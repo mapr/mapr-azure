@@ -54,7 +54,7 @@
 		},
 		"clusterName": {
 			"type": "string",
-			"defaultValue": "my.cluster.com",
+			"defaultValue": "myCluster",
 			"metadata": {
 				"Description": "Name of this cluster. Used for storage labels."
 			}
@@ -113,7 +113,7 @@
 		"subnetBackEndRef": "[concat(variables('vnetRef'),'/subnets/private')]",
 		"FrontEndRef": "[concat(variables('vnetRef'),'/subnets/public')]",				
 
-		"storageAccountName": "[concat(resourceGroup().name,parameters('storageAccountName'))]",
+		"storageAccountName": "[concat(parameters('clusterName'),parameters('storageAccountName'))]",
 		"storageRef": "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]"
 	},
 
