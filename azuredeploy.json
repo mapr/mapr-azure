@@ -78,6 +78,12 @@
 			"metadata": {
 				"Description": "MapR password"
 			}
+		},
+		"sshKeyData": {
+			"type": "string",
+			"metadata": {
+				"Description": "Public Ssh Key"
+			}
 		}
 	},
 
