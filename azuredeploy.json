@@ -90,8 +90,11 @@
 
 	"variables": {
 
+	    "vmSourceImageName": "b39f27a8b8c64d52b05eac6a62ebad85__Ubuntu-14_04_2_LTS-amd64-server-20150309-en-us-30GB",
+        "vmSourceImageRef": "[concat('/',subscription().subscriptionId,'/services/images/',variables('vmSourceImageName'))]",
+		
 		"vmSourceImageRef1": "[concat('/',subscription().subscriptionId,'/services/images/','mapr-ubuntu-os-2015-04-21')]",
-		"vmSourceImageRef": "https://vm1.blob.core.windows.net/vhds/mapr-ubuntu-os-2015-04-21.vhd",
+		"vmSourceImageRef2": "https://vm1.blob.core.windows.net/vhds/mapr-ubuntu-os-2015-04-21.vhd",
 
 
 		"bootstrapVersion" : "v1.0",
