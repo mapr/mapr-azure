@@ -54,7 +54,7 @@
 		},
 		"clusterName": {
 			"type": "string",
-			"defaultValue": "myCluster",
+			"defaultValue": "mycluster",
 			"metadata": {
 				"Description": "Name of this cluster. Used for storage labels."
 			}
@@ -111,7 +111,8 @@
 		"DNSNameLB": "[concat('mapr.com')]",
 		"vnetRef": "[resourceId('Microsoft.Network/virtualNetworks',variables('newVirtualNetworkName'))]",
 		"subnetBackEndRef": "[concat(variables('vnetRef'),'/subnets/private')]",
-		"FrontEndRef": "[concat(variables('vnetRef'),'/subnets/public')]",				
+		"FrontEndRef": "[concat(variables('vnetRef'),'/subnets/public')]",
+		"sshKeyPath": "/home/mapr/.ssh/authorized_keys",
 
 		"storageAccountName": "[concat(parameters('clusterName'),parameters('storageAccountName'))]",
 		"storageRef": "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]"
@@ -209,7 +210,7 @@
 		{
 			"apiVersion": "2014-12-01-preview",
 			"type": "Microsoft.Compute/virtualMachines",
-			"name": "[concat(parameters('clusterName'),'-',copyIndex())]",
+			"name": "[concat(parameters('clusterName'),copyIndex())]",
 			"location": "[parameters('location')]",
 			"tags": {
 				"ServerRole": "[parameters('tags')]"
