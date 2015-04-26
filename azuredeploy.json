@@ -301,7 +301,7 @@
 
 		{
 			"type": "Microsoft.Compute/virtualMachines/extensions",
-			"name": "[concat(parameters('clusterName'),copyIndex(),'/configuressh')]",
+			"name": "[concat(parameters('clusterName'),'n',copyIndex(),'/configuressh')]",
 			"apiVersion": "2014-12-01-preview",
 			"location": "[parameters('location')]",
 			"copy": {
