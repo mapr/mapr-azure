@@ -408,7 +408,7 @@ find_mapr_disks() {
 		# we'll eliminate /dev/sdb from our list in Azure (as determined 
 		# by the presense of the Windows Azure Agent)
 		#	TBD : be smarter about which device to remove
-	if [ -f /etc/init.d/waagent ] ;
+	if [ -f /etc/init.d/waagent ] ; then
 		pdisks=$(echo $disks | sed -e 's|/dev/sdb||' -e 's/^[[:space:]]*//')
 		[ -n "${pdisks:-}" ] && disks="$pdisks" 
 	fi
