@@ -22,3 +22,4 @@ sh $BINDIR/prepare-node.sh
 
 sh $BINDIR/deploy-mapr-ami.sh
 
+exit 0
