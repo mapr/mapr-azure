@@ -1,7 +1,7 @@
 {
   "itemDisplayName": "Deploy a Multi VM MapR Cluster",
-  "description": "This template deploys N  Linux VMs and it configures a Multi VM MapR Cluster.",
-  "summary": "This template deploys N  Linux VMs and it configures a Multi VM MapR Cluster.",
+  "description": "This template deploys <N> Linux VMs and it configures a Multi VM MapR Cluster with the Community Edition license.",
+  "summary": "Deploy MapR Cluster within Azure framework.",
   "githubUsername": "mapr",
-  "dateUpdated": "2015-04-17"
+  "dateUpdated": "2015-06-08"
 }
