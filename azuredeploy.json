@@ -57,7 +57,7 @@
         }
     },
     "variables": {
-        "scriptsUri" : "https://raw.githubusercontent.com/dbtucker/AzureTest/master",
+        "scriptsUri" : "https://raw.githubusercontent.com/mapr/mapr-azure/master",
         "vmBasename": "[concat(parameters('clusterName'),'node')]",
         "nicBasename": "[concat(parameters('clusterName'),'-nic')]",
         "publicIPAddressBasename": "[concat(parameters('clusterName'),'-publicIP')]",
