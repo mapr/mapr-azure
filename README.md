@@ -11,6 +11,6 @@ types to use; storage for each node is currently defined in the
 template itself (4 1TB volumes per node).
 
 The Control System interface to the cluster will be available at
-	https://<cluster_node_0>:8443
+	https://[cluster_node_0]:8443
 
 
