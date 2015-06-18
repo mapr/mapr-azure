@@ -26,7 +26,9 @@ function main() {
 
 	chmod a+x /tmp/mapr-setup.sh
 	/tmp/mapr-setup.sh -y
-	if [ $? -ne 0 ] ; then
+	if [ $? -eq 0 ] ; then
+		/opt/mapr/installer/build/python/bin/easy_install requests
+	else
 		echo "Failed to deploy MapR Installer with mapr-setup.sh" | tee -a $LOG
 		exit 1
 	fi
