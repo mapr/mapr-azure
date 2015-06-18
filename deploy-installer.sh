@@ -40,6 +40,17 @@ $MAPR_PASSWD
 passwdEOF
 fi
 
+# Once the installer has been successfully installed, you can 
+# use the python script to talk with it
+#
+# ./deploy-mapr-cluster.py  
+#	--hosts maprazure3node0,maprazure3node1 	# nodes from /etc/hosts
+#	--ssh-user azadmin 
+#	--ssh-password superStrong,123              # from template
+#	--cluster itest 							# from template
+#	--disks /dev/sdc,/dev/sdd,/dev/sde,/dev/sdf 	# auto-detect
+#	--mapr-password MapRAZ						# must match MAPR_PASSWD above
+
 }
 
 main $@
