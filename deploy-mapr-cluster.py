@@ -1,4 +1,6 @@
-#!/usr/bin/env python
+#!/opt/mapr/installer/build/python/bin/python
+#   
+#   # Use installer python for now #!/usr/bin/env python
 #
 #   NOTE: Requires Python 2.7 
 #
@@ -314,8 +316,12 @@ def query_yes_no(question, default="yes"):
 def gatherArgs () :
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
+    parser.add_argument("--debug", action="store_true",
+        help="Enable debug output from installer service.")
     parser.add_argument("-q","--quiet", action="store_true",
-        help="Execute silently, without prompting user.")
+        help="Execute installation without prompting user.")
+    parser.add_argument("--silent", action="store_true",
+        help="Execute installation with neither prompts nor status output.")
     parser.add_argument("--cluster", default="MyCluster",
         help="Cluster name")
     parser.add_argument("--mapr-version", default="4.1.0",
@@ -330,8 +336,10 @@ def gatherArgs () :
         help="URI for MapR installer service")
     parser.add_argument("--ssh-user", default="ec2-user",
         help="ssh user for system access")
-    parser.add_argument("--ssh-keyfile", default="~/.ssh/id_launch",
-        help="ssh private key file")
+    parser.add_argument("--ssh-keyfile",
+        help="private key file to authenticate as ssh-user")
+    parser.add_argument("--ssh-password",
+        help="password for ssh-user")
     parser.add_argument("--portal-user",
         help="Registered user for mapr.com portal")
     parser.add_argument("--portal-password",
@@ -483,10 +491,11 @@ driver.setDisks (checkedArgs.disks)
 # Set up services ... could be much smarter here 
 #   (especially about the versioning for each service).
 driver.initializeServicesList (checkedArgs.mapr_version)
-driver.addMapRDBServices ()
-driver.addSparkServices ()
-driver.addDrillServices ()
-driver.addHiveServices ()
+
+# driver.addMapRDBServices ()
+# driver.addSparkServices ()
+# driver.addDrillServices ()
+# driver.addHiveServices ()
 
 operationOK = driver.configureClusterDeployment()
 if operationOK == True :
