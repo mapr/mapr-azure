@@ -10,7 +10,7 @@
             }
         },
         "clusterSize": {
-            "defaultValue": "3",
+            "defaultValue": 3,
             "type": "int"
         },
         "adminUserName": {
