@@ -3,7 +3,7 @@
         "value": "MapRazure"
     },
     "clusterSize": {
-        "value": "3"
+        "value": 3
     },
     "adminUsername": {
         "value": "azadmin"
