@@ -1,6 +1,7 @@
 #!/bin/bash
 #
-# Wrapper script around our deployment scripts.
+# Wrapper script invocation of MapR installer service and auto-installation
+# of MapR cluster.
 #
 # Assumptions: all other scripts downloaded to same directory.
 #
@@ -36,8 +37,8 @@ sh $BINDIR/gen-cluster-hosts.sh ${1:-$CLUSTER_HOSTNAME_BASE} ${2:-3} ${3:-} ${4:
 
 sh $BINDIR/prepare-disks.sh
 
-sh $BINDIR/prepare-node.sh
+#	sh $BINDIR/prepare-node.sh
 
-sh $BINDIR/deploy-mapr-ami.sh
+#	sh $BINDIR/deploy-mapr-ami.sh
 
 exit 0
