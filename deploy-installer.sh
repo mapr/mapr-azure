@@ -25,7 +25,7 @@ function main() {
 	fi
 
 	chmod a+x /tmp/mapr-setup.sh
-	/tmp/mapr-setup.sh -y
+	/tmp/mapr-setup.sh -y install
 	if [ $? -ne 0 ] ; then
 		echo "Failed to deploy MapR Installer with mapr-setup.sh" | tee -a $LOG
 		exit 1
