@@ -56,7 +56,7 @@ chmod a+x $BINDIR/deploy-mapr-cluster.py
 echo $BINDIR/deploy-mapr-cluster.py -y \
 	--ssh-user azadmin \
 	--ssh-password MapRAzur3 \
-	--on M5 -cluster $MAPR_CLUSTER \
+	--cluster $MAPR_CLUSTER \
 	--hosts-file /tmp/maprhosts \
 	--disks-file /tmp/MapR.disks \
 	--mapr-password $MAPR_PASSWD \
