@@ -5,6 +5,9 @@
     "clusterSize": {
         "value": 3
     },
+    "clusterEdition": {
+        "value": "M3"
+    },
     "adminUsername": {
         "value": "azadmin"
     },
