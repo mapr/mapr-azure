@@ -24,6 +24,8 @@ function main() {
 		exit 1
 	fi
 
+		# mapr-setup.sh uses different env variable for password.
+	export MAPR_PASSWORD=$MAPR_PASSWD
 	chmod a+x /tmp/mapr-setup.sh
 	/tmp/mapr-setup.sh -y install
 	if [ $? -ne 0 ] ; then
