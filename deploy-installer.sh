@@ -26,13 +26,15 @@ function main() {
 
 	chmod a+x /tmp/mapr-setup.sh
 	/tmp/mapr-setup.sh -y
-	if [ $? -eq 0 ] ; then
-		/opt/mapr/installer/build/python/bin/easy_install requests
-	else
+	if [ $? -ne 0 ] ; then
 		echo "Failed to deploy MapR Installer with mapr-setup.sh" | tee -a $LOG
 		exit 1
 	fi
 
+		# Make sure we have the "requests" package enabled 
+		# (necessary for python script to drive the installer)
+	/opt/mapr/installer/build/python/bin/pip install requests
+	
 	if [ -n "${MAPR_PASSWD}" ] ; then
 		passwd $MAPR_USER << passwdEOF
 $MAPR_PASSWD
@@ -48,7 +50,7 @@ fi
 #	--ssh-user azadmin 
 #	--ssh-password superStrong,123              # from template
 #	--cluster itest 							# from template
-#	--disks /dev/sdc,/dev/sdd,/dev/sde,/dev/sdf 	# auto-detect
+#	--disks /dev/sdc,/dev/sdd,/dev/sde,/dev/sdf 	# auto-detect (should be in /tmp/MapR.disks)
 #	--mapr-password MapRAZ						# must match MAPR_PASSWD above
 
 }

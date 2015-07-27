@@ -1,8 +1,8 @@
 #!/opt/mapr/installer/build/python/bin/python
-#   
-#   # Use installer python for now #!/usr/bin/env python
 #
-#   NOTE: Requires Python 2.7 
+#   # Use installer python for now inestead of #!/usr/bin/env python
+#
+#   NOTE: Requires Python 2.7 and "requests" package
 #
 # Usage
 #
@@ -16,6 +16,8 @@
 #       mapr_user = mapr
 #       mapr_password = mapr
 #       cluster = 'my.cluster.com'
+#       ecosystem defaults
+#           { 'drill' : '1.0.0', 'hbase' : '0.98', 'hive' : '0.13', 'pig' : '0.14' }
 #
 #   The command line parsing also has some defaults ... which 
 #   help when setting up the driver object in this temp wrapper.
@@ -27,11 +29,16 @@
 #       cluster = 'MyCluster'
 #       ssh-user = 'ec2-user'
 #       ssh-keyfile = "~/.ssh/id_launch
+#
+# TBD
+#   Add logic to support "--eco-verison <product>=latest" ... for latest 
+#   supported version.
 
 
-import argparse
 import os
+import sys
 import subprocess
+import argparse
 import datetime
 import time
 import ssl
@@ -52,6 +59,7 @@ class MIDriver:
         self.cluster = 'my.cluster.com'
         self.mapr_version = '4.1.0'
         self.mapr_edition = 'M3'
+        self.eco_defaults = { 'drill' : '1.0', 'hbase' : '0.98', 'hive' : '0.13', 'pig' : '0.14' }
         self.disks = []
         self.hosts = []
         self.services = {}
@@ -60,12 +68,28 @@ class MIDriver:
         self.ssh_key = None
         self.portal_user = None
         self.portal_password = None
+        self.stage_user = None
+        self.stage_password = None
+        self.stage_license_url = "http://stage.mapr.com/license"
 
-        # TBD : Be smarter
-        #   check for 0-lenghth list.
+            # State variables from REST interface
+        self.current_state = None
+        self.license_uploaded = False
+
+        # TBD : Be smarter for setting cluster and edition
+        #   check for 0-lenghth string or list.
     def setClusterName(self, newName) :
         if newName != None :
             self.cluster = newName
+
+    def setEdition(self, newEdition) :
+        if newEdition != None :
+            if newEdition.lower()  == 'm3' or newEdition.lower() == 'community' :
+                self.mapr_edition = 'M3'
+            elif newEdition.lower()  == 'm5' or newEdition.lower() == 'enterprise' :
+                self.mapr_edition = 'M5'
+            elif newEdition.lower()  == 'm7' or newEdition.lower() == 'database' :
+                self.mapr_edition = 'M7'
 
     def setSshCredentials(self, newUser, newKey, newPassword) :
         if newUser != None : 
@@ -81,6 +105,12 @@ class MIDriver:
         if newPassword != None : 
             self.portal_password = newPassword
 
+    def setStageCredentials(self, newUser, newPassword) :
+        if newUser != None : 
+            self.stage_user = newUser
+        if newPassword != None : 
+            self.stage_password = newPassword
+
     def setHosts(self, newHosts) :
         if newHosts != None :
             self.hosts = newHosts
@@ -89,35 +119,75 @@ class MIDriver:
         if newDisks != None :
             self.disks = newDisks
 
-    def config_get(self) :
-        r = requests.get(self.installer_url + "/api/config",
+    def swagger_get(self,target) :
+        errcnt = 0
+        while errcnt < 5 :
+            try :
+                r = requests.get(self.installer_url + target,
+                    auth = (self.mapr_user, self.mapr_password),
+                    headers = self.headers,
+                    verify = False)
+            except ConnectionError :
+                errcnt += 1
+            else :
+                return r
+
+    def swagger_patch(self, target, payload) :
+        requests.patch(self.installer_url + target,
                 auth = (self.mapr_user, self.mapr_password),
                 headers = self.headers,
-                verify = False)
-        return r
+                verify = False,
+                data = json.dumps(payload))
+
+    def config_get(self) :
+        return self.swagger_get("/api/config")
 
     def config_patch(self, payload) :
-        requests.patch(self.installer_url + "/api/config",
-                auth = (self.mapr_user, self.mapr_password),
-                headers = self.headers,
-                verify = False,
-                data = json.dumps(payload))
+        self.swagger_patch ("/api/config", payload)
 
     def process_get(self) :
-        r = requests.get(self.installer_url + "/api/process",
+        return self.swagger_get("/api/process")
+
+    def process_patch(self,payload) :
+        self.swagger_patch ("/api/process", payload)
+
+    def services_get(self,payload=None) :
+        r = requests.get(self.installer_url + "/api/services",
                 auth = (self.mapr_user, self.mapr_password),
                 headers = self.headers,
+                params = payload, 
                 verify = False)
         return r
 
-    def process_patch(self,payload) :
-        requests.patch(self.installer_url + "/api/process",
-                auth = (self.mapr_user, self.mapr_password),
-                headers = self.headers,
-                verify = False,
-                data = json.dumps(payload))
+    def service_available(self,sname,sversion) :
+        payload = { 'name' : "mapr-"+sname, 'version' : sversion } 
+        r = self.services_get (payload)
+        return ( r.json()['count'] != 0 )
 
-    def initializeServicesList (self, mapr_version = None) :
+    def get_service_hosts(self,sname,sversion) :
+        payload = { 'name' : "mapr-"+sname, 'version' : sversion } 
+        r = self.services_get (payload)
+        return ( r.json()['resources'][0]['hosts'] )
+
+        # For services that have defined ui ports, this
+        # routine assemples a list of "host:port" to return
+    def get_service_url(self,sname,sversion) :
+        payload = { 'name' : "mapr-"+sname, 'version' : sversion } 
+        r = self.services_get (payload)
+        resources=r.json()['resources'][0]
+
+        urls = []
+        for h in resources['hosts'] :
+            if 'ui_ports' in resources : 
+                for p in resources['ui_ports'] :
+                    urls.append(h+':'+str(p))
+            else :
+                urls.append(h)
+
+        return ( urls )
+
+
+    def initializeCoreServicesList (self, mapr_version = None) :
         if mapr_version != None:
             self.mapr_version = mapr_version
         self.services = {}
@@ -132,11 +202,69 @@ class MIDriver:
         self.services["mapr-webserver"] = { "enabled" : True, "version" : self.mapr_version }
         self.services["mapr-zookeeper"] = { "enabled" : True, "version" : self.mapr_version }
 
-        # Always include NFS; Installer 
+        # Always include NFS service
         self.services["mapr-nfs"] = { "enabled" : True, "version" : self.mapr_version }
 
+
+    def initializeEcoServicesList (self) :
+        ver = self.eco_defaults.get('hbase')
+        if ver != None : 
+            self.addMapRDBServices (ver)
+
+        ver = self.eco_defaults.get('hive')
+        if ver != None : 
+            self.addHiveServices (ver)
+
+        ver = self.eco_defaults.get('spark')
+        if ver != None : 
+            self.addSparkServices (ver)
+
+        ver = self.eco_defaults.get('pig')
+        if ver != None : 
+            self.addEcoServices ('pig', ver)
+
+        ver = self.eco_defaults.get('drill')
+        if ver != None : 
+            self.addEcoServices ('drill', ver)
+
+
+        # MapRDB
+    def addMapRDBServices (self, hbase_version = None) :
+        if hbase_version == None :
+            hbase_version = self.eco_defaults.get('hbase', "0.98")
+        elif hbase_version.lower() == "none" :
+            if 'mapr-hbase' in self.services :
+                del self.services['mapr-hbase']
+            if 'mapr-hbasethrift' in self.services :
+                del self.services['mapr-hbasethrift']
+            if 'mapr-libhbase' in self.services :
+                del self.services['mapr-libhbase']
+            return
+        elif self.service_available ('hbase', hbase_version) == False : 
+            hbase_version = self.eco_defaults.get('hbase', "0.98")
+
+        self.services["mapr-hbase"] = { "enabled" : True, "version" : hbase_version }
+#        self.services["mapr-hbasethrift"] = { "enabled" : True, "version" : hbase_version }
+        self.services["mapr-libhbase"] = { "enabled" : True, "version" : hbase_version }
+
+
         # Hive (with only local MySQL supported for now)
-    def addHiveServices (self, hive_version = "0.13", hive_user = None, hive_password = None, hive_db = "local") :
+    def addHiveServices (self, hive_version = None, hive_user = None, hive_password = None, hive_db = "local") :
+        if hive_version == None :
+            hive_version = self.eco_defaults.get('hive', "0.13")
+        elif hive_version.lower() == "none" :
+            if 'mapr-mysql' in self.services :
+                del self.services['mapr-mysql']
+            if 'mapr-hive-client' in self.services :
+                del self.services['mapr-hive-client']
+            if 'mapr-hivemetastore' in self.services :
+                del self.services['mapr-hivemetastore']
+            if 'mapr-hiveserver2' in self.services :
+                del self.services['mapr-hiveserver2']
+            return
+        elif self.service_available ('hive', hive_version) == False : 
+            hive_version = self.eco_defaults.get('hive', "0.13")
+
         if hive_db == 'local' :
             self.services["mapr-mysql"] = { "enabled" : True }
             if hive_user == None :
@@ -151,25 +279,42 @@ class MIDriver:
 
         self.services["mapr-hive-client"] = { "enabled" : True, "version" : hive_version}
         self.services["mapr-hiveserver2"] = { "enabled" : True, "version" : hive_version}
-        self.services["mapr-metastore"] = { "enabled" : True, "database" : HIVE_DATABASE, "version" : hive_version }
+        self.services["mapr-hivemetastore"] = { "enabled" : True, "database" : HIVE_DATABASE, "version" : hive_version }
     
+        # Spark service
+    def addSparkServices (self, spark_version = None) :
+        if spark_version == None :
+            spark_version = self.eco_defaults.get('spark', "1.2.1")
+        elif spark_version.lower() == "none" :
+            if 'mapr-spark-client' in self.services :
+                del self.services['mapr-spark-client']
+            if 'mapr-spark-historyserver' in self.services :
+                del self.services['mapr-spark-historyserver']
+            return
+        elif self.service_available ('spark', spark_version) == False : 
+            spark_version = self.eco_defaults.get('spark', "1.2.1")
 
-        # Hive (with only local MySQL supported for now)
-    def addMapRDBServices (self, hbase_version = "0.98") :
-        self.services["mapr-hbase"] = { "enabled" : True, "version" : hbase_version }
-        self.services["mapr-hbasethrift"] = { "enabled" : True, "version" : hbase_version }
-        self.services["mapr-libhbase"] = { "enabled" : True, "version" : hbase_version }
-
-    def addSparkServices (self, spark_version = "1.2.1") :
         self.services["mapr-spark-client"] = { "enabled" : True, "version" : spark_version }
         self.services["mapr-spark-historyserver"] = { "enabled" : True, "version" : spark_version }
 
-    def addDrillServices (self, drill_version = "1.0.0") :
-        self.services["mapr-drill"] = { "enabled" : True, "version" : drill_version}
+        # Basic ecosystem service ... no extra work for config
+    def addEcoServices (self, eco_service = None, eco_version = None) :
+        svc = 'mapr-' + eco_service
+
+        if eco_version == None  or  eco_version == None :
+            return
+        elif eco_version.lower() == "none" :
+            if svc in self.services :
+                del self.services[svc]
+            return
+
+        if self.service_available (eco_service, eco_version) == False :
+            return
+
+        self.services[svc] = { "enabled" : True, "version" : eco_version}
 
 
-
-    def configureClusterDeployment(self) :
+    def initializeClusterConfig(self) :
         payload = { 'cluster_admin_password' : self.mapr_password } 
         self.config_patch(payload)
 
@@ -202,16 +347,77 @@ class MIDriver:
             payload = { 'mapr_name' : self.portal_user, 'mapr_password' : self.portal_password } 
             self.config_patch(payload)
 
-        # Last, but not least, specify the services
+#            payload = { 'licenseType' : self.mapr_edition, 'licenseValidation' : 'INSTALL' } 
+#            self.config_patch(payload)
+
+        # Specify the services
         payload = { 'services' : self.services } 
         self.config_patch(payload)
+
+        # Last, but not least, add stage license (if necessary)
+        self.configureTrialLicense()
 
             # Print out the message config for sanity 
             # (long term, we'll drop this)
         r = self.config_get()
         print json.dumps(r.json(),indent=4,sort_keys=True)
 
+            # Handle the case where a CHECK has failed and
+            # we're just trying again
         rc = self.waitForProcessState( 'INIT' )
+        if rc == False :
+            if self.current_state[0:5] == "CHECK" :
+                rc = True
+            elif self.current_state == "PROVISIONED" :
+                rc = True
+            elif self.current_state[-5:] == "ERROR" :
+                rc = True
+
+        return rc
+
+
+        # The default service provisioning can leave "gaps",
+        # nodes that don't have fileserver/nodemanager/nfs on them.
+        # For most small/mid-size clusters, that's not a good plan
+        # For now, make sure that ALL nodes have those services
+    def updateClusterConfig(self) :
+            # fileserver
+        svc_target="/api/services/"+"mapr-fileserver-"+self.mapr_version
+        self.swagger_patch (svc_target, {"hosts" : self.hosts})
+
+            # nodemanager
+        if 'mapr-nodemanager' in self.services :
+            svc_target="/api/services/"+"mapr-nodemanager-"+self.mapr_version
+            self.swagger_patch (svc_target, {"hosts" : self.hosts})
+
+            # hive-client, pig, and spark-client (on all nodes)
+        for s in ["hive-client", "pig", "drill", "spark-client" ] :
+            svc = "mapr-" + s
+            if svc in self.services :
+                ver = self.services[svc].get("version")
+                svc_target="/api/services/"+svc+"-"+ver
+                self.swagger_patch (svc_target, {"hosts" : self.hosts})
+
+
+        # If access to the license stage repository has
+        # been specified, download trial license and 
+        # put into the configuration.
+    def configureTrialLicense(self) :
+        if self.stage_user == None  or  self.mapr_edition == 'M3' :
+            return 
+
+        license_url = self.stage_license_url + "/LatestDemoLicense-" + self.mapr_edition + ".txt"
+
+        license = requests.get(license_url,
+                auth = (self.stage_user, self.stage_password),
+                headers = { 'Content-Type' : 'text/plain' }) 
+
+        if license.reason != 'OK' :
+            print ( "Failed to retrieve trial license" )
+            return False
+
+        self.config_patch ( {'license' : license.text} )
+        self.license_uploaded = True
 
 
         # Return success when state is reached.
@@ -235,10 +441,11 @@ class MIDriver:
                 break
 
         print ( "Installer state %s" % (curState) )
+        self.current_state = curState 
         return (maxWait > 0) 
 
 
-    def doInstall(self) :
+    def checkClusterConfig(self) :
         payload = { 'state' : 'CHECKING' } 
         self.process_patch (payload)
         rc = self.waitForProcessState( 'CHECKED' )
@@ -251,15 +458,49 @@ class MIDriver:
         if rc != True :
             return (rc)
 
+        self.updateClusterConfig()
+
+            # Print out the cluster's config for sanity 
+            # (long term, we'll drop this)
+        self.printCoreServiceLayout()
+
+        return (True)
+
+    def doInstall(self) :
         payload = { 'state' : 'INSTALLING' } 
         self.process_patch (payload)
         rc = self.waitForProcessState( 'INSTALLED' , 3600, 20)
         if rc != True :
             return (rc)
 
+        if self.license_uploaded == True :
+            payload = { 'state' : 'LICENSING' } 
+            self.process_patch (payload)
+            rc = self.waitForProcessState( 'LICENSED' , 120, 10)
+            if rc != True :
+                return (rc)
+
+        payload = { 'state' : 'COMPLETED' } 
+        self.process_patch (payload)
+        self.waitForProcessState( 'COMPLETED' , 10, 10)
         return (True)
 
+    def printCoreServiceLayout(self, svc_list=["zookeeper","cldb","fileserver","nodemanager","resourcemanager" ]) :
+        print ("")
+        print ("Cluster Services Configuration: ")
+        for svc in svc_list :
+            svc_hosts = self.get_service_hosts (svc, self.mapr_version)
+            print (svc + ": " + ','.join(svc_hosts))
+        print ("")
 
+    def printMCS(self) :
+        mcs_hosts = self.get_service_hosts ('webserver', self.mapr_version)
+        print ("MCS console(s) available at:")
+        for h in mcs_hosts :
+            print ("    https://"+h+":8443") 
+
+    def printSuccessUrl(self) :
+        print ("MapR Installer Service available at "+installer_url+"/#/complete") 
 
 # Variable we should be grabbing based on customer input or deployment infrastructure
 #    To Be Done
@@ -316,18 +557,14 @@ def query_yes_no(question, default="yes"):
 def gatherArgs () :
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-    parser.add_argument("--debug", action="store_true",
-        help="Enable debug output from installer service.")
-    parser.add_argument("-q","--quiet", action="store_true",
-        help="Execute installation without prompting user.")
-    parser.add_argument("--silent", action="store_true",
-        help="Execute installation with neither prompts nor status output.")
+    parser.add_argument("-q","--quiet", default=False, action="store_true",
+        help="Execute silently, without prompting user.")
     parser.add_argument("--cluster", default="MyCluster",
         help="Cluster name")
     parser.add_argument("--mapr-version", default="4.1.0",
         help="MapR Software Version")
     parser.add_argument("--mapr-edition", default="M3",
-        help="MapR License Edition (M3, M5, or M7)")
+        help="MapR License Edition (M3 {community}, M5 {enterprise}, or M7 {database})")
     parser.add_argument("--mapr-user", default="mapr",
         help="MapR admin user")
     parser.add_argument("--mapr-password", default="MapR",
@@ -336,20 +573,26 @@ def gatherArgs () :
         help="URI for MapR installer service")
     parser.add_argument("--ssh-user", default="ec2-user",
         help="ssh user for system access")
-    parser.add_argument("--ssh-keyfile",
-        help="private key file to authenticate as ssh-user")
-    parser.add_argument("--ssh-password",
-        help="password for ssh-user")
+    parser.add_argument("--ssh-keyfile", default="~/.ssh/id_launch",
+        help="ssh private key file")
     parser.add_argument("--portal-user",
-        help="Registered user for mapr.com portal")
+        help="Registered user for mapr.com portal *** UNSUPPORTED *** ")
     parser.add_argument("--portal-password",
-        help="Password for portal user")
+        help="Password for portal user *** UNSUPPORTED *** ")
+    parser.add_argument("--stage-user", 
+        help="Registered username for retrieving demo licenses from  stage.mapr.com/license")
+    parser.add_argument("--stage-password", 
+        help="Password for stage user")
     parser.add_argument("--disks",
         help="Comma-separate list of disks for MapR-FS on cluster nodes")
+    parser.add_argument("--disks-file",
+        help="File containing disks for MapR-FS (one disk per line)")
     parser.add_argument("--hosts",
         help="Comma-separate list of hosts on which to deploy MapR")
     parser.add_argument("--hosts-file",
         help="File containing hosts (one host per line)")
+    parser.add_argument("--eco-version", nargs='*', action='append',
+        help="Desired versions of esystem comments; format is <pkg>=<ver> (use multiple times for multiple components)")
 
     args = parser.parse_args()
     return (args)
@@ -397,8 +640,25 @@ def checkArgs (argList) :
         newHosts = argList.hosts.split(",")
         argList.hosts = newHosts
 
-    if argList.disks != None :
-        argList.disks = argList.disks.split(",")
+    if argList.disks == None :
+        if argList.disks_file != None :
+            if os.path.isfile(argList.disks_file) :
+                newDisks = []
+                proc = subprocess.Popen('/usr/bin/env cat '+argList.disks_file, shell=True, stdout=subprocess.PIPE)
+                while ( True ) :
+                    d = proc.stdout.readline() 
+                    if d == '' :
+                        break
+                    else :
+                        d = d.rstrip()
+
+                    if ( len (d) > 0 ) :
+                        newDisks.append (d)
+
+                argList.disks = newDisks
+    else :
+        newDisks = argList.disks.split(",")
+        argList.disks = newDisks
 
         # Extract key file (if possible)
     if argList.ssh_keyfile != None : 
@@ -406,54 +666,7 @@ def checkArgs (argList) :
             ssh_key = keyfile.read()
         argList.ssh_key = ssh_key
 
-        # Use our public credentials for now, if nothing is set
-    if argList.portal_user == None : 
-        argList.portal_user = "maprse-bd@maprtech.com"
-        argList.portal_password = "BD4dev"
-
     return argList
-
-
-    
-# Temporary logic.  We should get much smarter here about how
-# to decide which packages we want
-def genServicesList (args) :
-    svcs = {}
-
-        # MapR core YARN stuff (forget MRv1 for now)
-    svcs["mapr-core"] = { "enabled" : True, "version" : args["mapr_version"] }
-    svcs["mapr-cldb"] = { "enabled" : True, "version" : args["mapr_version"] }
-    svcs["mapr-fileserver"] = { "enabled" : True, "version" : args["mapr_version"] }
-    svcs["mapr-nodemanager"] = { "enabled" : True, "version" : args["mapr_version"] }
-    svcs["mapr-resourcemanager"] = { "enabled" : True, "version" : args["mapr_version"] }
-    svcs["mapr-historyserver"] = { "enabled" : True, "version" : args["mapr_version"] }
-    svcs["mapr-webserver"] = { "enabled" : True, "version" : args["mapr_version"] }
-    svcs["mapr-zookeeper"] = { "enabled" : True, "version" : args["mapr_version"] }
-
-        # Always include NFS
-    svcs["mapr-nfs"] = { "enabled" : True, "version" : args["mapr_version"] }
-
-        # HBase and related libraries
-    svcs["mapr-hbase"] = { "enabled" : True, "version" : "0.98" }
-    svcs["mapr-hbasethrift"] = { "enabled" : True, "version" : "0.98" }
-    svcs["mapr-libhbase"] = { "enabled" : True, "version" : "0.98" }
-    
-        # Hive (with local MySQL for now)
-    svcs["mapr-mysql"] = { "enabled" : True }
-    HIVE_DATABASE = { "type" : "MYSQL", "create" : True, "name" : "hive_013", "user" : "hive", "password" : MAPR_PASSWD }
-
-    svcs["mapr-hive-client"] = { "enabled" : True, "version" : "0.13" }
-    svcs["mapr-hiveserver2"] = { "enabled" : True, "version" : "0.13" }
-    svcs["mapr-metastore"] = { "enabled" : True, "database" : HIVE_DATABASE, "version" : "0.13" }
-    
-        # Spark
-    svcs["mapr-spark-client"] = { "enabled" : True, "version" : "1.2.1" }
-    svcs["mapr-spark-historyserver"] = { "enabled" : True, "version" : "1.2.1" }
-
-        # Drill
-    svcs["mapr-drill"] = { "enabled" : True, "version" : "1.0.0" }
-
-    return svcs
 
 
 
@@ -467,17 +680,18 @@ checkedArgs = checkArgs (myArgs)
 # argDict = vars(checkedArgs)
 # print json.dumps(argDict,indent=4,sort_keys=True)
 
+# cont = query_yes_no ("Continue with installation ?", "no")
+# if cont != True :
+#     exit (0)
 
-# TBD  Confirm settings with user here before proceeding
 
 # TBD Change design to throw exception if the installer is not found
 driver = MIDriver (checkedArgs.installer_url, checkedArgs.mapr_user, checkedArgs.mapr_password)
 
-
-# TBD Much better error handling ... including dump of the complete
-# cluster configuration is going to be AFTER the provisioning step
+# Simplified logic
 #
 driver.setClusterName (checkedArgs.cluster)
+driver.setEdition (checkedArgs.mapr_edition)
 driver.setSshCredentials (
     getattr(checkedArgs,'ssh_user', None), 
     getattr(checkedArgs,'ssh_key', None), 
@@ -485,22 +699,80 @@ driver.setSshCredentials (
 driver.setPortalCredentials (
     getattr(checkedArgs,'portal_user', None), 
     getattr(checkedArgs,'portal_password', None)) 
+driver.setStageCredentials (
+    getattr(checkedArgs,'stage_user', None), 
+    getattr(checkedArgs,'stage_password', None)) 
 driver.setHosts (checkedArgs.hosts)
 driver.setDisks (checkedArgs.disks)
 
+    # There is certainly a better way to handle this,
+    # but at least this works.
+eco_versions={}
+eco_overrides = getattr(checkedArgs, 'eco_version', None)
+if eco_overrides != None : 
+    for el in eco_overrides :
+        entry = el[0].split ('=')
+        eco_versions[entry[0]] = entry[1]
+
+# print eco_versions
+
 # Set up services ... could be much smarter here 
 #   (especially about the versioning for each service).
-driver.initializeServicesList (checkedArgs.mapr_version)
+#   Problem is that passing "None" in while we're deciding we 
+#   want to load the services should use the default
+#
+driver.initializeCoreServicesList (checkedArgs.mapr_version)
+driver.initializeEcoServicesList ()
 
-# driver.addMapRDBServices ()
-# driver.addSparkServices ()
-# driver.addDrillServices ()
-# driver.addHiveServices ()
+ver = eco_versions.get('hbase')
+if ver != None : 
+    driver.addMapRDBServices (ver)
 
-operationOK = driver.configureClusterDeployment()
+ver = eco_versions.get('hive')
+if ver != None : 
+    driver.addHiveServices (ver)
+
+ver = eco_versions.get('spark')
+if ver != None : 
+    driver.addSparkServices (ver)
+
+# All the ecosystem projects that DO NOT require
+# complex config, we'll just handle here.
+#   TBD : be smarter about the svc list and
+#   walk through everything in eco_versions.
+#
+for svc in { 'pig', 'drill', 'hue', 'oozie' } :
+    ver = eco_versions.get(svc)
+    if ver != None : 
+        driver.addEcoServices (svc, ver)
+
+
+operationOK = driver.initializeClusterConfig()
 if operationOK == True :
-    cont = query_yes_no ("Continue with installation ?", "yes")
-    if cont != True :
-        exit (0)
+    if checkedArgs.quiet == False : 
+        cont = query_yes_no ("Configuration uploaded; continue with CHECKING ?", "yes")
+        if cont != True :
+            exit (0)
+else :
+    print ( "Failed to initialized installer services; aborting" )
+    exit (0)
+
+operationOK = driver.checkClusterConfig()
+if operationOK == True :
+    if checkedArgs.quiet == False : 
+        cont = query_yes_no ("Configuration validated; continue with INSTALL ?", "yes")
+        if cont != True :
+            exit (0)
+else :
+    print ( "Failed to validate configuration; aborting" )
+    exit (0)
 
 operationOK = driver.doInstall()
+if operationOK == False :
+    print ( "Failed to complete cluster installation; aborting" )
+    exit (0)
+
+if checkedArgs.quiet == False : 
+    print ( "" )
+    driver.printSuccessUrl()
+    driver.printMCS()
