@@ -54,7 +54,7 @@ function unmount_unused() {
 #
 find_mapr_disks() {
     disks=""
-    for d in `fdisk -l 2>/dev/null | grep -e "^Disk .* bytes.*$" | awk '{print $2}' `
+    for d in `fdisk -l 2>/dev/null | grep -e "^Disk .* bytes.*$" | awk '{print $2}' | sort `
     do
         dev=${d%:}
 
@@ -75,15 +75,26 @@ find_mapr_disks() {
         disks="$disks $dev"
     done
 
+		# Azure ALWAYS includes an ephemeral disk device, even if persistent
+		# storage is provisioned.  The disk usually shows up as /dev/sdb.
+		# That is VERY BAD for MapR, since restarting the node will
+		# then always result in storage pool corruption.   For that reason, 
+		# we'll eliminate /dev/sdb from our list in Azure (as determined 
+		# by the presense of the Windows Azure Agent)
+		#	TBD : be smarter about which device to remove
+	if [ -f /etc/init.d/waagent ] ; then
+		pdisks=$(echo $disks | sed -e 's|/dev/sdb||' -e 's/^[[:space:]]*//')
+		[ -n "${pdisks:-}" ] && disks="$pdisks" 
+	fi
+
     MAPR_DISKS="$disks"
     export MAPR_DISKS
 }
 
 unmount_unused /mnt/resource		# location of Azure ephemeral mount
-exit 0
 
-
-# Extra work if we want to test ... which we usually DO NOT NEED TO DO
+# Extra work if we want to test or we want to simply auto-deployment
+# with deploy-mapr-cluster wrapper. 
 #
 find_mapr_disks
 echo "MAPR_DISKS=$MAPR_DISKS"
@@ -92,3 +103,5 @@ for d in $MAPR_DISKS
 do
 	echo $d >> /tmp/MapR.disks
 done
+
+exit 0
