@@ -127,7 +127,7 @@ class MIDriver:
                     auth = (self.mapr_user, self.mapr_password),
                     headers = self.headers,
                     verify = False)
-            except ConnectionError :
+            except requests.ConnectionError :
                 errcnt += 1
             else :
                 return r
@@ -558,7 +558,9 @@ def gatherArgs () :
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
     parser.add_argument("-q","--quiet", default=False, action="store_true",
-        help="Execute silently, without prompting user.")
+        help="Execute silently, without any status output.")
+    parser.add_argument("-y","--yes", default=False, action="store_true",
+        help="Execute without prompting user (status messages will still be printed).")
     parser.add_argument("--cluster", default="MyCluster",
         help="Cluster name")
     parser.add_argument("--mapr-version", default="4.1.0",
@@ -573,8 +575,10 @@ def gatherArgs () :
         help="URI for MapR installer service")
     parser.add_argument("--ssh-user", default="ec2-user",
         help="ssh user for system access")
-    parser.add_argument("--ssh-keyfile", default="~/.ssh/id_launch",
+    parser.add_argument("--ssh-keyfile",
         help="ssh private key file")
+    parser.add_argument("--ssh-password",
+        help="password for ssh admin user (if no key file is given)")
     parser.add_argument("--portal-user",
         help="Registered user for mapr.com portal *** UNSUPPORTED *** ")
     parser.add_argument("--portal-password",
@@ -749,7 +753,7 @@ for svc in { 'pig', 'drill', 'hue', 'oozie' } :
 
 operationOK = driver.initializeClusterConfig()
 if operationOK == True :
-    if checkedArgs.quiet == False : 
+    if checkedArgs.yes == False : 
         cont = query_yes_no ("Configuration uploaded; continue with CHECKING ?", "yes")
         if cont != True :
             exit (0)
@@ -759,7 +763,7 @@ else :
 
 operationOK = driver.checkClusterConfig()
 if operationOK == True :
-    if checkedArgs.quiet == False : 
+    if checkedArgs.yes == False : 
         cont = query_yes_no ("Configuration validated; continue with INSTALL ?", "yes")
         if cont != True :
             exit (0)
