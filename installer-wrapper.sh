@@ -37,8 +37,29 @@ sh $BINDIR/gen-cluster-hosts.sh ${1:-$CLUSTER_HOSTNAME_BASE} ${2:-3} ${3:-} ${4:
 
 sh $BINDIR/prepare-disks.sh
 
-#	sh $BINDIR/prepare-node.sh
+# At this point, we only need to configure the installer service
+# and launch the process on the one node.
 
-#	sh $BINDIR/deploy-mapr-ami.sh
+# Simple test ... are we node 0 ?
+[ "$HOSTNAME" != "${CLUSTER_HOSTNAME_BASE}0" ] && exit 0
+
+export MAPR_CLUSTER=AZtest
+[ -f /tmp/mkclustername ] && MAPR_CLUSTER=`cat /tmp/mkclustername` 
+
+export MAPR_PASSWD=MapRAZ
+sh $BINDIR/deploy-installer.sh
+
+	# Invoke installer
+	#	By default, it will go to https://localhost:9443 ... which is fine
+	#	ssh-user/ssh-password has to match what is in the template
+chmod a+x $BINDIR/deploy-mapr-cluster.py
+echo $BINDIR/deploy-mapr-cluster.py -y \
+	--ssh-user azadmin \
+	--ssh-password MapRAzur3 \
+	--on M5 -cluster $MAPR_CLUSTER \
+	--hosts-file /tmp/maprhosts \
+	--disks-file /tmp/MapR.disks \
+	--mapr-password $MAPR_PASSWD \
+	--mapr-edition M5 
 
 exit 0
