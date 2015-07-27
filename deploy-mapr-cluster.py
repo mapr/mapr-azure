@@ -500,7 +500,7 @@ class MIDriver:
             print ("    https://"+h+":8443") 
 
     def printSuccessUrl(self) :
-        print ("MapR Installer Service available at "+installer_url+"/#/complete") 
+        print ("MapR Installer Service available at "+self.installer_url+"/#/complete") 
 
 # Variable we should be grabbing based on customer input or deployment infrastructure
 #    To Be Done
