@@ -71,6 +71,11 @@ function main() {
 
 }
 
+set -x
+
 main $@
 exitCode=$?
 
+set +x
+
+exit $exitCode

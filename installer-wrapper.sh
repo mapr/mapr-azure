@@ -47,7 +47,8 @@ export MAPR_CLUSTER=AZtest
 [ -f /tmp/mkclustername ] && MAPR_CLUSTER=`cat /tmp/mkclustername` 
 
 export MAPR_PASSWD=MapRAZ
-sh $BINDIR/deploy-installer.sh
+chmod a+x $BINDIR/deploy-installer.sh
+$BINDIR/deploy-installer.sh
 
 	# Invoke installer
 	#	By default, it will go to https://localhost:9443 ... which is fine
