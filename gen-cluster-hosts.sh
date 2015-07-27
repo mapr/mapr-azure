@@ -7,6 +7,11 @@ LOG=/tmp/gen-cluster-hosts.log
 # Expect the template to pass in the hostname base and cluster size.
 # The IP_PREFIX and FIRST_IP should match the template ... or pass them in
 # as arguments.
+#
+# NOTE: the CH_HOSTS_FILE is used by multiple other scripts as
+# part of the complete cluster deployment
+#
+
 
 CLUSTER_HOSTNAME_BASE=${1:-}
 CLUSTER_SIZE=${2:-}
