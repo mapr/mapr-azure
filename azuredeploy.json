@@ -275,7 +275,9 @@
                         "[concat(variables('scriptsUri'), '/prepare-disks.sh')]",
                         "[concat(variables('scriptsUri'), '/prepare-node.sh')]",
                         "[concat(variables('scriptsUri'), '/deploy-mapr-ami.sh')]",
-                        "[concat(variables('scriptsUri'), '/azure-wrapper.sh')]"
+                        "[concat(variables('scriptsUri'), '/deploy-mapr-cluster.py')]",
+                        "[concat(variables('scriptsUri'), '/azure-wrapper.sh')]",
+                        "[concat(variables('scriptsUri'), '/installer-wrapper.sh')]"
                     ],
                     "commandToExecute": "[concat('sh azure-wrapper.sh ', variables('vmBasename'), ' ', parameters('clusterSize'))]"
                 }
