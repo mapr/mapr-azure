@@ -13,6 +13,14 @@
             "defaultValue": 3,
             "type": "int"
         },
+        "clusterEdition": {
+            "defaultValue": "M3",
+            "type": "string",
+            "allowedValues": ["M3", "M5", "M7"],
+            "metadata": {
+                 "description": "MapR License Edition {Community, Enterprise, or Enterprise Database}"
+            }
+        },
         "adminUserName": {
             "defaultValue": "azadmin",
             "type": "string"
@@ -274,6 +282,7 @@
                         "[concat(variables('scriptsUri'), '/gen-cluster-hosts.sh')]",
                         "[concat(variables('scriptsUri'), '/prepare-disks.sh')]",
                         "[concat(variables('scriptsUri'), '/prepare-node.sh')]",
+                        "[concat(variables('scriptsUri'), '/deploy-installer.sh')]",
                         "[concat(variables('scriptsUri'), '/deploy-mapr-ami.sh')]",
                         "[concat(variables('scriptsUri'), '/deploy-mapr-cluster.py')]",
                         "[concat(variables('scriptsUri'), '/azure-wrapper.sh')]",
