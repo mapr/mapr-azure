@@ -33,7 +33,7 @@ BINDIR=`dirname $THIS`
 HOSTNAME=`hostname`
 CLUSTER_HOSTNAME_BASE="${HOSTNAME%node*}node"
 
-sh $BINDIR/gen-cluster-hosts.sh ${1:-$CLUSTER_HOSTNAME_BASE} ${2:-3} ${3:-} ${4:-}
+sh $BINDIR/gen-cluster-hosts.sh ${1:-$CLUSTER_HOSTNAME_BASE} ${2:-3} 
 
 sh $BINDIR/prepare-disks.sh
 
@@ -60,6 +60,6 @@ echo $BINDIR/deploy-mapr-cluster.py -y \
 	--hosts-file /tmp/maprhosts \
 	--disks-file /tmp/MapR.disks \
 	--mapr-password $MAPR_PASSWD \
-	--mapr-edition M5 
+	--mapr-edition ${3:-M3} 
 
 exit 0
