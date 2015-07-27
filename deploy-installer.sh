@@ -12,6 +12,25 @@ MAPR_USER=${MAPR_USER:-mapr}
 # MAPR_PASSWD=${MAPR_PASSWD:-${INSTANCE_ID}}
 MAPR_PASSWD=${MAPR_PASSWD:-MapRAZ}
 
+# For CentOS and RedHat 6, the epel repository specification
+# often references a mirrorlist of supporting hosts.  Unfortunately,
+# this list often produces an error :
+#	Error: Cannot retrieve repository metadata (repomd.xml) for 
+#	repository: epel. Please verify its path and try again
+#
+# Resetting it to reference the baseurl directly seems to solve the problem
+# 
+function reset_epel() {
+	epel_def=/etc/yum.repos.d/epel.repo
+	[ ! -f $epel_def ] && return
+
+		# TO BE DONE
+		#	Be much smarter here ... make sure sed has desired effect
+	sed -i 's/^mirrorlist=/#mirrorlist=/g' $epel_def
+	sed -i 's/^#baseurl=/baseurl=/g'       $epel_def
+	yum-config-manager -enable epel		    
+}
+
 function main() {
 	echo "$0 script started at "`date`   | tee -a $LOG
 	echo "    with args: $@"             | tee -a $LOG
@@ -23,6 +42,8 @@ function main() {
 		echo "Failed to access mapr-setup.sh from $INSTALLER_SETUP_URI" | tee -a $LOG
 		exit 1
 	fi
+
+	reset_epel
 
 		# mapr-setup.sh uses different env variable for password.
 	export MAPR_PASSWORD=$MAPR_PASSWD
@@ -37,13 +58,6 @@ function main() {
 		# (necessary for python script to drive the installer)
 	/opt/mapr/installer/build/python/bin/pip install requests
 	
-	if [ -n "${MAPR_PASSWD}" ] ; then
-		passwd $MAPR_USER << passwdEOF
-$MAPR_PASSWD
-$MAPR_PASSWD
-passwdEOF
-fi
-
 # Once the installer has been successfully installed, you can 
 # use the python script to talk with it
 #
