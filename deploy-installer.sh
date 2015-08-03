@@ -1,5 +1,8 @@
 #!/bin/bash
 
+THIS=`readlink -f $0`
+BINDIR=`dirname $THIS`
+
 LOG=/tmp/deploy-installer.log
 
 INSTALLER_SETUP_URI=http://package.mapr.com/releases/installer/mapr-setup.sh
@@ -41,6 +44,11 @@ function main() {
 	if [ $? -ne 0 ] ; then
 		echo "Failed to access mapr-setup.sh from $INSTALLER_SETUP_URI" | tee -a $LOG
 		exit 1
+	fi
+
+		# For debugging, we might have a custom version of mapr-setup.sh
+	if [ -f $BINDIR/mapr-setup.sh ] ; then
+		cp $BINDIR/mapr-setup.sh /tmp
 	fi
 
 	reset_epel
