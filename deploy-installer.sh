@@ -1,5 +1,8 @@
 #!/bin/bash
 
+THIS=`readlink -f $0`
+BINDIR=`dirname $THIS`
+
 LOG=/tmp/deploy-installer.log
 
 INSTALLER_SETUP_URI=http://package.mapr.com/releases/installer/mapr-setup.sh
@@ -43,7 +46,15 @@ function main() {
 		exit 1
 	fi
 
+		# For debugging, we might have a custom version of mapr-setup.sh
+	if [ -f $BINDIR/mapr-setup.sh ] ; then
+		cp $BINDIR/mapr-setup.sh /tmp
+	fi
+
 	reset_epel
+
+		# We need to disable the requiretty constraint on sudo
+	sed -i 's/ requiretty/ !requiretty/' /etc/sudoers
 
 		# mapr-setup.sh uses different env variable for password.
 	export MAPR_PASSWORD=$MAPR_PASSWD
@@ -71,6 +82,11 @@ function main() {
 
 }
 
+set -x
+
 main $@
 exitCode=$?
 
+set +x
+
+exit $exitCode

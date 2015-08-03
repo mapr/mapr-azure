@@ -18,13 +18,21 @@
 #
 #
 # USAGE :
-#	$0 [ <basename> ] [ <cluster_size> ] [ <IP_subnet_prefix> ] [ <first_ip> ]
+#	$0 [ <basename> ] [ <cluster_size> ] [ <cluster_edition> ] 
 #
 # EXAMPLE :
-#	$0 testnode 4 10.0.0. 10
+#	$0 testnode 4 M5
 #
 #		The effect would be a 4-node cluster with testnode0, testnode1, 
-#		testnode2, and testnode3 (at 10.10.10.[10-13]).
+#		testnode2, and testnode3 ... licensed for M5
+#
+# CONSTRAINTS
+#	The default IP addresses of the nodes are 10.0.0.x, with x starting at 10.
+#	(See the defaults in gen-cluster-hosts.sh).
+#
+# TBD
+#	Do a better job passing in the network addresses rather than forcing 
+#   the defaults.
 #	
 
 THIS=`readlink -f $0`
@@ -47,7 +55,8 @@ export MAPR_CLUSTER=AZtest
 [ -f /tmp/mkclustername ] && MAPR_CLUSTER=`cat /tmp/mkclustername` 
 
 export MAPR_PASSWD=MapRAZ
-sh $BINDIR/deploy-installer.sh
+chmod a+x $BINDIR/deploy-installer.sh
+$BINDIR/deploy-installer.sh
 
 	# Invoke installer
 	#	By default, it will go to https://localhost:9443 ... which is fine
