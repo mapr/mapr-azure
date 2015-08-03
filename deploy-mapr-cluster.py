@@ -11,7 +11,7 @@
 #   script.  The MIDriver class __could__ be leveraged elsewhere, 
 #   so it has a simple set of defaults:
 #       installer_url = https://localhost:9443
-#       mapr_version : 4.1.0
+#       mapr_version : 5.0.0
 #       mapr_edition = 'M3'
 #       mapr_user = mapr
 #       mapr_password = mapr
@@ -22,7 +22,7 @@
 #   The command line parsing also has some defaults ... which 
 #   help when setting up the driver object in this temp wrapper.
 #       installer_url = https://localhost:9443
-#       mapr_version : 4.1.0
+#       mapr_version : 5.0.0
 #       mapr_edition = 'M3'
 #       mapr_user = mapr
 #       mapr_password = MapR
@@ -56,10 +56,10 @@ class MIDriver:
         self.installer_url = url
         self.mapr_user = user
         self.mapr_password = passwd
-        self.cluster = 'my.cluster.com'
-        self.mapr_version = '4.1.0'
+        self.cluster = 'mapr.minewhat.com'
+        self.mapr_version = '5.0.0'
         self.mapr_edition = 'M3'
-        self.eco_defaults = { 'drill' : '1.0', 'hbase' : '0.98', 'hive' : '0.13', 'pig' : '0.14' }
+        self.eco_defaults = { 'drill' : '1.0', 'hbase' : '0.98', 'hive' : '0.13', 'pig' : '0.14', 'spark' : '1.3.1' }
         self.disks = []
         self.hosts = []
         self.services = {}
@@ -563,7 +563,7 @@ def gatherArgs () :
         help="Execute without prompting user (status messages will still be printed).")
     parser.add_argument("--cluster", default="MyCluster",
         help="Cluster name")
-    parser.add_argument("--mapr-version", default="4.1.0",
+    parser.add_argument("--mapr-version", default="5.0.0",
         help="MapR Software Version")
     parser.add_argument("--mapr-edition", default="M3",
         help="MapR License Edition (M3 {community}, M5 {enterprise}, or M7 {database})")
