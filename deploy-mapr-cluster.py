@@ -558,7 +558,7 @@ def gatherArgs () :
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
     parser.add_argument("-q","--quiet", default=False, action="store_true",
-        help="Execute silently, without any status output.")
+        help="Execute silently, without any status output")
     parser.add_argument("-y","--yes", default=False, action="store_true",
         help="Execute without prompting user (status messages will still be printed).")
     parser.add_argument("--cluster", default="MyCluster",
@@ -578,7 +578,7 @@ def gatherArgs () :
     parser.add_argument("--ssh-keyfile",
         help="ssh private key file")
     parser.add_argument("--ssh-password",
-        help="password for ssh admin user (if no key file is given)")
+        help="password for ssh user (if no key file is given)")
     parser.add_argument("--portal-user",
         help="Registered user for mapr.com portal *** UNSUPPORTED *** ")
     parser.add_argument("--portal-password",
