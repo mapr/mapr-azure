@@ -1,6 +1,6 @@
 ﻿{
     "clusterName": {
-        "value": "MapRazure"
+        "value": "maprazure"
     },
     "clusterSize": {
         "value": 3
@@ -12,7 +12,7 @@
         "value": "azadmin"
     },
     "adminPassword": {
-        "value": ""
+        "value": "MapRAzur3"
     },
     "location": {
         "value": "West US"
