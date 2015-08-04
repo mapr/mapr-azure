@@ -69,6 +69,16 @@ function main() {
 		# (necessary for python script to drive the installer)
 	/opt/mapr/installer/build/python/bin/pip install requests
 	
+		# And wait for the service to come to life (at least 2 minutes)
+	SWAIT=120
+	STIME=5
+	/bin/false
+	while [ $? -ne 0  -a  $SWAIT -gt 0 ] ; do
+		sleep $STIME
+		SWAIT=$[SWAIT - $STIME]
+		curl -f -k -u mapr:$MAPR_PASSWORD https://localhost:9443 &> /dev/null
+	done
+
 # Once the installer has been successfully installed, you can 
 # use the python script to talk with it
 #
