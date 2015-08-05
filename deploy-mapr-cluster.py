@@ -72,9 +72,18 @@ class MIDriver:
         self.stage_password = None
         self.stage_license_url = "http://stage.mapr.com/license"
 
+        self.silent_running = False
+
             # State variables from REST interface
         self.current_state = None
         self.license_uploaded = False
+
+        # Disable status messages during load
+    def setSilentRunning (self, newSilent) :
+        if newSilent == True :
+            silent_running = True
+        elif newSilent == False :
+            silent_running = False
 
         # TBD : Be smarter for setting cluster and edition
         #   check for 0-lenghth string or list.
@@ -360,7 +369,8 @@ class MIDriver:
             # Print out the message config for sanity 
             # (long term, we'll drop this)
         r = self.config_get()
-        print json.dumps(r.json(),indent=4,sort_keys=True)
+        if self.silent_running == False :
+            print json.dumps(r.json(),indent=4,sort_keys=True)
 
             # Handle the case where a CHECK has failed and
             # we're just trying again
@@ -433,14 +443,20 @@ class MIDriver:
             elif ( curState == tgtState.replace('ED', 'ING')) :
                 curTime = datetime.datetime.now()
                 timeHdr = datetime.datetime.strftime (curTime, "%H:%M:%S")
-                print ("%s  : Waiting for %s (current state %s)" % (timeHdr, tgtState, curState) )
+                if self.silent_running == False :
+                    print ("%s  : Waiting for %s (current state %s)" % (timeHdr, tgtState, curState) )
+                    sys.stdout.flush()
+
                 maxWait -= waitInterval
                 time.sleep(waitInterval)
             else :
                 maxWait = 0
                 break
 
-        print ( "Installer state %s" % (curState) )
+        if self.silent_running == False :
+            print ( "Installer state %s" % (curState) )
+            sys.stdout.flush()
+
         self.current_state = curState 
         return (maxWait > 0) 
 
@@ -462,7 +478,8 @@ class MIDriver:
 
             # Print out the cluster's config for sanity 
             # (long term, we'll drop this)
-        self.printCoreServiceLayout()
+        if self.silent_running == True :
+            self.printCoreServiceLayout()
 
         return (True)
 
@@ -492,15 +509,18 @@ class MIDriver:
             svc_hosts = self.get_service_hosts (svc, self.mapr_version)
             print (svc + ": " + ','.join(svc_hosts))
         print ("")
+        sys.stdout.flush()
 
     def printMCS(self) :
         mcs_hosts = self.get_service_hosts ('webserver', self.mapr_version)
         print ("MCS console(s) available at:")
         for h in mcs_hosts :
             print ("    https://"+h+":8443") 
+        sys.stdout.flush()
 
     def printSuccessUrl(self) :
         print ("MapR Installer Service available at "+self.installer_url+"/#/complete") 
+        sys.stdout.flush()
 
 # Variable we should be grabbing based on customer input or deployment infrastructure
 #    To Be Done
@@ -708,6 +728,7 @@ driver.setStageCredentials (
     getattr(checkedArgs,'stage_password', None)) 
 driver.setHosts (checkedArgs.hosts)
 driver.setDisks (checkedArgs.disks)
+driver.setSilentRunning (checkedArgs.quiet)
 
     # There is certainly a better way to handle this,
     # but at least this works.
