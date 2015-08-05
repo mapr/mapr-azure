@@ -54,7 +54,7 @@ function main() {
 	reset_epel
 
 		# We need to disable the requiretty constraint on sudo
-	sed -i 's/ requiretty/ !requiretty/' /etc/sudoers
+#	sed -i 's/ requiretty/ !requiretty/' /etc/sudoers
 
 		# mapr-setup.sh uses different env variable for password.
 	export MAPR_PASSWORD=$MAPR_PASSWD
