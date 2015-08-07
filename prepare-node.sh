@@ -354,6 +354,16 @@ function install_openjdk_rpm() {
 function install_java() {
 	echo Installing JAVA >> $LOG
 
+		# Support a "-f" force option, which removes OpenJDK so
+		# that we can install Oracle JDK
+	if [ "${1:-}" = "-f" ] ; then
+		if which dpkg &> /dev/null; then
+			apt-get remove -y --purge 'openjdk-?-jdk'
+		elif which rpm &> /dev/null; then
+			yum remove -y 'java-1.?.?-openjdk-devel'
+		fi
+	fi
+
 		# If Java is already installed, simply set JAVA_HOME
 		# Should check for Java version, but both 1.6 and 1.7 work.
 		#
@@ -661,7 +671,7 @@ main() {
 	echo "Image creation started at "`date` >> $LOG
 	
 	update_os
-	install_java
+	install_java -f
 
 	add_mapr_user
 	setup_mapr_repo
