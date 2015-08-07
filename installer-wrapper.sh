@@ -45,6 +45,13 @@ sh $BINDIR/gen-cluster-hosts.sh ${1:-$CLUSTER_HOSTNAME_BASE} ${2:-3}
 
 sh $BINDIR/prepare-disks.sh
 
+# These should be passed in via metadata
+export MAPR_PASSWD=MapRAZ
+export MAPR_VERSION=${4:-5.0.0} 
+sh $BINDIR/prepare-node.sh
+
+exit 0
+
 # At this point, we only need to configure the installer service
 # and launch the process on the one node.
 
@@ -54,7 +61,6 @@ sh $BINDIR/prepare-disks.sh
 export MAPR_CLUSTER=AZtest
 [ -f /tmp/mkclustername ] && MAPR_CLUSTER=`cat /tmp/mkclustername` 
 
-export MAPR_PASSWD=MapRAZ
 chmod a+x $BINDIR/deploy-installer.sh
 $BINDIR/deploy-installer.sh
 
