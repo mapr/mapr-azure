@@ -17,7 +17,7 @@
 #       mapr_password = mapr
 #       cluster = 'my.cluster.com'
 #       ecosystem defaults
-#           { 'drill' : '1.0.0', 'hbase' : '0.98', 'hive' : '0.13', 'pig' : '0.14' }
+#           { 'drill' : '1.1', 'hbase' : '0.98', 'pig' : '0.14' }
 #
 #   The command line parsing also has some defaults ... which 
 #   help when setting up the driver object in this temp wrapper.
@@ -59,7 +59,7 @@ class MIDriver:
         self.cluster = 'my.cluster.com'
         self.mapr_version = '4.1.0'
         self.mapr_edition = 'M3'
-        self.eco_defaults = { 'drill' : '1.0', 'hbase' : '0.98', 'hive' : '0.13', 'pig' : '0.14' }
+        self.eco_defaults = { 'drill' : '1.1', 'hbase' : '0.98', 'pig' : '0.14' }
         self.disks = []
         self.hosts = []
         self.services = {}
