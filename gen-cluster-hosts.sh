@@ -29,7 +29,8 @@ echo "" | tee -a /etc/hosts
 for ((h=0; h<CLUSTER_SIZE; h++))
 do
 	hname=${CLUSTER_HOSTNAME_BASE}$h
-	hip=$(dig -t a +search +short $hname)
+#	hip=$(dig -t a +search +short $hname)
+	hip=$(getent hosts $hname | awk '{print $1}')
 
 	if [ -z "$hip" ] ; then
 		hip=${CLUSTER_IP_PREFIX}$[h+$CLUSTER_IP_FIRST]
