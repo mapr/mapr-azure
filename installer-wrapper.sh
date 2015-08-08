@@ -50,8 +50,6 @@ export MAPR_PASSWD=MapRAZ
 export MAPR_VERSION=${4:-5.0.0} 
 sh $BINDIR/prepare-node.sh
 
-exit 0
-
 # At this point, we only need to configure the installer service
 # and launch the process on the one node.
 
