@@ -85,6 +85,9 @@ c() {
 #   NOTE: this target will change FREQUENTLY !!!
 #
 function add_epel_repo() {
+	yum repolist enabled | grep -q ^epel
+	[ $? -eq 0 ] && return
+
     EPEL_RPM=/tmp/epel.rpm
 	if [ `which lsb_release 2> /dev/null` ] ; then
     	CVER=`lsb_release -r | awk '{print $2}'`
@@ -141,7 +144,7 @@ function update_os_deb() {
 function update_os_rpm() {
 	add_epel_repo
 
-	yum makecache
+	yum clean expire-cache
 #	c yum update -y --exclude=module-init-tools
 	c yum install -y nfs-utils iputils libsysfs nc
 	c yum install -y ntp ntpdate
@@ -548,7 +551,7 @@ function setup_mapr_repo_rpm() {
 
 	if [ -f $MAPR_REPO_FILE ] ; then
 		sed -i "s|/releases/v.*/|/releases/v${MAPR_VERSION}/|" $MAPR_REPO_FILE
-		yum makecache
+		yum makecache fast
 		return
 	fi
 
@@ -570,7 +573,7 @@ gpgcheck=0
 protected=1
 EOF_redhat
 
-    yum makecache
+    yum makecache fast
 }
 
 function setup_mapr_repo() {
