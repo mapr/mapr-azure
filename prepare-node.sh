@@ -671,7 +671,7 @@ main() {
 	echo "Image creation started at "`date` >> $LOG
 	
 	update_os
-	install_java -f
+	install_java
 
 	add_mapr_user
 	setup_mapr_repo
