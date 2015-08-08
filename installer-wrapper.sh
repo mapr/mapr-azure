@@ -37,7 +37,8 @@ BINDIR=`dirname $THIS`
 HOSTNAME=`hostname`
 CLUSTER_HOSTNAME_BASE="${HOSTNAME%node*}node"
 
-sh $BINDIR/gen-cluster-hosts.sh ${1:-$CLUSTER_HOSTNAME_BASE} ${2:-}
+#	With DNS working, no need to do this on all hosts
+# sh $BINDIR/gen-cluster-hosts.sh ${1:-$CLUSTER_HOSTNAME_BASE} ${2:-}
 
 sh $BINDIR/prepare-disks.sh
 
@@ -64,6 +65,8 @@ $BINDIR/deploy-installer.sh
 #	the "prepare-node.sh" step.  Simplest check for that
 #	is to look for prepare-mapr-node.log in /home/mapr
 #		* so long as mapr user is created by prepare-node *
+
+sh $BINDIR/gen-cluster-hosts.sh ${1:-$CLUSTER_HOSTNAME_BASE} ${2:-}
 
 
 	# Invoke installer
