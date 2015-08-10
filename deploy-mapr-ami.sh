@@ -1191,7 +1191,8 @@ function setup_mapr_repo_rpm() {
     if [ -f $MAPR_REPO_FILE ] ; then
   		sed -i "s|/releases/v.*/|/releases/v${MAPR_VERSION}/|" $MAPR_REPO_FILE
   		sed -i "s|/releases/ecosystem.*/|/releases/ecosystem${ECO_SUFFIX:-}/|" $MAPR_REPO_FILE
-    	yum makecache fast
+    	yum clean all
+    	yum makecache
 		return 
 	fi
 
@@ -1213,7 +1214,8 @@ gpgcheck=0
 protected=1
 EOF_redhat
 
-	yum makecache fast
+	yum clean all
+	yum makecache
 }
 
 function setup_mapr_repo() {

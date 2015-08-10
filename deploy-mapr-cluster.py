@@ -386,16 +386,11 @@ class MIDriver:
         return rc
 
 
-        # The default service provisioning can leave "gaps";
-        # fix those here.
-        #   1.  node0 always has webserver 
-        #   2.  all nodes have fileserver/nodemanager/nfs
-        #       (makes sense for even 6-10 node clusters in the cloudl)
+        # The default service provisioning can leave "gaps",
+        # nodes that don't have fileserver/nodemanager/nfs on them.
+        # For most small/mid-size clusters, that's not a good plan
+        # For now, make sure that ALL nodes have those services
     def updateClusterConfig(self) :
-            # webserver
-        svc_target="/api/services/"+"mapr-webserver-"+self.mapr_version
-        self.swagger_patch (svc_target, {"hosts" : self.hosts[0]})
-
             # fileserver
         svc_target="/api/services/"+"mapr-fileserver-"+self.mapr_version
         self.swagger_patch (svc_target, {"hosts" : self.hosts})

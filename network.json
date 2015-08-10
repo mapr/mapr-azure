@@ -1,0 +1,97 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json# ",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "clusterSize": {
+            "type": "int"
+        },
+        "clusterName": {
+            "type": "string",
+            "defaultValue": ""
+        },
+         "location": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "publicIPAddressBasename" : {
+            "type" : "string",
+            "defaultValue": ""
+        },
+        "publicIPAddressType" : {
+            "type" : "string",
+            "defaultValue": ""
+        },
+        "networkSpec" : {
+            "type" : "object"
+        },
+        "nicBasename" : {
+            "type" : "string",
+            "defaultValue": ""
+        },
+        "subnet1Ref" : {
+            "type" : "string",
+            "defaultValue": ""            
+        }
+    },
+    "variables": {},
+    "resources": [{
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[parameters('publicIPAddressBasename')]",
+      "location": "[parameters('location')]",
+      "properties": {
+          "publicIPAllocationMethod": "[parameters('publicIPAddressType')]",
+          "dnsSettings": {
+              "domainNameLabel": "[parameters('clusterName')]"
+          }
+      }
+    },
+    {
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[concat(parameters('clusterName'), '-vnet')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[parameters('networkSpec').vnetCIDR]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[parameters('networkSpec').subnet1Name]",
+            "properties" : {
+                "addressPrefix": "[parameters('networkSpec').subnet1CIDR]"
+            }
+          }
+        ]
+      }
+    },
+    {
+        "apiVersion": "2015-05-01-preview",
+        "type": "Microsoft.Network/networkInterfaces",
+        "name": "[concat(parameters('nicBasename'), copyIndex())]",
+        "location": "[parameters('location')]",
+        "dependsOn": [
+            "[concat('Microsoft.Network/virtualNetworks/', parameters('clusterName'), '-vnet')]"
+        ],
+        "copy": {
+            "name": "nicLoop",
+            "count": "[parameters('clusterSize')]"
+        },
+        "properties": {
+            "ipConfigurations": [
+            {
+                "name": "ipconfig1",
+                "properties": {
+                    "privateIPAllocationMethod": "Dynamic",
+                    "subnet": {
+                        "id": "[parameters('subnet1Ref')]"
+                    }
+                }
+            }
+            ]
+        }
+    }
+    ]
+}

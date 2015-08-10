@@ -40,9 +40,6 @@ function main() {
 	echo "    executed by: "`whoami`     | tee -a $LOG
 	echo ""                              | tee -a $LOG
 
-		# Fixe EPEL specification; necessary for older versions of CentOS
-	reset_epel
-
 	curl -o /tmp/mapr-setup.sh $INSTALLER_SETUP_URI
 	if [ $? -ne 0 ] ; then
 		echo "Failed to access mapr-setup.sh from $INSTALLER_SETUP_URI" | tee -a $LOG
@@ -54,11 +51,12 @@ function main() {
 		cp $BINDIR/mapr-setup.sh /tmp
 	fi
 
+	reset_epel
+
 		# We need to disable the requiretty constraint on sudo
 #	sed -i 's/ requiretty/ !requiretty/' /etc/sudoers
 
 		# mapr-setup.sh uses different env variable for password.
-	[ -z "${TERM}" ] && export TERM=ansi
 	export MAPR_PASSWORD=$MAPR_PASSWD
 	chmod a+x /tmp/mapr-setup.sh
 	/tmp/mapr-setup.sh -y install

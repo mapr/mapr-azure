@@ -23,38 +23,42 @@
 #
 murl_top=http://metadata/computeMetadata/v1
 murl_attr="${murl_top}/instance/attributes"
+md_header="Metadata-Flavor: Google"
 
-THIS_FQDN=$(curl -f $murl_top/instance/hostname)
+THIS_FQDN=$(curl -H "$md_header" -f $murl_top/instance/hostname)
 if [ -z "${THIS_FQDN}" ] ; then
 	THIS_HOST=${THIS_FQDN/.*/}
 else
 	THIS_HOST=`/bin/hostname`
 fi
 
+THIS_IMAGE=$(curl -H "$md_header" -f $murl_attr/image)    # name of initial image loaded here
+GCE_PROJECT=$(curl -H "$md_header" -f $murl_top/project/project-id) 
+
+
+# NOTE: We could be smart and look to see if THIS_IMAGE was a 
+# MapR image, and bail on all the rest of this script.
+
 # Definitions for our installation
 #	These should use the same meta-data definitions as the configure-* script
 #
-curl -f $murl_attr &> /dev/null
-if [ $? -eq 0 ] ; then
-	MAPR_HOME=$(curl -f $murl_attr/maprhome)
-	MAPR_UID=$(curl -f $murl_attr/mapruid)
-	MAPR_USER=$(curl -f $murl_attr/mapruser)
-	MAPR_GROUP=$(curl -f $murl_attr/maprgroup)
-	MAPR_PASSWD=$(curl -f $murl_attr/maprpasswd)
-
-	MAPR_VERSION=$(curl -f $murl_attr/maprversion)
-	MAPR_PACKAGES=$(curl -f $murl_attr/maprpackages)
-fi
-
+MAPR_HOME=$(curl -H "$md_header" -f $murl_attr/maprhome)	# software installation directory
 MAPR_HOME=${MAPR_HOME:-"/opt/mapr"}
-MAPR_UID=${MAPR_UID:-"5000"}
+MAPR_UID=$(curl -H "$md_header" -f $murl_attr/mapruid)
+MAPR_UID=${MAPR_UID:-"2000"}
+MAPR_USER=$(curl -H "$md_header" -f $murl_attr/mapruser)
 MAPR_USER=${MAPR_USER:-"mapr"}
+MAPR_GROUP=$(curl -H "$md_header" -f $murl_attr/maprgroup)
 MAPR_GROUP=${MAPR_GROUP:-"mapr"}
+MAPR_PASSWD=$(curl -H "$md_header" -f $murl_attr/maprpasswd)
 MAPR_PASSWD=${MAPR_PASSWD:-"MapR"}
-MAPR_VERSION=${MAPR_VERSION:-"5.0.0"}
 
+MAPR_VERSION=$(curl -H "$md_header" -f $murl_attr/maprversion)
+MAPR_VERSION=${MAPR_VERSION:-"4.1.0"}
+MAPR_PACKAGES=$(curl -H "$md_header" -f $murl_attr/maprpackages)
 MAPR_PACKAGES=${MAPR_PACKAGES:-"core,fileserver"}
 MAPR_PACKAGES=${MAPR_PACKAGES//:/,}
+
 
 LOG=/tmp/prepare-mapr-node.log
 OUT=/tmp/prepare-mapr-node.out
@@ -85,9 +89,6 @@ c() {
 #   NOTE: this target will change FREQUENTLY !!!
 #
 function add_epel_repo() {
-	yum repolist enabled | grep -q ^epel
-	[ $? -eq 0 ] && return
-
     EPEL_RPM=/tmp/epel.rpm
 	if [ `which lsb_release 2> /dev/null` ] ; then
     	CVER=`lsb_release -r | awk '{print $2}'`
@@ -144,7 +145,7 @@ function update_os_deb() {
 function update_os_rpm() {
 	add_epel_repo
 
-	yum clean expire-cache
+	yum makecache
 #	c yum update -y --exclude=module-init-tools
 	c yum install -y nfs-utils iputils libsysfs nc
 	c yum install -y ntp ntpdate
@@ -316,8 +317,7 @@ function install_openjdk_deb() {
 function install_oraclejdk_rpm() {
     echo "Installing Oracle JDK (for rpm distros)" >> $LOG
 
-#	JDK_RPM="http://download.oracle.com/otn-pub/java/jdk/7u75-b13/jdk-7u75-linux-x64.rpm"
-	JDK_RPM="http://download.oracle.com/otn-pub/java/jdk/8u51-b16/jdk-8u51-linux-x64.rpm"
+	JDK_RPM="http://download.oracle.com/otn-pub/java/jdk/7u75-b13/jdk-7u75-linux-x64.rpm"
 
 	$(cd /tmp; curl -f -L -C - -b "oraclelicense=accept-securebackup-cookie" -O $JDK_RPM)
 
@@ -356,16 +356,6 @@ function install_openjdk_rpm() {
 # This has GOT TO SUCCEED ... otherwise the node is useless for MapR
 function install_java() {
 	echo Installing JAVA >> $LOG
-
-		# Support a "-f" force option, which removes OpenJDK so
-		# that we can install Oracle JDK
-	if [ "${1:-}" = "-f" ] ; then
-		if which dpkg &> /dev/null; then
-			apt-get remove -y --purge 'openjdk-?-jdk'
-		elif which rpm &> /dev/null; then
-			yum remove -y 'java-1.?.?-openjdk-devel'
-		fi
-	fi
 
 		# If Java is already installed, simply set JAVA_HOME
 		# Should check for Java version, but both 1.6 and 1.7 work.
@@ -551,7 +541,7 @@ function setup_mapr_repo_rpm() {
 
 	if [ -f $MAPR_REPO_FILE ] ; then
 		sed -i "s|/releases/v.*/|/releases/v${MAPR_VERSION}/|" $MAPR_REPO_FILE
-		yum makecache fast
+		yum makecache
 		return
 	fi
 
@@ -573,7 +563,7 @@ gpgcheck=0
 protected=1
 EOF_redhat
 
-    yum makecache fast
+    yum makecache
 }
 
 function setup_mapr_repo() {

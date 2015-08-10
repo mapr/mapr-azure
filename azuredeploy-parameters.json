@@ -18,6 +18,6 @@
         "value": "West US"
     },
     "vmSize": {
-        "value": "Standard_D4"
+        "value": "Standard_DS14"
     }
 }
