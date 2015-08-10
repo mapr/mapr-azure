@@ -21,6 +21,14 @@
                  "description": "MapR License Edition {Community, Enterprise, or Enterprise Database}"
             }
         },
+        "maprVersion": {
+            "defaultValue": "5.0.0",
+            "type": "string",
+            "allowedValues": ["4.1.0", "5.0.0"],
+            "metadata": {
+                 "description": "MapR Software Version"
+            }
+        },
         "adminUserName": {
             "defaultValue": "azadmin",
             "type": "string"
