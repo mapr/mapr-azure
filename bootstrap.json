@@ -8,34 +8,22 @@
         "clusterName": {
             "type": "string"
         },
+        "clusterEdition": {
+            "type": "string",
+        },
+        "maprVersion": {
+            "type": "string",
+        },
         "scriptsUri": {
             "type": "string"
         },
-        "adminUsername": {
+        "location": {
             "type": "string"
-        },
-        "adminPassword": {
-            "type": "string"
-        },
-        "imagePublisher": {
-            "type": "string"
-        },
-        "imageOffer": {
-            "type": "string"
-        },
-        "imageSKU": {
-            "type": "string"
-        },
-        "storageAccountBasename": {
-            "type": "string"
-        },
-         "location": {
-            "type": "string"
-        },
-        "nicBasename": {
-            "type": "string"
-        }        
+        }
     },
+    "variables": {
+        "vmBasename": "[concat(parameters('clusterName'),'node')]"
+	},
     "resources": [
     {
         "name": "[concat(variables('vmBasename'),copyIndex(),'/extension')]",
@@ -55,14 +43,14 @@
             "typeHandlerVersion": "1.2",
             "settings": {
                 "fileUris": [
-                    "[concat(variables('scriptsUri'), '/gen-cluster-hosts.sh')]",
-                    "[concat(variables('scriptsUri'), '/prepare-disks.sh')]",
-                    "[concat(variables('scriptsUri'), '/prepare-node.sh')]",
-                    "[concat(variables('scriptsUri'), '/deploy-installer.sh')]",
-                    "[concat(variables('scriptsUri'), '/deploy-mapr-ami.sh')]",
-                    "[concat(variables('scriptsUri'), '/deploy-mapr-cluster.py')]",
-                    "[concat(variables('scriptsUri'), '/azure-wrapper.sh')]",
-                    "[concat(variables('scriptsUri'), '/installer-wrapper.sh')]"
+                    "[concat(parameters('scriptsUri'), 'gen-cluster-hosts.sh')]",
+                    "[concat(parameters('scriptsUri'), 'prepare-disks.sh')]",
+                    "[concat(parameters('scriptsUri'), 'prepare-node.sh')]",
+                    "[concat(parameters('scriptsUri'), 'deploy-installer.sh')]",
+                    "[concat(parameters('scriptsUri'), 'deploy-mapr-ami.sh')]",
+                    "[concat(parameters('scriptsUri'), 'deploy-mapr-cluster.py')]",
+                    "[concat(parameters('scriptsUri'), 'azure-wrapper.sh')]",
+                    "[concat(parameters('scriptsUri'), 'installer-wrapper.sh')]"
                 ],
                 "commandToExecute": "[concat('sh installer-wrapper.sh ', variables('vmBasename'), ' ', parameters('clusterSize'), ' ', parameters('clusterEdition'), ' ', parameters('maprVersion'))]"
             }
