@@ -48,12 +48,13 @@ function main() {
 
 		# For debugging, we might have a custom version of mapr-setup.sh
 	if [ -f $BINDIR/mapr-setup.sh ] ; then
+		cp /tmp/mapr-setup.sh /tmp/mapr-setup-released.sh
 		cp $BINDIR/mapr-setup.sh /tmp
 	fi
 
 	reset_epel
 
-		# We need to disable the requiretty constraint on sudo
+		# We may need to disable the requiretty constraint on sudo
 #	sed -i 's/ requiretty/ !requiretty/' /etc/sudoers
 
 		# mapr-setup.sh uses different env variable for password.
