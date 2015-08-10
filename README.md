@@ -17,6 +17,8 @@ template itself (4 1TB volumes per node).
 The Control System interface to the cluster will be available at
 	https://[cluster_node_0]:8443
 
+For more details on the template itself and customizing it to your
+needs, please reference DEVELOPERS.txt in this repository.
 <h2>
 Command Line Usage
 </h2>
