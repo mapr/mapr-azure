@@ -29,27 +29,6 @@
             "defaultValue": "MapRAzur3",
             "type": "securestring"
         },
-        "imagePublisher": {
-            "type": "string",
-            "defaultValue": "OpenLogic",
-            "metadata": {
-                 "description": "Image Publisher"
-            }
-        },
-        "imageOffer": {
-            "type": "string",
-            "defaultValue": "CentOS",
-            "metadata": {
-                "description": "Image Offer"
-            }
-        },
-        "imageSKU": {
-            "type": "string",
-            "defaultValue": "6.5",
-            "metadata": {
-                "description": "Image SKU"
-            }
-        },
         "location": {
             "type": "string",
             "defaultValue" : "West US",
@@ -61,26 +40,22 @@
         "vmSize": {
             "type": "string",
             "defaultValue": "Standard_D12",
-            "allowedValues": ["Standard_D2", "Standard_D3", "Standard_D4", "Standard_D11", "Standard_D12", "Standard_D13", "Standard_D14", "Standard_DS3", "Standard_DS4", "Standard_DS11", "Standard_DS12", "Standard_DS13", "Standard_DS14"]
+            "allowedValues": ["Standard_D3", "Standard_D4", "Standard_D12", "Standard_D13", "Standard_D14", "Standard_DS3", "Standard_DS4", "Standard_DS12", "Standard_DS13", "Standard_DS14"]
         }
     },
     "variables": {
-        "scriptsUri" : "https://raw.githubusercontent.com/mapr/mapr-azure/master",
-        "vmBasename": "[concat(parameters('clusterName'),'node')]",
+        "imagePublisher" : "OpenLogic",
+        "imageOffer" : "CentOS",
+        "imageSKU" : "7.0",        
+        "scriptsUri" : "https://rgmaprarm.blob.core.windows.net/arm/",
         "nicBasename": "[concat(parameters('clusterName'),'-nic')]",
         "publicIPAddressBasename": "[concat(parameters('clusterName'),'-publicIP')]",
         "storageAccountBasename": "[concat(parameters('clusterName'),'sa')]",
         "networkSpec" : {
             "vnetCIDR":"10.0.0.0/16",
             "subnet1Name": "Privnet-1",
-            "subnet1CIDR" : "10.0.0.0/24",
-            "subnet1Prefix" : "10.0.0.",
-            "subnet2Name": "Privnet-2",
-            "subnet2CIDR" : "10.0.1.0/24",
-            "subnet2Prefix" : "10.0.1.",
-            "nodeAddressStart" : 10
+            "subnet1CIDR" : "10.0.0.0/24"
         },
-        "vmStorageAccountContainerName": "vhds",
         "publicIPAddressType" : "Dynamic",
         "storageAccountType": "Standard_LRS",
         "vnetID":"[resourceId('Microsoft.Network/virtualNetworks',concat(parameters('clusterName'), '-vnet'))]",
@@ -88,209 +63,122 @@
     },
     "resources": [
     {
-      "type": "Microsoft.Storage/storageAccounts",
-      "name": "[concat(variables('storageAccountBasename'), copyIndex())]",
-      "apiVersion": "2015-05-01-preview",
-      "location": "[parameters('location')]",
-      "copy": {
-                "name": "storageAccountLoop",
-                "count": "[parameters('clusterSize')]"
-       },
-       "properties": {
-           "accountType": "[variables('storageAccountType')]"
-       }
+        "name": "network",
+        "type": "Microsoft.Resources/deployments",
+        "apiVersion": "2015-01-01",
+        "properties": {
+            "mode": "Incremental",
+            "templateLink": {
+                "uri": "[concat(variables('scriptsUri'), 'network.json')]",
+                "contentVersion": "1.0.0.0"
+            },
+            "parameters": {
+                "clusterSize" : {
+                    "value": "[parameters('clusterSize')]"
+                },
+                "clusterName" : {
+                    "value": "[parameters('clusterName')]"
+                },
+                "location" : {
+                    "value": "[parameters('location')]"
+                },
+                "publicIPAddressBasename" : {
+                    "value" : "[variables('publicIPAddressBasename')]"
+                },
+                "publicIPAddressType": {
+                    "value": "[variables('publicIPAddressType')]"
+                },
+                "networkSpec" : {
+                    "value" : "[variables('networkSpec')]"
+                },
+                "nicBasename" : {
+                    "value" : "[variables('nicBasename')]"
+                },
+                "subnet1Ref" : {
+                    "value" : "[variables('subnet1Ref')]"
+                }
+            }
+        }
     },
     {
-      "apiVersion": "2015-05-01-preview",
-      "type": "Microsoft.Network/publicIPAddresses",
-      "name": "[concat(variables('publicIPAddressBasename'), copyIndex())]",
-      "location": "[parameters('location')]",
-      "copy": {
-          "name": "publicIPLoop",
-          "count": "[parameters('clusterSize')]"
-      },
-      "properties": {
-          "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
-          "dnsSettings": {
-              "domainNameLabel": "[concat(parameters('clusterName'),'-node',copyIndex())]"
-          }
-      }
-    },
-    {
-      "apiVersion": "2015-05-01-preview",
-      "type": "Microsoft.Network/virtualNetworks",
-      "name": "[concat(parameters('clusterName'), '-vnet')]",
-      "location": "[parameters('location')]",
-      "properties": {
-        "addressSpace": {
-          "addressPrefixes": [
-            "[variables('networkSpec').vnetCIDR]"
-          ]
-        },
-        "subnets": [
-          {
-            "name": "[variables('networkSpec').subnet1Name]",
-            "properties" : {
-                "addressPrefix": "[variables('networkSpec').subnet1CIDR]"
+        "name": "vms",
+        "type": "Microsoft.Resources/deployments",
+        "apiVersion": "2015-01-01",
+        "dependsOn": [
+            "['Microsoft.Resources/deployments/network']"
+        ],        
+        "properties": {
+            "mode": "Incremental",
+            "templateLink": {
+                "uri": "[concat(variables('scriptsUri'), parameters('vmSize'), '.json')]",
+                "contentVersion": "1.0.0.0"
+            },
+            "parameters": {
+                "clusterSize" : {
+                    "value": "[parameters('clusterSize')]"
+                },
+                "clusterName" : {
+                    "value": "[parameters('clusterName')]"
+                },
+                "scriptsUri" : {
+                    "value": "[variables('scriptsUri')]"
+                },
+                "adminUsername" : {
+                    "value": "[parameters('adminUsername')]"
+                },
+                "adminPassword" : {
+                    "value": "[parameters('adminPassword')]"
+                },
+                "imagePublisher" : {
+                    "value": "[variables('imagePublisher')]"
+                },
+                "imageOffer" : {
+                    "value": "[variables('imageOffer')]"
+                },
+                "imageSKU" : {
+                    "value": "[variables('imageSKU')]"
+                },
+                "location" : {
+                    "value": "[parameters('location')]"
+                },
+                "storageAccountBasename" : {
+                    "value" : "[variables('storageAccountBasename')]"
+                },
+                "nicBasename" : {
+                    "value" : "[variables('nicBasename')]"
+                }
             }
-          },
-          {
-            "name": "[variables('networkSpec').subnet2Name]",
-            "properties" : {
-                "addressPrefix": "[variables('networkSpec').subnet2CIDR]"
-            }
-          }
-        ]
-      }
-    },
+        }
+    },    
     {
         "apiVersion": "2015-05-01-preview",
         "type": "Microsoft.Network/networkInterfaces",
-        "name": "[concat(variables('nicBasename'), copyIndex())]",
+        "name": "[concat(variables('nicBasename'), '0')]",
         "location": "[parameters('location')]",
         "dependsOn": [
-            "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressBasename'), copyIndex())]",
-            "[concat('Microsoft.Network/virtualNetworks/', parameters('clusterName'), '-vnet')]"
+            "['Microsoft.Resources/deployments/network']"
         ],
-        "copy": {
-            "name": "nicLoop",
-            "count": "[parameters('clusterSize')]"
-        },
         "properties": {
             "ipConfigurations": [
             {
                 "name": "ipconfig1",
                 "properties": {
-                    "privateIPAllocationMethod": "Static",
-                    "privateIPAddress": "[concat(variables('networkSpec').subnet1Prefix, copyIndex(variables('networkSpec').nodeAddressStart))]",
                     "subnet": {
                         "id": "[variables('subnet1Ref')]"
                     },
                     "publicIPAddress": {
-                        "id": "[resourceId('Microsoft.Network/publicIPAddresses',concat(variables('publicIPAddressBasename'),copyIndex()))]"
+                        "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressBasename'))]"
                     }
                 }
             }
             ]
         }
-    },
-    {
-        "apiVersion": "2015-05-01-preview",
-        "type": "Microsoft.Compute/virtualMachines",
-        "name": "[concat(variables('vmBasename'), copyIndex())]",
-        "location": "[parameters('location')]",
-        "copy" : {
-            "name" : "nicLoop",
-            "count": "[parameters('clusterSize')]"
-            
-        },
-        "dependsOn": [
-            "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountBasename'), copyIndex())]",
-            "[concat('Microsoft.Network/networkInterfaces/', variables('nicBasename'), copyIndex())]"
-        ],
-        "properties": {
-            "hardwareProfile": {
-                "vmSize": "[parameters('vmSize')]"
-            },
-            "osProfile": {
-                "computername": "[concat(variables('vmBasename'),copyIndex())]",
-                "adminUsername": "[parameters('adminUsername')]",
-                "adminPassword": "[parameters('adminPassword')]"
-            },
-            "storageProfile": {
-              "imageReference": {
-                "publisher": "[parameters('imagePublisher')]",
-                "offer": "[parameters('imageOffer')]",
-                "sku" : "[parameters('imageSKU')]",
-                "version":"latest"
-              },
-              "osDisk" : {
-                "name": "osdisk1",
-                "vhd": {
-                   "uri": "[concat('http://',variables('storageAccountBasename'),copyIndex(),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/','osdisk1spec.vhd')]"
-                },
-                "caching": "ReadWrite",
-                "createOption": "FromImage"
-              },
-              "dataDisks": [
-                {
-                    "name": "datadisk0",
-                    "diskSizeGB": "1023",
-                    "lun": 0,
-                    "vhd": {
-                        "Uri": "[concat('http://', variables('storageAccountBasename'), copyIndex(), '.blob.core.windows.net/vhds0/', 'datadisk0.vhd')]"
-                    },
-                    "createOption": "Empty"
-                },
-                {
-                    "name": "datadisk1",
-                    "diskSizeGB": "1023",
-                    "lun": 1,
-                    "vhd": {
-                        "Uri": "[concat('http://', variables('storageAccountBasename'), copyIndex(), '.blob.core.windows.net/vhds1/', 'datadisk1.vhd')]"
-                    },
-                    "createOption": "Empty"
-                },
-                {
-                    "name": "datadisk2",
-                    "diskSizeGB": "1023",
-                    "lun": 2,
-                    "vhd": {
-                        "Uri": "[concat('http://', variables('storageAccountBasename'), copyIndex(), '.blob.core.windows.net/vhds2/', 'datadisk2.vhd')]"
-                    },
-                    "createOption": "Empty"
-                },
-                {
-                    "name": "datadisk3",
-                    "diskSizeGB": "1023",
-                    "lun": 3,
-                    "vhd": {
-                        "Uri": "[concat('http://', variables('storageAccountBasename'), copyIndex(), '.blob.core.windows.net/vhds3/', 'datadisk3.vhd')]"
-                    },
-                    "createOption": "Empty"
-                }
-              ]
-            },
-            "networkProfile": {
-                "networkInterfaces" : [
-                {
-                    "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('nicBasename'), copyIndex()))]"
-                }
-                ]
-            }
+    }
+    ],
+    "outputs": {
+        "vms": {
+            "type": "string",
+            "value": "[concat(variables('scriptsUri'), parameters('vmSize'), '.json')]"
         }
-    },
-    {
-            "type": "Microsoft.Compute/virtualMachines/extensions",
-            "name": "[concat(variables('vmBasename'),copyIndex(),'/preparenode')]",
-            "apiVersion": "2015-05-01-preview",
-            "location": "[parameters('location')]",
-            "copy" : {
-                "name" : "nicLoop",
-                "count": "[parameters('clusterSize')]"
-            
-            },
-            "dependsOn": [
-                "[concat('Microsoft.Compute/virtualMachines/', variables('vmBasename'), copyIndex())]"
-            ],
-            "properties": {
-                "publisher": "Microsoft.OSTCExtensions",
-                "type": "CustomScriptForLinux",
-                "typeHandlerVersion": "1.2",
-                "settings": {
-                    "fileUris": [
-                        "[concat(variables('scriptsUri'), '/gen-cluster-hosts.sh')]",
-                        "[concat(variables('scriptsUri'), '/prepare-disks.sh')]",
-                        "[concat(variables('scriptsUri'), '/prepare-node.sh')]",
-                        "[concat(variables('scriptsUri'), '/deploy-installer.sh')]",
-                        "[concat(variables('scriptsUri'), '/deploy-mapr-ami.sh')]",
-                        "[concat(variables('scriptsUri'), '/deploy-mapr-cluster.py')]",
-                        "[concat(variables('scriptsUri'), '/azure-wrapper.sh')]",
-                        "[concat(variables('scriptsUri'), '/installer-wrapper.sh')]"
-                    ],
-                    "commandToExecute": "[concat('sh azure-wrapper.sh ', variables('vmBasename'), ' ', parameters('clusterSize'))]"
-                }
-            }
-        }
-    ]
+    }    
 }

@@ -3,7 +3,6 @@
 LOG=/tmp/gen-cluster-hosts.log
 
 # VERY SIMPLE Script to generate the /etc/hosts file for our cluster
-#	IF AND ONLY IF the hostnames don't resolve via dig
 #
 # Expect the template to pass in the hostname base and cluster size.
 # The IP_PREFIX and FIRST_IP should match the template ... or pass them in
@@ -28,13 +27,10 @@ truncate --size 0 $CF_HOSTS_FILE
 echo "" | tee -a /etc/hosts
 for ((h=0; h<CLUSTER_SIZE; h++))
 do
+	hip=${CLUSTER_IP_PREFIX}$[h+$CLUSTER_IP_FIRST]
 	hname=${CLUSTER_HOSTNAME_BASE}$h
-	hip=$(dig -t a +search +short $hname)
 
-	if [ -z "$hip" ] ; then
-		hip=${CLUSTER_IP_PREFIX}$[h+$CLUSTER_IP_FIRST]
-		echo "$hip $hname" | tee -a /etc/hosts
-	fi
+	echo "$hip $hname" | tee -a /etc/hosts
 
 	echo "$hname MAPRNODE${h}" >> $CF_HOSTS_FILE
 
