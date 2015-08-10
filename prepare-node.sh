@@ -374,7 +374,7 @@ function install_java() {
 
 			# We could be linked to the JRE or JDK version; we want
 			# the REAL jdk, so look for javac in the directory we choose
-		jcmd=`python -c "import os; print os.path.realpath('$javacmd')"`
+		jcmd=`readlink -f $javacmd`
 		if [ -x ${jcmd%/jre/bin/java}/bin/javac ] ; then
 			JAVA_HOME=${jcmd%/jre/bin/java}
 		elif [ -x ${jcmd%/java}/javac ] ; then
