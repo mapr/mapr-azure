@@ -34,9 +34,6 @@
             "name" : "extLoop",
             "count": "[parameters('clusterSize')]"
         },
-        "dependsOn": [
-            "[concat('Microsoft.Compute/virtualMachines/', variables('vmBasename'), copyIndex())]"
-        ],
         "properties": {
             "publisher": "Microsoft.OSTCExtensions",
             "type": "CustomScriptForLinux",
