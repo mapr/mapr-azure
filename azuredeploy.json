@@ -181,6 +181,41 @@
             }
             ]
         }
+    },
+    {
+        "name": "extensions",
+        "type": "Microsoft.Resources/deployments",
+        "apiVersion": "2015-01-01",
+        "dependsOn": [
+            "['Microsoft.Resources/deployments/vms']"
+        ],        
+        "properties": {
+            "mode": "Incremental",
+            "templateLink": {
+                "uri": "[concat(variables('scriptsUri'), 'bootstrap.json')]",
+                "contentVersion": "1.0.0.0"
+            },
+            "parameters": {
+                "clusterSize" : {
+                    "value": "[parameters('clusterSize')]"
+                },
+                "clusterName" : {
+                    "value": "[parameters('clusterName')]"
+                },
+                "clusterEdition" : {
+                    "value": "[parameters('clusterEdition')]"
+                },
+                "maprVersion" : {
+                    "value": "[parameters('maprVersion')]"
+                },
+                "scriptsUri" : {
+                    "value": "[variables('scriptsUri')]"
+                },
+                "location" : {
+                    "value": "[parameters('location')]"
+                }
+            }
+        }
     }
     ],
     "outputs": {
