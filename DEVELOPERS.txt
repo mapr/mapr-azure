@@ -1,0 +1,30 @@
+
+BACKGROUND
+	See www.mapr.com for details on the MapR Distribution for
+	Hadoop and it's key differentiating features.
+
+
+PROVISIONING MODEL
+	Two different models are supported.  The default (captured
+	in azuredeploy.json) loads the MapR Installer Service on 
+	node0 of the requested infratructure and then executes
+	an install on all provisioned nodes  using that serice.
+	In this model, users can specify the cluster size along
+	with the MapR version and license edition.
+
+	Alternatively, you can use az_scripted.json that invokes
+	a simple set of shell scripts to deploy a MapR M3 Edition
+	cluster.   
+
+
+
+TESTING
+	The template makes heavy use of the github repository itself
+	for accessing scripts and files during the deployment.  See
+	the "scriptsUri refereence in azuredeploy.json.   To test
+	your modifications, you'll most likely want to clone the
+	repository and update the scriptsUri link to point to a 
+	location over which you have complete control.
+
+
+
