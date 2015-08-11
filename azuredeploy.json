@@ -55,7 +55,7 @@
         "imagePublisher" : "OpenLogic",
         "imageOffer" : "CentOS",
         "imageSKU" : "7.0",        
-        "scriptsUri" : "https://rgmaprarm.blob.core.windows.net/arm/",
+        "scriptsUri" : "https://raw.githubusercontent.com/mapr/mapr-azure/master/",
         "nicBasename": "[concat(parameters('clusterName'),'-nic')]",
         "publicIPAddressBasename": "[concat(parameters('clusterName'),'-publicIP')]",
         "storageAccountBasename": "[concat(parameters('clusterName'),'sa')]",
@@ -157,7 +157,7 @@
                 }
             }
         }
-    },    
+    },
     {
         "apiVersion": "2015-05-01-preview",
         "type": "Microsoft.Network/networkInterfaces",
