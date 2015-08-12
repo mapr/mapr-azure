@@ -335,8 +335,8 @@ install_mapr_packages() {
 			[ ${CORE_FIRST:-n} = 'y' ] && apt-get install -y --force-yes mapr-core
 			apt-get install -y --force-yes $MAPR_TO_INSTALL
 		elif which rpm &> /dev/null; then
-			[ ${CORE_FIRST:-n} = 'y' ] && yum install -y --disablerepo=* --enablerepo=MapR* mapr-core
-			yum install -y --disablerepo=* --enablerepo=MapR* $MAPR_TO_INSTALL
+			[ ${CORE_FIRST:-n} = 'y' ] && yum install -y mapr-core
+			yum install -y $MAPR_TO_INSTALL
 		fi
 	fi
 
