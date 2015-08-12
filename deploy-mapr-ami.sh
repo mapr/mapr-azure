@@ -448,7 +448,7 @@ provision_mapr_disks() {
 	find_mapr_disks
 	if [ -n "$MAPR_DISKS" ] ; then
 		for d in $MAPR_DISKS ; do echo $d ; done >> $diskfile
-		$MAPR_HOME/server/disksetup -M -F $diskfile
+		$MAPR_HOME/server/disksetup -W 6 -F $diskfile
 
 			# Archive the diskfile so we can reuse later
 		cp $diskfile $MAPR_USER_DIR
