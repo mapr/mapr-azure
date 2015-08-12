@@ -1,0 +1,11 @@
+# MapR configuration file to be used by automated
+# provisioning script deploy-mapr-ami.sh.
+#	NOTE: make sure NODE_PREFIX matches the setting below !!!
+#
+# Simple M3 cluster ... 3 zk nodes + arbitrary number of data nodes
+#
+MAPRNODE0:zookeeper,cldb,fileserver,nodemanager,nfs,webserver,hbase
+MAPRNODE1:zookeeper,fileserver,nodemanager,hbase
+MAPRNODE2:zookeeper,resourcemanager,historyserver,fileserver,nodemanager,hbase
+MAPRNODEn:fileserver,nodemanager,hbase
+
