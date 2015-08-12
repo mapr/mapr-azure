@@ -40,8 +40,9 @@
             "typeHandlerVersion": "1.2",
             "settings": {
                 "fileUris": [
-                    "[concat(parameters('scriptsUri'), 'M3.lst",
-                    "[concat(parameters('scriptsUri'), '3node.lst",
+                    "[concat(parameters('scriptsUri'), 'M3.lst')]",
+                    "[concat(parameters('scriptsUri'), '3node.lst')]",
+                    "[concat(parameters('scriptsUri'), '6node.lst')]",
                     "[concat(parameters('scriptsUri'), 'gen-cluster-hosts.sh')]",
                     "[concat(parameters('scriptsUri'), 'prepare-disks.sh')]",
                     "[concat(parameters('scriptsUri'), 'prepare-node.sh')]",
