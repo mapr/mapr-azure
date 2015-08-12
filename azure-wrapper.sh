@@ -47,8 +47,9 @@ export MAPR_PASSWD=MapRAZ
 export MAPR_VERSION=${4:-5.0.0} 
 sh $BINDIR/prepare-node.sh
 
-echo "${3:-M3} > /tmp/maprlicensetype	# must match deploy-mapr-ami.sh
+echo "${3:-M3}" > /tmp/maprlicensetype	# must match deploy-mapr-ami.sh
 CFG_DIR=/home/mapr/cfg					# must match deploy-mapr-ami.sh
+mkdir -p $CFG_DIR
 cp -p $BINDIR/*.lst $CFG_DIR
 chown -R mapr:mapr $CFG_DIR
 
