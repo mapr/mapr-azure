@@ -47,12 +47,20 @@ export MAPR_PASSWD=MapRAZ
 export MAPR_VERSION=${4:-5.0.0} 
 sh $BINDIR/prepare-node.sh
 
-echo "${3:-M3}" > /tmp/maprlicensetype	# must match deploy-mapr-ami.sh
-CFG_DIR=/home/mapr/cfg					# must match deploy-mapr-ami.sh
+# deploy-mapr-ami.sh expects these files in /home/mapr; copy them there
+echo "${3:-M3}" > /tmp/maprlicensetype
+CFG_DIR=/home/mapr/cfg
 mkdir -p $CFG_DIR
 cp -p $BINDIR/*.lst $CFG_DIR
 chown -R mapr:mapr $CFG_DIR
 
-sh $BINDIR/deploy-mapr-ami.sh
+# and now deploy our software
+#
+chmod a+x $BINDIR/deploy-mapr-ami.sh
+$BINDIR/deploy-mapr-ami.sh
+
+if [ $? -eq 0 ] ; then
+	sh $BINDIR/deploy-mapr-data-services.sh drill
+fi
 
 exit 0
