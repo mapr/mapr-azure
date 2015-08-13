@@ -20,7 +20,7 @@
 #	/home/mapr/sbin/deploy-mapr-ami.sh (this script)
 #	/home/mapr/cfg/onenode.parm	(default 1-node cluster config)
 #	/home/mapr/cfg/<N>node.lst  (config files for different cluster sizes)
-#		NOTE : for now, we survive without the cfg files
+#		NOTE : For Azure Template, we gather config files from github
 #
 # Input (TBD):
 #	/tmp/mkclustername : Optional name for the cluster
