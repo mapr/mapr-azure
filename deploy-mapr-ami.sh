@@ -183,7 +183,7 @@ function generate_mapr_param_file() {
 
 		# SPECIAL CASE FOR AZURE
 		#	Generate simple M3 cluster file
-	if [ -z "${cfg_file:-}"  -o  ! -r "{cfg_file:-/tmp}" ] ; then
+	if [ -z "${cfg_file:-}"  -o  ! -r "${cfg_file}" ] ; then
 		echo "Error: No config found for $CLUSTER_SIZE nodes" | tee -a $LOG
 		echo "Info: Defaulting to baseline M3 config" | tee -a $LOG
 
@@ -198,9 +198,9 @@ MAPRNODEn:fileserver,nodemanager,hbase
 EOF_m3config
 	fi
 
-		# CF_HOSTS_FILE is of the form : [ FQDN | IP ]  ${NODEPREFIX}<IDX>
+		# CF_HOSTS_FILE is of the form : [ HOST | IP ]  ${NODEPREFIX}<IDX>
 		# Parse correctly with this logic
-	MY_ID=`grep -w $THIS_FQDN $CF_HOSTS_FILE | awk '{print $2}'`
+	MY_ID=`grep -w $THIS_HOST $CF_HOSTS_FILE | awk '{print $2}'`
 	if [ -z "$MY_ID" ] ; then
 		MY_IP=`hostname -I`
 		MY_ID=`grep -w $MY_IP $CF_HOSTS_FILE | awk '{print $2}'`
@@ -210,7 +210,7 @@ EOF_m3config
 		# If we don't find this host in CF_HOSTS_FILE,
 		# assume we're just a "worker" node 
 	if [ -z "${MY_ID:-}" ] ; then
-		echo "WARNING: Neither host $THIS_FQDN nor IP $MY_IP found in $CF_HOSTS_FILE" | tee -a $LOG
+		echo "WARNING: Neither host $THIS_HOST nor IP $MY_IP found in $CF_HOSTS_FILE" | tee -a $LOG
 		MY_ID="${NODE_PREFIX}n"
 	fi
 
@@ -230,14 +230,7 @@ EOF_m3config
 
 	fidx=0
 	while [ $fidx -lt $CLUSTER_SIZE ] ; do
-		NODE_IP=`grep " ${NODE_PREFIX}${fidx}" $CF_HOSTS_FILE | awk '{print $1}'`
-
-			# Properly handle both IP addresses and hostnames
-		if [ ${NODE_IP%%.*} -gt 0 ] ; then   
-			NODE_HOSTNAME=`host $NODE_IP | awk '{print $NF}'`
-		else                                 
-			NODE_HOSTNAME=$NODE_IP
-		fi
+		NODE_HOSTNAME=`grep " ${NODE_PREFIX}${fidx}" $CF_HOSTS_FILE | awk '{print $1}'`
 		NODE_HOSTNAME=${NODE_HOSTNAME%%.*}
 		cfg_entry=`grep "^${NODE_PREFIX}${fidx}" $cfg_file`
 		NODE_PACKAGES=${cfg_entry#*:}
