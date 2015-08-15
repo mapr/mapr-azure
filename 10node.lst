@@ -1,0 +1,23 @@
+# MapR configuration file to be used by automated
+# provisioning script deploy-mapr-ami.sh.
+#	NOTE: make sure NODE_PREFIX matches the setting below !!!
+#
+# Multi master mega cluster ... 20 nodes with distributed cldb/zk/rm 
+#	+ arbitrary number of data nodes
+#
+# no nodemanager service on any management nodes
+#	resource manager isolated from zookeeper
+#		deploy second RM on NODE4 once community resolve RM UI issues
+#
+MAPRNODE0:zookeeper,cldb,fileserver,nfs,hbase,webserver
+MAPRNODE1:zookeeper,cldb,fileserver,nfs,hbase
+MAPRNODE2:zookeeper,cldb,fileserver,nfs,hbase
+MAPRNODE3:resourcemanager,fileserver,nfs,hbase
+MAPRNODE4:fileserver,nfs,hbase
+MAPRNODE5:historyserver,fileserver,nodemanager,nfs,hbase
+MAPRNODE6:fileserver,nodemanager,nfs,hbase
+MAPRNODE7:fileserver,nodemanager,nfs,hbase
+MAPRNODE8:fileserver,nodemanager,nfs,hbase
+MAPRNODE9:fileserver,nodemanager,nfs,hbase
+MAPRNODEn:fileserver,nodemanager,nfs,hbase
+
