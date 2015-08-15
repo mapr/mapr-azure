@@ -51,18 +51,22 @@ fi
 SUDO="su ${USER}"
 [ $USER = $THIS_USER ] && SUDO=""		# no need for su in this case
 
+# We'll use the user's home directory a lot (and '~' may not evaluate
+# correctly in the following commands) , so let's set an env variable
+USER_DIR=`eval "echo ~${USER}"`
+
 if [ -n "${SUDO}" ] ; then
-	$SUDO -c "ssh-keygen -q -t rsa -P '' -f ~${USER}/${KEYFILE}"
-	$SUDO -c "cat << sscEOF >> ~${USER}/.ssh/config 
+	$SUDO -c "ssh-keygen -q -t rsa -P '' -f ${USER_DIR}/${KEYFILE}"
+	$SUDO -c "cat << sscEOF >> ${USER_DIR}/.ssh/config 
 IdentityFile  ~/${KEYFILE} 
 sscEOF"
-	$SUDO -c "chmod 600 ~${USER}/.ssh/config"
+	$SUDO -c "chmod 600 ${USER_DIR}/.ssh/config"
 else
-	ssh-keygen -q -t rsa -P '' -f ~${USER}/${KEYFILE}
-	cat << scEOF >> ~/.ssh/config
+	ssh-keygen -q -t rsa -P '' -f ${USER_DIR}/${KEYFILE}
+	cat << scEOF >> ${USER_DIR}/.ssh/config
 IdentityFile  ~/${KEYFILE}
 scEOF
-	chmod 600 ~/.ssh/config
+	chmod 600 ${USER_DIR}/.ssh/config
 fi
 
 [ $? -ne 0 ] && exit 3
@@ -75,12 +79,12 @@ MY_SSH_OPTS="-o StrictHostKeyChecking=no -o PasswordAuthentication=yes"
 for h in `awk '{print $1}' $CF_HOSTS_FILE` ; do
 	if [ -n "${SUDO}" ] ; then
 		$SUDO -c "SSHPASS=$PASSWD sshpass -e ssh-copy-id $MY_SSH_OPTS ${USER}@${h}"
-		$SUDO -c "scp ~${USER}/${KEYFILE}* ${USER}@${h}:.ssh"
-		$SUDO -c "scp ~${USER}/.ssh/config  ${USER}@${h}:.ssh"
+		$SUDO -c "scp ${USER_DIR}/${KEYFILE}* ${USER}@${h}:.ssh"
+		$SUDO -c "scp ${USER_DIR}/.ssh/config  ${USER}@${h}:.ssh"
 	else
-		SSHPASS=$PASSWD sshpass -e ssh-copy-id $MY_SSH_OPTS ${USER}@${h}
-		scp ~${USER}/${KEYFILE}* ${USER}@${h}:.ssh
-		scp ~${USER}/.ssh/config  ${USER}@${h}:.ssh
+		SSHPASS=$PASSWD sshpass -e ssh-copy-id $MY_SSH_OPTS ${h}
+		scp ${USER_DIR}/${KEYFILE}* ${h}:.ssh
+		scp ${USER_DIR}/.ssh/config  ${h}:.ssh
 	fi
 
 done
