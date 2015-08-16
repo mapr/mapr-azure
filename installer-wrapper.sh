@@ -37,15 +37,14 @@ BINDIR=`dirname $THIS`
 HOSTNAME=`hostname`
 CLUSTER_HOSTNAME_BASE="${HOSTNAME%node*}node"
 
-#	With DNS working, no need to do this on all hosts
-# sh $BINDIR/gen-cluster-hosts.sh ${1:-$CLUSTER_HOSTNAME_BASE} ${2:-}
-
 sh $BINDIR/prepare-disks.sh
 
 # These should be passed in via metadata
 export MAPR_PASSWD=MapRAZ
 export MAPR_VERSION=${4:-5.0.0} 
 sh $BINDIR/prepare-node.sh
+
+sh $BINDIR/gen-cluster-hosts.sh ${1:-$CLUSTER_HOSTNAME_BASE} ${2:-}
 
 # At this point, we only need to configure the installer service
 # and launch the process on the one node.
@@ -64,9 +63,7 @@ $BINDIR/deploy-installer.sh
 #	Confirm that all nodes are alive and have completed
 #	the "prepare-node.sh" step.  Simplest check for that
 #	is to look for prepare-mapr-node.log in /home/mapr
-#		* so long as mapr user is created by prepare-node *
-
-sh $BINDIR/gen-cluster-hosts.sh ${1:-$CLUSTER_HOSTNAME_BASE} ${2:-}
+#		*** so long as mapr user is created by prepare-node ***
 
 
 	# Invoke installer
