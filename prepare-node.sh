@@ -132,6 +132,7 @@ function update_os_deb() {
 	c apt-get install -y sysstat
 	apt-get install -y dnsutils less lsof
 	apt-get install -y clustershell pdsh realpath
+	apt-get install -y sshpass
 
 	[ -f /etc/debian_version ] && touch /etc/init.d/.legacy-bootordering
 }
@@ -153,6 +154,7 @@ function update_os_rpm() {
 	c yum install -y sysstat
 	yum install -y bind-utils less lsof
 	yum install -y clustershell pdsh
+	yum install -y sshpass
 }
 
 # Make sure that NTP service is sync'ed and running
