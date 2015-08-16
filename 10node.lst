@@ -13,7 +13,7 @@ MAPRNODE0:zookeeper,cldb,fileserver,nfs,hbase,webserver
 MAPRNODE1:zookeeper,cldb,fileserver,nfs,hbase
 MAPRNODE2:zookeeper,cldb,fileserver,nfs,hbase
 MAPRNODE3:resourcemanager,fileserver,nfs,hbase
-MAPRNODE4:fileserver,nfs,hbase
+MAPRNODE4:resourcemanager,fileserver,nfs,hbase
 MAPRNODE5:historyserver,fileserver,nodemanager,nfs,hbase
 MAPRNODE6:fileserver,nodemanager,nfs,hbase
 MAPRNODE7:fileserver,nodemanager,nfs,hbase
