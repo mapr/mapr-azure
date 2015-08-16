@@ -291,11 +291,9 @@ EOF_m3config
 
 	if [ -n "${LIC_TYPE:-}" ] ; then
 		lfile="$MAPR_USER_DIR/licenses/MaprMarketplace${LIC_TYPE}License.txt"
-		if [ ! -r $lfile ] ; then
-			curl -f http://maprtech-emr.s3.amazonaws.com/licenses/MaprMarketplaceM3License.txt -o /tmp/MaprMarketplace${LIC_TYPE}License.txt
-			lfile="/tmp/MaprMarketplace${LIC_TYPE}License.txt"
+		if [ -r $lfile ] ; then
+			echo "MAPR_LICENSE_FILE=$lfile"  >> $OFILE
 		fi
-		echo "MAPR_LICENSE_FILE=$lfile"  >> $OFILE
 	fi
 }
 
