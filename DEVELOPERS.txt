@@ -18,13 +18,38 @@ PROVISIONING MODEL
 
 
 
+TOOLS
+	The Azure command line toolkit is available from Microsoft
+	  http://azure.microsoft.com/en-us/documentation/articles/xplat-cli/#configure
+
+	The command-line tool has two modes : “resource” and “service” .   
+	Most of our work is via “resource” mode, so you may need to do
+		azure config mode arm          # asm for “service” mode
+
+	Log in to your azure account with
+		azure login
+
+	
 TESTING
 	The template makes heavy use of the github repository itself
 	for accessing scripts and files during the deployment.  See
-	the "scriptsUri refereence in azuredeploy.json.   To test
+	the "scriptsUri" refereence in template json docs (
+	azuredeploy.json and az_scripted.json).   To test
 	your modifications, you'll most likely want to clone the
 	repository and update the scriptsUri link to point to a 
 	location over which you have complete control.
 
+	To create a cluster, first create a fully defined set of 
+	parameters for you cluster.   This is done by copying 
+	azuredeploy-parameters.json to a writable file (say, ap.json) 
+	and editing it for the values you wish (cluster size, instance
+	type, etc.).
+
+	Those parameters are used as input to one of the deployment 
+	templates with the command :
+		azure group create <RGname> <AzureRegion> \
+			-f [az_scripted.json | azuredeploy.json ] \
+			-e ap.json \
+			-d <DeploymentName>
 
 
