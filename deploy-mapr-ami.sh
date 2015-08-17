@@ -493,6 +493,38 @@ configure_mapr_services() {
 	fi
 }
 
+# Hadoop 2.7 and beyond have simpler mechanisms for enabling
+# cloud object stores.   We'll make sure the libraries are in
+# the proper location here.
+#	NOTE: For now, we'll make a copy (since there's lots of cross-talk
+#	between these files).
+#
+enable_object_stores() {
+	HADOOP_HOME="$(ls -d ${MAPR_HOME}/hadoop/hadoop-2*)"
+	[ -z "${HADOOP_HOME:-}" ] && return
+
+	COMMON_LIB=$HADOOP_HOME/share/hadoop/common/lib
+	TOOLS_LIB=$HADOOP_HOME/share/hadoop/tools/lib
+
+		# WASB store
+	for f in $TOOLS_LIB/*azure*.jar ; do
+		jar=`basename $f`
+		if [ ! -r $COMMON_LIB/$jar ] ; then
+			cp -p $f $COMMON_LIB
+		fi
+	done
+
+		# S3 store
+	for f in $TOOLS_LIB/*aws*.jar ; do
+		jar=`basename $f`
+		if [ ! -r $COMMON_LIB/$jar ] ; then
+			cp -p $f $COMMON_LIB
+		fi
+	done
+
+}
+
+configure_mapr_services() {
 # Simple script to add useful parameters to the 
 # Hadoop *.xml configuration files.   This should be done
 # as a separate Python or Perl script to better handle
@@ -1408,6 +1440,7 @@ function main()
 		$AUTOSTARTARG $SECARG $VMARG
 
 	configure_mapr_services
+	enable_object_stores
 	update_site_config
 	update_hive_config
 
