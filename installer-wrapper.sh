@@ -64,6 +64,28 @@ $BINDIR/deploy-installer.sh
 #	the "prepare-node.sh" step.  Simplest check for that
 #	is to look for prepare-mapr-node.log in /home/mapr
 #		*** so long as mapr user is created by prepare-node ***
+#
+# For now, kludge this to just make sure the names resolve
+CF_HOSTS_FILE=/tmp/maprhosts 
+cp -p $CF_HOSTS_FILE ${CF_HOSTS_FILE}.orig
+truncate --size 0 $CF_HOSTS_FILE
+for h in `awk '{print $1}' ${CF_HOSTS_FILE}.orig` ; do
+	hip=$(getent hosts $hname | awk '{print $1}')
+
+	if [ -n "$hip" ] ; then
+		echo $h >> $CF_HOSTS_FILE
+	fi
+done
+
+diff -q ${CF_HOSTS_FILE} ${CF_HOSTS_FILE}.orig &> /dev/null
+if [ $? -ne 0 ] ; then
+	echo ""
+	echo "WARNING: DNS resolution failed for"
+	diff -bw -u ${CF_HOSTS_FILE} ${CF_HOSTS_FILE}.orig | grep -E "^\-[A-z]"
+	echo ""
+	echo "Those nodes will be exempted from the deployment"
+	echo ""
+fi
 
 
 	# Invoke installer
