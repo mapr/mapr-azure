@@ -486,7 +486,7 @@ class MIDriver:
     def doInstall(self) :
         payload = { 'state' : 'INSTALLING' } 
         self.process_patch (payload)
-        rc = self.waitForProcessState( 'INSTALLED' , 3600, 20)
+        rc = self.waitForProcessState( 'INSTALLED' , 5400, 20)
         if rc != True :
             return (rc)
 
