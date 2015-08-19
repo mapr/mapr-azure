@@ -69,19 +69,21 @@ $BINDIR/deploy-installer.sh
 CF_HOSTS_FILE=/tmp/maprhosts 
 cp -p $CF_HOSTS_FILE ${CF_HOSTS_FILE}.orig
 truncate --size 0 $CF_HOSTS_FILE
+excluded_hosts=""
 for h in `awk '{print $1}' ${CF_HOSTS_FILE}.orig` ; do
-	hip=$(getent hosts $hname | awk '{print $1}')
+	hip=$(getent hosts $h | awk '{print $1}')
 
 	if [ -n "$hip" ] ; then
 		echo $h >> $CF_HOSTS_FILE
+	else
+		excluded_hosts="$excluded_hosts $h"
 	fi
 done
 
-diff -q ${CF_HOSTS_FILE} ${CF_HOSTS_FILE}.orig &> /dev/null
-if [ $? -ne 0 ] ; then
+if [ -n "${excluded_hosts}" ] ; then
 	echo ""
-	echo "WARNING: DNS resolution failed for"
-	diff -bw -u ${CF_HOSTS_FILE} ${CF_HOSTS_FILE}.orig | grep -E "^\-[A-z]"
+	echo "WARNING: DNS resolution failed for "
+	echo "  $excluded_hosts"
 	echo ""
 	echo "Those nodes will be exempted from the deployment"
 	echo ""
