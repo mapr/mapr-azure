@@ -3,7 +3,9 @@
 # Wrapper script invocation of MapR installer service and auto-installation
 # of MapR cluster.
 #
-# Assumptions: all other scripts downloaded to same directory.
+# Assumptions: 
+#	- script run as root
+#	- all other scripts downloaded to same directory.
 #
 # WARNING: The file upload process from the Azure templates CLEARS the
 #	execute bit on all files.   For that reason, we must to "sh <script>"
@@ -34,6 +36,11 @@
 THIS=`readlink -f $0`
 BINDIR=`dirname $THIS`
 
+# These admin user settings must match the template
+#	(or be passed in)
+SUDO_USER=azadmin
+SUDO_PASSWD=MapRAzur3
+
 HOSTNAME=`hostname`
 CLUSTER_HOSTNAME_BASE="${HOSTNAME%node*}node"
 
@@ -51,6 +58,16 @@ sh $BINDIR/gen-cluster-hosts.sh ${1:-$CLUSTER_HOSTNAME_BASE} ${2:-}
 
 # Simple test ... are we node 0 ?
 [ "$HOSTNAME" != "${CLUSTER_HOSTNAME_BASE}0" ] && exit 0
+
+# Let's distribute some ssh keys for our known accounts
+#
+sh $BINDIR/gendist-sshkey.sh $SUDO_USER $SUDO_PASSWD id_rsa
+sh $BINDIR/gendist-sshkey.sh mapr $MAPR_PASSWD id_launch
+ssh-keygen -t rsa -P '' -f ~/.ssh/id_rsa
+cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
+chmod 600 ~/.ssh/authorized_keys
+cat ~mapr/.ssh/id_launch.pub >> ~/.ssh/authorized_keys
+
 
 export MAPR_CLUSTER=AZtest
 [ -f /tmp/mkclustername ] && MAPR_CLUSTER=`cat /tmp/mkclustername` 
@@ -95,8 +112,8 @@ fi
 	#	ssh-user/ssh-password has to match what is in the template
 chmod a+x $BINDIR/deploy-mapr-cluster.py
 echo $BINDIR/deploy-mapr-cluster.py -y \
-	--ssh-user azadmin \
-	--ssh-password MapRAzur3 \
+	--ssh-user $SUDO_USER \
+	--ssh-password $SUDO_PASSWD \
 	--cluster $MAPR_CLUSTER \
 	--hosts-file /tmp/maprhosts \
 	--disks-file /tmp/MapR.disks \
@@ -105,8 +122,8 @@ echo $BINDIR/deploy-mapr-cluster.py -y \
 	--mapr-version ${4:-5.0.0} 
 
 $BINDIR/deploy-mapr-cluster.py -y \
-	--ssh-user azadmin \
-	--ssh-password MapRAzur3 \
+	--ssh-user $SUDO_USER \
+	--ssh-password $SUDO_PASSWD \
 	--cluster $MAPR_CLUSTER \
 	--hosts-file /tmp/maprhosts \
 	--disks-file /tmp/MapR.disks \
