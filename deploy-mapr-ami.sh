@@ -524,12 +524,6 @@ enable_object_stores() {
 
 }
 
-configure_mapr_services() {
-# Simple script to add useful parameters to the 
-# Hadoop *.xml configuration files.   This should be done
-# as a separate Python or Perl script to better handle
-# the xml format !!!
-#
 update_site_config() {
 	echo "Updating site configuration files" >> $LOG
 
