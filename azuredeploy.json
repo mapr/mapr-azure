@@ -159,30 +159,6 @@
         }
     },
     {
-        "apiVersion": "2015-05-01-preview",
-        "type": "Microsoft.Network/networkInterfaces",
-        "name": "[concat(variables('nicBasename'), '0')]",
-        "location": "[parameters('location')]",
-        "dependsOn": [
-            "['Microsoft.Resources/deployments/network']"
-        ],
-        "properties": {
-            "ipConfigurations": [
-            {
-                "name": "ipconfig1",
-                "properties": {
-                    "subnet": {
-                        "id": "[variables('subnet1Ref')]"
-                    },
-                    "publicIPAddress": {
-                        "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressBasename'))]"
-                    }
-                }
-            }
-            ]
-        }
-    },
-    {
         "name": "extensions",
         "type": "Microsoft.Resources/deployments",
         "apiVersion": "2015-01-01",
