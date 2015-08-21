@@ -17,7 +17,6 @@ PROVISIONING MODEL
 	cluster.   
 
 
-
 TOOLS
 	The Azure command line toolkit is available from Microsoft
 	  http://azure.microsoft.com/en-us/documentation/articles/xplat-cli/#configure
@@ -33,8 +32,8 @@ TOOLS
 TESTING
 	The template makes heavy use of the github repository itself
 	for accessing scripts and files during the deployment.  See
-	the "scriptsUri" refereence in template json docs (
-	azuredeploy.json and az_scripted.json).   To test
+	the "scriptsUri" refereence in template json docs 
+	(azuredeploy.json and az_scripted.json).   To test
 	your modifications, you'll most likely want to clone the
 	repository and update the scriptsUri link to point to a 
 	location over which you have complete control.
@@ -52,4 +51,14 @@ TESTING
 			-e ap.json \
 			-d <DeploymentName>
 
+
+AZURE RESOURCE NAMESPACE
+	The templates create a series of resources within the specified
+	resource group (vms, network interfaces, public IP addresses, etc).
+	The basename for the resources is the cluster name parameter.
+	Some resources (notably storage accounts and public IP addresses) have 
+	a Global namespace, extending beyond the resource group.   For that 
+	reason, you cannot create two clusters of the same name even in 
+	different resource groups or subscriptions (you'll get a resource 
+	creation error for the storage accounts).
 
