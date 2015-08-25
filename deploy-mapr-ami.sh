@@ -215,7 +215,7 @@ EOF_m3config
 	fi
 
 		# Now the work starts
-	cfg_entry=`grep ^$MY_ID $cfg_file`
+	cfg_entry=`grep -w ^$MY_ID $cfg_file`
 	if [ -z "$cfg_entry" ] ; then
 		cfg_entry=`grep "^${NODE_PREFIX}n" $cfg_file`
 		if [ -z "$cfg_file" ] ; then
@@ -230,9 +230,9 @@ EOF_m3config
 
 	fidx=0
 	while [ $fidx -lt $CLUSTER_SIZE ] ; do
-		NODE_HOSTNAME=`grep " ${NODE_PREFIX}${fidx}" $CF_HOSTS_FILE | awk '{print $1}'`
+		NODE_HOSTNAME=`grep " ${NODE_PREFIX}${fidx}$" $CF_HOSTS_FILE | awk '{print $1}'`
 		NODE_HOSTNAME=${NODE_HOSTNAME%%.*}
-		cfg_entry=`grep "^${NODE_PREFIX}${fidx}" $cfg_file`
+		cfg_entry=`grep -w "^${NODE_PREFIX}${fidx}" $cfg_file`
 		NODE_PACKAGES=${cfg_entry#*:}
 
 		fidx=$[fidx+1]
