@@ -48,6 +48,7 @@
                     "[concat(parameters('scriptsUri'), 'deploy-installer.sh')]",
                     "[concat(parameters('scriptsUri'), 'deploy-mapr-ami.sh')]",
                     "[concat(parameters('scriptsUri'), 'deploy-mapr-cluster.py')]",
+                    "[concat(parameters('scriptsUri'), 'deploy-mapr-data-services.sh')]",
                     "[concat(parameters('scriptsUri'), 'azure-wrapper.sh')]",
                     "[concat(parameters('scriptsUri'), 'installer-wrapper.sh')]"
                 ],
