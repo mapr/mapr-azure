@@ -483,6 +483,12 @@ configure_mapr_services() {
 # give CLDB more threads 
 # sed -i 's/cldb.numthreads=10/cldb.numthreads=40/' $CLDB_CONF_FILE
 
+		# Change mapr-warden initscript to create use "hostname"
+		# instead of "hostname --fqdn".  Since the micro-dns
+		# in the GCE environment does the right thing with
+		# name resolution, it's OK to use short hostnames
+	sed -i 's/ --fqdn//' $MAPR_HOME/initscripts/mapr-warden
+
 		# Fix for bug 11649 ; only seen with Debian/Ubuntu ... but
 		# we'll do it for everyone
 	if [ ${MAPR_VERSION%%.*} -ge 3 ] ; then
