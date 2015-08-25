@@ -275,6 +275,14 @@ function deploy_drill()
 	[ -f $JETS3T_JAR ] && \
 		ln -s $JETS3T_JAR $DRILL_HOME/jars/3rdparty
 
+	TOOLS_LIB=${HADOOP_HOME}/share/hadoop/tools/lib
+	for f in ${TOOLS_LIB}/*aws* ; do
+		jar=`basename $f`
+		if [ ! -r $DRILL_HOME/jars/3rdparty/$jar ] ; then
+			ln -s $f $DRILL_HOME/jars/3rdparty
+		fi
+	done
+
 	$MAPR_HOME/server/configure.sh -R		# force reload of services
 	maprcli node services -name drill-bits -action restart -nodes `cat /opt/mapr/hostname`
 	[ $? -eq 0 ] && sleep 10
