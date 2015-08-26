@@ -117,14 +117,8 @@ function add_epel_repo() {
 }
 
 
-# The "customized" debian distributions often have configuration
-# files that should not be overwritten during the upgrade process.
-# We need the Dpkg::Options arg so that we don't get an error
-# during the upgrad operation that will cause us to bail out
-# right away.
 function update_os_deb() {
 	apt-get update
-#	c apt-get upgrade -y -o Dpkg::Options::="--force-confdef,confold"
 	c apt-get install -y nfs-common iputils-arping libsysfs2
 	c apt-get install -y ntp
 
@@ -137,21 +131,34 @@ function update_os_deb() {
 	[ -f /etc/debian_version ] && touch /etc/init.d/.legacy-bootordering
 }
 
-# For CentOS and Fedora, the GCE environment does not support 
-# plugin modules to be added to the kernel ... so we don't
-# need the module-init-tools package.   Moreover, on several
-# occasions, updating that module cause strange behavior during
-# instance launch.
+# Helper function for YUM install since we often see yum metadata
+# issues in cloud deployments.   Allow 1 failure ... rebuild cache
+# If the actions fails again, exit.
+YUM_FAILURE=0
+function do_yum_install() {
+	if [ $YUM_FAILURE -eq 0 ] ; then
+    	echo "yum install -y $@" >> $LOG
+		yum install -y $@
+		[ $? -eq 0 ] && return
+		yum clean all
+		yum makecache
+		YUM_FAILURE=1
+	fi
+
+	c yum install -y $@
+}
+
 function update_os_rpm() {
 	add_epel_repo
 
 	yum clean expire-cache
-#	c yum update -y --exclude=module-init-tools
-	c yum install -y nfs-utils iputils libsysfs nc
-	c yum install -y ntp ntpdate
+	do_yum_install nfs-utils iputils libsysfs nc
+	do_yum_install ntp ntpdate
 
-	c yum install -y syslinux sdparm
-	c yum install -y sysstat
+	do_yum_install syslinux sdparm
+	do_yum_install sysstat
+
+		# Failure to install these components IS NOT critical
 	yum install -y bind-utils less lsof
 	yum install -y clustershell pdsh
 	yum install -y sshpass
