@@ -743,9 +743,10 @@ configure_mapr_nfs() {
 	fi
 
 		# For RedHat distros, we need to start up NFS services
+		# RedHat 7 no longer has the nfslock service (nor is it necessary)
 	if which rpm &> /dev/null; then
-		/etc/init.d/rpcbind restart
-		/etc/init.d/nfslock restart
+		service rpcbind restart
+		[ -x /etc/init.d/nfslock ] && /etc/init.d/nfslock restart
 	fi
 
 	echo "Mounting ${MAPR_NFS_SERVER}:/mapr to $MAPR_FSMOUNT" >> $LOG
