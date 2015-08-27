@@ -9,11 +9,11 @@
 #	ZK completely isolated from resource manager
 #		deploy second RM on NODE4 once community resolve RM UI issues
 #
-MAPRNODE0:zookeeper,cldb,fileserver,nfs,hbase,webserver
-MAPRNODE1:zookeeper,cldb,fileserver,nfs,hbase
-MAPRNODE2:zookeeper,historyserver,fileserver,nodemanager,nfs,hbase
+MAPRNODE0:zookeeper,cldb,fileserver,nodemanager,nfs,hbase,webserver
+MAPRNODE1:zookeeper,cldb,fileserver,nodemanager,nfs,hbase
+MAPRNODE2:zookeeper,fileserver,nodemanager,nfs,hbase
 MAPRNODE3:resourcemanager,fileserver,nodemanager,nfs,hbase
-MAPRNODE4:fileserver,nodemanager,nfs,hbase
-MAPRNODE5:fileserver,nodemanager,nfs,hbase
+MAPRNODE4:resourcemanager,fileserver,nodemanager,nfs,hbase
+MAPRNODE5:historyserver,fileserver,nodemanager,nfs,hbase,webserver
 MAPRNODEn:fileserver,nodemanager,nfs,hbase
 

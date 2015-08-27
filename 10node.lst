@@ -2,19 +2,19 @@
 # provisioning script deploy-mapr-ami.sh.
 #	NOTE: make sure NODE_PREFIX matches the setting below !!!
 #
-# Multi master mega cluster ... 20 nodes with distributed cldb/zk/rm 
+# Multi master mega cluster ... 10 nodes with distributed cldb/zk/rm 
 #	+ arbitrary number of data nodes
 #
-# no nodemanager service on any management nodes
+# nodemanager on all nodes
 #	resource manager isolated from zookeeper
-#		deploy second RM on NODE4 once community resolve RM UI issues
+#	history server isolated from resource managers
 #
-MAPRNODE0:zookeeper,cldb,fileserver,nfs,hbase,webserver
-MAPRNODE1:zookeeper,cldb,fileserver,nfs,hbase
-MAPRNODE2:zookeeper,cldb,fileserver,nfs,hbase
-MAPRNODE3:resourcemanager,fileserver,nfs,hbase
-MAPRNODE4:resourcemanager,fileserver,nfs,hbase
-MAPRNODE5:historyserver,fileserver,nodemanager,nfs,hbase
+MAPRNODE0:zookeeper,cldb,fileserver,nodemanager,nfs,hbase,webserver
+MAPRNODE1:zookeeper,cldb,fileserver,nodemanager,nfs,hbase
+MAPRNODE2:zookeeper,cldb,fileserver,nodemanager,nfs,hbase
+MAPRNODE3:resourcemanager,fileserver,nodemanager,nfs,hbase
+MAPRNODE4:resourcemanager,fileserver,nodemanager,nfs,hbase
+MAPRNODE5:historyserver,fileserver,nodemanager,nfs,hbase,webserver
 MAPRNODE6:fileserver,nodemanager,nfs,hbase
 MAPRNODE7:fileserver,nodemanager,nfs,hbase
 MAPRNODE8:fileserver,nodemanager,nfs,hbase
