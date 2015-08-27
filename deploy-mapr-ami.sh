@@ -70,7 +70,7 @@ MAPR_METRICS_DEFAULT=metrics
 
 MAPR_BUILD=`cat $MAPR_HOME/MapRBuildVersion 2> /dev/null`
 [ -n "${MAPR_BUILD}" ] && MAPR_VERSION=${MAPR_BUILD%.*.*}
-MAPR_VERSION=${MAPR_VERSION:-4.1.0}
+MAPR_VERSION=${MAPR_VERSION:-5.0.0}
 
 # Derived from above settings ... with reasonable defaults
 MAPR_USER_DIR=`eval "echo ~${MAPR_USER}"`
@@ -477,6 +477,9 @@ configure_mapr_services() {
 	MFS_CONF_FILE=${MAPR_HOME}/conf/mfs.conf
 	WARDEN_CONF_FILE=${MAPR_HOME}/conf/warden.conf
 
+# Configure log exceptions for Warden
+	sed -e 's/^log.retention.exceptions=.*/log.retention.exceptions=mfs.log-\*,mfsinit.log,maprcli-\*.log,disksetup.\*.log,cldb.log,configure.log/' –i $WARDEN_CONF_FILE
+
 # give MFS more memory -- only on slaves, not on masters
 #sed -i 's/service.command.mfs.heapsize.percent=.*$/service.command.mfs.heapsize.percent=35/' $MFS_CONF_FILE
 
@@ -558,6 +561,27 @@ update_site_config() {
 	echo "" | tee -a ${CORE_CONF_FILE}
 	echo '</configuration>' | tee -a ${CORE_CONF_FILE}
 
+	[ ! -f $MAPRED_CONF_FILE ] && return
+
+		# mapred-site changes for smarter calculation of disk constraint
+    sed -i '/^<\/configuration>/d' ${MAPRED_CONF_FILE}
+
+		echo "
+<property>
+  <name>mapreduce.map.disk</name>
+  <value>0.2</value>
+</property>
+
+<property>
+  <name>mapreduce.reduce.disk</name>
+  <value>0.5</value>
+</property>
+" | tee -a ${MAPRED_CONF_FILE}
+
+	echo "" | tee -a ${MAPRED_CONF_FILE}
+	echo '</configuration>' | tee -a ${MAPRED_CONF_FILE}
+
+
 		# yarn-site changes needed for early 4.x releases, where 
 		# yarn.resourcemanager.hostname is not properly recognized
 		# by the web proxying services.   If we have only one
@@ -565,14 +589,14 @@ update_site_config() {
 	[ ! -f $YARN_CONF_FILE ] && return
 
 	num_rms=`echo ${rmnodes//,/ } | wc -w`
-	[ ${num_rms:-0} -ne 1 ] && return
+	[ ${MAPR_VERSION%%.*} -gt 4  -o  ${num_rms:-0} -ne 1 ] && return
 
     sed -i '/^<\/configuration>/d' ${YARN_CONF_FILE}
 
 	echo "
 <property>
-<name>yarn.resourcemanager.hostname</name>
-<value>$rmnodes</value>
+  <name>yarn.resourcemanager.hostname</name>
+  <value>$rmnodes</value>
 </property>" | tee -a ${YARN_CONF_FILE}
 
 	echo "" | tee -a ${YARN_CONF_FILE}
