@@ -135,11 +135,14 @@ function verify_instance_hostname() {
 	SYSCONFIG_NETWORK=/etc/sysconfig/network
 
 	if [ -f $SYSCONFIG_NETWORK ] ; then
-		eval "CFG_`grep ^HOSTNAME= /etc/sysconfig/network`"
-		CUR_HOSTNAME=`hostname`
+		grep -q ^HOSTNAME= $SYSCONFIG_NETWORK
+		if [ $? -eq 0 ] ; then
+			eval "CFG_`grep ^HOSTNAME= $SYSCONFIG_NETWORK`"
+			CUR_HOSTNAME=`hostname`
 
-		if [ "$CFG_HOSTNAME" != "$CUR_HOSTNAME" ] ; then
-			sed -i "s/^HOSTNAME=.*$/HOSTNAME=$CUR_HOSTNAME/" $SYSCONFIG_NETWORK
+			if [ "$CFG_HOSTNAME" != "$CUR_HOSTNAME" ] ; then
+				sed -i "s/^HOSTNAME=.*$/HOSTNAME=$CUR_HOSTNAME/" $SYSCONFIG_NETWORK
+			fi
 		fi
 	fi
 }
@@ -1022,7 +1025,7 @@ function finalize_mapr_cluster()
 	set_maprfs_replication_factor
 
 		# Allow root to manage cluster
-	c maprcli acl edit -type cluster -user root:fc
+	su $MAPR_USER -c "maprcli acl edit -type cluster -user root:fc"
 
 	license_installed=0
 	if [ -n "${MAPR_LICENSE_FILE:-}"  -a  -f "${MAPR_LICENSE_FILE}" ] ; then
