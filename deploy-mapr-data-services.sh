@@ -1,10 +1,13 @@
 #! /bin/bash
 #
 #   $File: deploy-mapr-hiveserer.sh $
-#	$Date: Mon Jan 19 13:51:49 PST 2015 $
+#   $Date: Fri Aug 28 17:49:05 PDT 2015 $
 #   $Author: dtucker $
+#	$Revision: 1.1 $
 #
-# Deploy data services on top of a running MapR cluster.
+# Deploy data services on top of a __running__ MapR cluster.
+#	repeat ... a __running__ MapR cluster
+#
 # This script should only be run AFTER the successful completion of the 
 # deploy-mapr-ami.sh script in a CloudFormation operation.
 #
@@ -18,12 +21,13 @@
 #		Should be done ONLY on 1-node
 #
 #	drill : deploys mapr-drill package.  Assumes cluster ZK will be used
-#		NOTE: will configure HIVE plugin if metatore service found ... so
+#		NOTE: will configure HIVE plugin if metastore service found ... so
 #		make sure that "hiveserver" is specified BEFORE drill
-#			TBD : set default blobstore for profiles to maprfs:///
+#			We enable centralized storage of query profiles via blobroot
 #
 #	spark : deploys mapr-spark package alongside mapr-resourcemanager
-#		NOTE: spark-jobhistory installed at the same place
+#		NOTE: spark-jobhistory installed at the same place as
+#		mapr-historyserver
 #
 # TBD services
 #
@@ -207,13 +211,20 @@ function deploy_spark()
 
 		# Update spark-defaults.conf
 		# No need to set historyserver.address on node where
-		# where spark-historyserver has been installed.
+		# where spark-historyserver has been installed ... 
+		# only on other spark nodes
 	echo "spark.yarn.jar    maprfs:///apps/spark/lib/$SJAR" >> $SDEFAULTS
 	[ ! -f $MAPR_HOME/roles/historyserver  -a  -n "$SHISTORYSERVER" ] && \
 		echo "spark.yarn.historyserver.address http://$SHISTORYSERVER:18080" >> $SDEFAULTS
 
 	echo "log4j.rootCategory=WARN, console" >> $SLOGPROPS
 	grep "appender.console" ${SLOGPROPS}.template >> $SLOGPROPS
+
+		# Copy hive-site.xml into conf directory if it exists
+	HIVE_HOME=$(ls -d /opt/mapr/hive/hive-*)
+	if [ -f $HIVE_HOME/conf/hive-site.xml ] ; then
+		cp $HIVE_HOME/conf/hive-site.xml $SPARK_HOME/conf
+	fi
 }
 
 
