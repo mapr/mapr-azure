@@ -46,8 +46,11 @@ THIS_FQDN=$(curl -f $murl_top/hostname)
 [ -z "${THIS_FQDN}" ] && THIS_FQDN=`hostname --fqdn`
 THIS_HOST=${THIS_FQDN%%.*}
 INSTANCE_ID=$(curl -f $murl_top/instance-id)
-[ -z "${AMI_LAUNCH_INDEX}" ] && \
+if [ -z "${AMI_LAUNCH_INDEX}" ] ; then
 	AMI_LAUNCH_INDEX=$(curl -f $murl_top/ami-launch-index) 
+	[ -z "${AMI_LAUNCH_INDEX}" ] && \
+		AMI_LAUNCH_INDEX=${THIS_HOST#*node}
+fi
 
 # A comma separated list of packages (without the "mapr-" prefix)
 # to be installed.   This script assumes that NONE of them have 
@@ -908,7 +911,7 @@ function store_ssh_keys()
 		  $clusterKeyDir/id_rsa_root.${AMI_LAUNCH_INDEX}
 	fi
 	if [ -f ${maprKeyFile} ] ; then
-		if [ -${AMI_LAUNCH_INDEX:-1} -eq 0  -o  -f $MAPR_HOME/roles/webserver ]
+		if [ ${AMI_LAUNCH_INDEX:-1} -eq 0  -o  -f $MAPR_HOME/roles/webserver ]
 		then
 			echo "  Pushing $maprKeyFile to $clusterKeyDir" >> $LOG
 			hadoop fs -put $maprKeyFile \
@@ -1356,8 +1359,8 @@ function main()
 	echo "$0 script started at "`date`   | tee -a $LOG
 	echo "    with args: $@"             | tee -a $LOG
 	echo "    executed by: "`whoami`     | tee -a $LOG
-	echo "    \$Revision: $"             | tee -a $LOG
-	echo "    \$Date: $"                 | tee -a $LOG
+	echo ""                              | tee -a $LOG
+	echo "LAUNCH_INDEX ${AMI_LAUNCH_INDEX:-unknown}"  | tee -a $LOG
 	echo ""                              | tee -a $LOG
 
 
