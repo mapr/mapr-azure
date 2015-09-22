@@ -47,11 +47,15 @@ CLUSTER_HOSTNAME_BASE="${HOSTNAME%node*}node"
 sh $BINDIR/prepare-disks.sh
 
 # These should be passed in via metadata
-export MAPR_PASSWD=MapRAZ
+export MAPR_PASSWD=${5:-MapRAZ}
+export AUTH_METHOD=${6:-Password}
 export MAPR_VERSION=${4:-5.0.0} 
 sh $BINDIR/prepare-node.sh
 
 sh $BINDIR/gen-cluster-hosts.sh ${1:-$CLUSTER_HOSTNAME_BASE} ${2:-}
+
+# used to lock the cluster later
+sh $BINDIR/gen-create-lock.sh
 
 # At this point, we only need to configure the installer service
 # and launch the process on the one node.
@@ -67,6 +71,7 @@ ssh-keygen -t rsa -P '' -f ~/.ssh/id_rsa
 cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
 chmod 600 ~/.ssh/authorized_keys
 cat ~mapr/.ssh/id_launch.pub >> ~/.ssh/authorized_keys
+
 
 
 export MAPR_CLUSTER=AZtest
@@ -106,6 +111,8 @@ if [ -n "${excluded_hosts}" ] ; then
 	echo ""
 fi
 
+
+sh $BINDIR/gen-lock-cluster.sh $SUDO_USER $AUTH_METHOD
 
 	# Invoke installer
 	#	By default, it will go to https://localhost:9443 ... which is fine
