@@ -58,7 +58,7 @@
         "imagePublisher" : "OpenLogic",
         "imageOffer" : "CentOS",
         "imageSKU" : "7.0",        
-        "scriptsUri" : "https://raw.githubusercontent.com/mapr/mapr-azure/master/",
+        "scriptsUri" : "https://github.com/mapr/mapr-azure/tree/ssh-enhancement",
         "nicBasename": "[concat(parameters('clusterName'),'-nic')]",
         "publicIPAddressBasename": "[concat(parameters('clusterName'),'-publicIP')]",
         "storageAccountBasename": "[concat(parameters('clusterName'),'sa')]",
