@@ -39,7 +39,7 @@
             "type": "securestring"
         },
         "adminSSHKey": {
-            "defaultValue": "MapRAzur3",
+            "defaultValue": "",
             "type": "securestring"
         },
         "authType": {
