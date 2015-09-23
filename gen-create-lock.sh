@@ -30,6 +30,9 @@ DELIM
 
 chmod +600 $LOCK_SCRIPT
 
-# echo "Cmnd_Alias LOCK_SCRIPT=/usr/bin/bash $LOCK_SCRIPT" >> /etc/sudoers
-# echo "$USER ALL=(root) NOPASSWD:LOCK_SCRIPT " >> /etc/sudoers
-# echo 'Defaults!LOCK_SCRIPT !requiretty' >> /etc/sudoers
+SUDOERS=/tmp/sudoers
+cat /etc/sudoers > /tmp/sudoers
+
+echo "Cmnd_Alias LOCK_SCRIPT=/usr/bin/bash $LOCK_SCRIPT" >> $SUDOERS
+echo "$USER ALL=(root) NOPASSWD:LOCK_SCRIPT " >> $SUDOERS
+echo 'Defaults!LOCK_SCRIPT !requiretty' >> $SUDOERS
