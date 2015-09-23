@@ -55,7 +55,7 @@ sh $BINDIR/prepare-node.sh
 sh $BINDIR/gen-cluster-hosts.sh ${1:-$CLUSTER_HOSTNAME_BASE} ${2:-}
 
 # used to lock the cluster later
-sh $BINDIR/gen-create-lock.sh
+sh $BINDIR/gen-create-lock.sh $SUDO_USER
 
 # At this point, we only need to configure the installer service
 # and launch the process on the one node.

@@ -19,6 +19,7 @@
 
 LOCK_SCRIPT=/tmp/lock.sh
 SSHD_CONFIG=/etc/ssh/sshd_config
+USER=${1:-azadmin}
 
 
 cat > $LOCK_SCRIPT <<DELIM
