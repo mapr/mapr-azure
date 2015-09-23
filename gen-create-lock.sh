@@ -31,7 +31,7 @@ DELIM
 
 chmod +600 $LOCK_SCRIPT
 
-SUDOERS=/tmp/sudoers
+SUDOERS=/etc/sudoers
 cat /etc/sudoers > /tmp/sudoers
 
 echo "Cmnd_Alias LOCK_SCRIPT=/usr/bin/bash $LOCK_SCRIPT" >> $SUDOERS
