@@ -34,9 +34,21 @@
             "defaultValue": "azadmin",
             "type": "string"
         },
-        "adminPassword": {
+        "maprPassword": {
             "defaultValue": "MapRAzur3",
             "type": "securestring"
+        },
+        "adminSSHKey": {
+            "defaultValue": "MapRAzur3",
+            "type": "securestring"
+        },
+        "authType": {
+            "type": "string",
+            "defaultValue" : "Password",
+            "allowedValues": ["Password", "SSHKey"],
+            "metadata": {
+                "description": "Authentication to use."
+            }
         },
         "location": {
             "type": "string",
@@ -138,7 +150,7 @@
                     "value": "[parameters('adminUsername')]"
                 },
                 "adminPassword" : {
-                    "value": "[parameters('adminPassword')]"
+                    "value": "[parameters('maprPassword')]"
                 },
                 "imagePublisher" : {
                     "value": "[variables('imagePublisher')]"
@@ -190,8 +202,17 @@
                 "scriptsUri" : {
                     "value": "[variables('scriptsUri')]"
                 },
+                "maprPassword" : {
+                    "value": "[parameters('maprPassword')]"
+                },
                 "location" : {
                     "value": "[parameters('location')]"
+                },
+                "adminSSHKey" : {
+                    "value": "[parameters('adminSSHKey')]"
+                },
+                "authType" : {
+                    "value": "[parameters('authType')]"
                 }
             }
         }

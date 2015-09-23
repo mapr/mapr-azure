@@ -17,12 +17,19 @@
         "scriptsUri": {
             "type": "string"
         },
-        "adminPassword": {
+        "maprPassword": {
             "type": "string"
         },
         "location": {
             "type": "string"
+        },
+        "adminSSHKey": {
+            "type": "string"
+        },
+        "authType": {
+            "type": "string"
         }
+
     },
     "variables": {
         "vmBasename": "[concat(parameters('clusterName'),'node')]"
@@ -57,7 +64,7 @@
                     "[concat(parameters('scriptsUri'), 'azure-wrapper.sh')]",
                     "[concat(parameters('scriptsUri'), 'installer-wrapper.sh')]"
                 ],
-                "commandToExecute": "[concat('sh installer-wrapper.sh ', variables('vmBasename'), ' ', parameters('clusterSize'), ' ', parameters('clusterEdition'), ' ', parameters('maprVersion'), ' ', parameters('adminPassword'), ' ', 'Password')]"
+                "commandToExecute": "[concat('sh installer-wrapper.sh ', variables('vmBasename'), ' ', parameters('clusterSize'), ' ', parameters('clusterEdition'), ' ', parameters('maprVersion'), ' ', parameters('maprPassword'), ' ', parameters('authType'))]"
             }
         }
     }        
