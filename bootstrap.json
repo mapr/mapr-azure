@@ -23,7 +23,7 @@
         "location": {
             "type": "string"
         },
-        "adminSSHKey": {
+        "sshKey": {
             "type": "string"
         },
         "authType": {
