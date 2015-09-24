@@ -30,7 +30,7 @@
                  "description": "MapR Software Version"
             }
         },
-        "adminUserName": {
+        "adminUsername": {
             "defaultValue": "azadmin",
             "type": "string"
         },
@@ -216,6 +216,9 @@
                 },
                 "authType" : {
                     "value": "[parameters('authenticationType')]"
+                },
+                "adminUser" : {
+                    "value": "[parameters('adminUsername')]"
                 }
             }
         }

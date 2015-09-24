@@ -28,6 +28,9 @@
         },
         "authType": {
             "type": "string"
+        },
+        "adminUser": {
+            "type": "string"
         }
 
     },
@@ -64,7 +67,7 @@
                     "[concat(parameters('scriptsUri'), 'azure-wrapper.sh')]",
                     "[concat(parameters('scriptsUri'), 'installer-wrapper.sh')]"
                 ],
-                "commandToExecute": "[concat('sh installer-wrapper.sh ', variables('vmBasename'), ' ', parameters('clusterSize'), ' ', parameters('clusterEdition'), ' ', parameters('maprVersion'), ' ', parameters('maprPassword'), ' ', parameters('authType'))]"
+                "commandToExecute": "[concat('sh installer-wrapper.sh ', variables('vmBasename'), ' ', parameters('clusterSize'), ' ', parameters('clusterEdition'), ' ', parameters('maprVersion'), ' ', parameters('maprPassword'), ' ', parameters('authType'), ' ', parameters('adminUser'))]"
             }
         }
     }        

@@ -62,6 +62,9 @@ OUT=/tmp/prepare-mapr-node.out
 # Extend the PATH.  This shouldn't be needed after Compute leaves beta.
 PATH=/sbin:/usr/sbin:$PATH
 
+# Lock script
+LOCK_SCRIPT=/tmp/lock.sh
+
 
 # Helper utility to log the commands that are being run and
 # save any errors to a log file
@@ -238,7 +241,18 @@ function update_ssh_config() {
   sed -i 's/PermitRootLogin .*no$/PermitRootLogin yes/' $SSHD_CONFIG
 
 	[ service ssh status &> /dev/null ]   &&  service ssh restart
+	[ service ssh status &> /dev/null ]   &&  service sshd reload
 	[ service sshd status &> /dev/null ]  &&  service sshd restart
+
+	# This is created to lock the server later
+  cat > $LOCK_SCRIPT <<DELIM
+ #!/bin/bash
+ sed -i 's/PasswordAuthentication.*/PasswordAuthentication no/g' $SSHD_CONFIG
+ [ service ssh status &> /dev/null ]   &&  service ssh restart
+ [ service sshd status &> /dev/null ]  &&  service sshd restart
+DELIM
+
+  chmod 600 $LOCK_SCRIPT
 }
 
 function update_os() {

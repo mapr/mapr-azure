@@ -38,8 +38,8 @@ BINDIR=`dirname $THIS`
 
 # These admin user settings must match the template
 #	(or be passed in)
-SUDO_USER=azadmin
-SUDO_PASSWD=MapRAzur3
+SUDO_USER=${7:-password}
+SUDO_PASSWD=${5:-MapRAzur3}
 
 HOSTNAME=`hostname`
 CLUSTER_HOSTNAME_BASE="${HOSTNAME%node*}node"
@@ -47,8 +47,8 @@ CLUSTER_HOSTNAME_BASE="${HOSTNAME%node*}node"
 sh $BINDIR/prepare-disks.sh
 
 # These should be passed in via metadata
-export MAPR_PASSWD=${5:-MapRAZ}
-export AUTH_METHOD=${6:-Password}
+export MAPR_PASSWD=${5:-MapRAzur3}
+export AUTH_METHOD=${6:-password}
 export MAPR_VERSION=${4:-5.0.0} 
 sh $BINDIR/prepare-node.sh
 
