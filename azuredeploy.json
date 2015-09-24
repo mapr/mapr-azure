@@ -38,14 +38,14 @@
             "defaultValue": "MapRAzur3",
             "type": "securestring"
         },
-        "adminSSHKey": {
+        "sshKey": {
             "defaultValue": "",
             "type": "securestring"
         },
-        "authType": {
+        "authenticationType": {
             "type": "string",
-            "defaultValue" : "Password",
-            "allowedValues": ["Password", "SSHKey"],
+            "defaultValue" : "password",
+            "allowedValues": ["password", "sshPublicKey"],
             "metadata": {
                 "description": "Authentication to use."
             }
@@ -133,7 +133,7 @@
         "properties": {
             "mode": "Incremental",
             "templateLink": {
-                "uri": "[concat(variables('scriptsUri'), parameters('vmSize'), '.json')]",
+                "uri": "[concat(variables('scriptsUri'), parameters('vmSize'), '_', parameters('authenticationType'), '.json')]",
                 "contentVersion": "1.0.0.0"
             },
             "parameters": {
@@ -169,7 +169,10 @@
                 },
                 "nicBasename" : {
                     "value" : "[variables('nicBasename')]"
-                }
+                },
+                "sshKey" : {
+                    "value" : "[parameters('sshKey')]"
+                }    
             }
         }
     },
@@ -208,11 +211,11 @@
                 "location" : {
                     "value": "[parameters('location')]"
                 },
-                "adminSSHKey" : {
-                    "value": "[parameters('adminSSHKey')]"
+                "sshKey" : {
+                    "value": "[parameters('sshKey')]"
                 },
                 "authType" : {
-                    "value": "[parameters('authType')]"
+                    "value": "[parameters('authenticationType')]"
                 }
             }
         }

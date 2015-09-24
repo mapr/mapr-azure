@@ -23,10 +23,10 @@ THIS_HOST=`/bin/hostname`
 THIS_USER=`id -un`
 
 # Get methos from the command line.
-METHOD=${2:-}
+METHOD=${2:-password}
 USER=${1:-azadmin}
 
-[ $METHOD = "Password" ] && exit 0
+[ $METHOD = "password" ] && exit 0
 
 which sshpass &> /dev/null
 if [ $? -ne 0 ] ; then
