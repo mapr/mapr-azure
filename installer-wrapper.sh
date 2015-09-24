@@ -38,8 +38,12 @@ BINDIR=`dirname $THIS`
 
 # These admin user settings must match the template
 #	(or be passed in)
-SUDO_USER=${7:-password}
+SUDO_USER=${7:-azadmin}
 SUDO_PASSWD=${5:-MapRAzur3}
+
+# We need to set the password, because it is *not* set in the case where
+# we use PKI. We are going to later turn it off
+echo -e "$SUDO_PASSWD\n$SUDO_PASSWD" | (passwd --stdin $SUDO_USER)
 
 HOSTNAME=`hostname`
 CLUSTER_HOSTNAME_BASE="${HOSTNAME%node*}node"

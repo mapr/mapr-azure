@@ -240,9 +240,10 @@ function update_ssh_config() {
   sed -i 's/PasswordAuthentication .*no$/PasswordAuthentication yes/' $SSHD_CONFIG
   sed -i 's/PermitRootLogin .*no$/PermitRootLogin yes/' $SSHD_CONFIG
 
-	[ service ssh status &> /dev/null ]   &&  service ssh restart
-	[ service sshd status &> /dev/null ]  &&  service sshd restart
- 	service sshd reload
+
+  [ service ssh status &> /dev/null ]   &&  service ssh restart
+  [ service sshd status &> /dev/null ]  &&  service sshd restart
+  service sshd reload
 
 	# This is created to lock the server later
   cat > $LOCK_SCRIPT <<DELIM
