@@ -22,6 +22,12 @@
     },
     "vmSize": {
         "value": "Standard_D4"
+    },
+    "sshKey": {
+            "value": ""
+    },
+    "authenticationType": {
+            "value": "password"
     }
 }
 

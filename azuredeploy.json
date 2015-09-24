@@ -34,7 +34,7 @@
             "defaultValue": "azadmin",
             "type": "string"
         },
-        "maprPassword": {
+        "adminPassword": {
             "defaultValue": "MapRAzur3",
             "type": "securestring"
         },
@@ -150,7 +150,7 @@
                     "value": "[parameters('adminUsername')]"
                 },
                 "adminPassword" : {
-                    "value": "[parameters('maprPassword')]"
+                    "value": "[parameters('adminPassword')]"
                 },
                 "imagePublisher" : {
                     "value": "[variables('imagePublisher')]"
@@ -206,7 +206,7 @@
                     "value": "[variables('scriptsUri')]"
                 },
                 "maprPassword" : {
-                    "value": "[parameters('maprPassword')]"
+                    "value": "[parameters('adminPassword')]"
                 },
                 "location" : {
                     "value": "[parameters('location')]"
