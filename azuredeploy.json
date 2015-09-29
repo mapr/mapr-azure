@@ -38,6 +38,10 @@
             "defaultValue": "MapRAzur3",
             "type": "securestring"
         },
+        "maprPassword": {
+            "defaultValue": "MapRAZ",
+            "type": "securestring"
+        },
         "sshKey": {
             "defaultValue": "",
             "type": "securestring"
