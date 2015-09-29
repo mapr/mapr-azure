@@ -17,6 +17,9 @@
     "adminPassword": {
         "value": "MapRAzur3"
     },
+    "maprPassword": {
+        "value": "MapRAZ"
+    },
     "location": {
         "value": "West US"
     },
