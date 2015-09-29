@@ -12,7 +12,7 @@
         "clusterSize": {
             "defaultValue": 3,
             "type": "int",
-            "allowedValues": [3, 4, 5, 6, 8, 10, 20, 30]
+            "allowedValues": [3, 6, 10, 20, 30]
         },
         "clusterEdition": {
             "defaultValue": "M3",
@@ -62,15 +62,14 @@
             "type": "string",
             "defaultValue": "Standard_D12",
             "allowedValues": ["Standard_D3", "Standard_D4", "Standard_D12", "Standard_D13", "Standard_D14",
-                "Standard_DS3", "Standard_DS4", "Standard_DS12", "Standard_DS13", "Standard_DS14",
-                "Standard_G2", "Standard_G3", "Standard_G4", "Standard_G5"]
+                "Standard_DS3", "Standard_DS4", "Standard_DS12", "Standard_DS13", "Standard_DS14"]
         }
     },
     "variables": {
         "imagePublisher" : "OpenLogic",
         "imageOffer" : "CentOS",
         "imageSKU" : "7.0",        
-        "scriptsUri" : "https://raw.githubusercontent.com/mapr/mapr-azure/ssh-enhancement/",
+        "scriptsUri" : "https://raw.githubusercontent.com/mapr/mapr-azure/master/",
         "nicBasename": "[concat(parameters('clusterName'),'-nic')]",
         "publicIPAddressBasename": "[concat(parameters('clusterName'),'-publicIP')]",
         "storageAccountBasename": "[concat(parameters('clusterName'),'sa')]",
