@@ -245,14 +245,16 @@ function update_ssh_config() {
   [ service sshd status &> /dev/null ]  &&  service sshd restart
   service sshd reload
 
-	# This is created to lock the server later
-  cat > $LOCK_SCRIPT <<DELIM
- #!/bin/bash
- sed -i 's/PasswordAuthentication.*/PasswordAuthentication no/g' $SSHD_CONFIG
- [ service ssh status &> /dev/null ]   &&  service ssh restart
- [ service sshd status &> /dev/null ]  &&  service sshd restart
- service sshd reload
-DELIM
+	# This is created to lock the server later (if we need to disable
+	# password access).   The name of the script MUST MATCH that
+	# specified in the other *lock*.sh scripts
+  cat > $LOCK_SCRIPT << lsEOF
+#!/bin/bash
+sed -i 's/PasswordAuthentication.*/PasswordAuthentication no/g' $SSHD_CONFIG
+[ service ssh status &> /dev/null ]   &&  service ssh restart
+[ service sshd status &> /dev/null ]  &&  service sshd restart
+service sshd reload
+lsEOF
 
   chmod 600 $LOCK_SCRIPT
 }
