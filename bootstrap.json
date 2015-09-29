@@ -23,9 +23,6 @@
         "location": {
             "type": "string"
         },
-        "sshKey": {
-            "type": "string"
-        },
         "authType": {
             "type": "string"
         },

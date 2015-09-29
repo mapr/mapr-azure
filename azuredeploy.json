@@ -210,9 +210,6 @@
                 "location" : {
                     "value": "[parameters('location')]"
                 },
-                "sshKey" : {
-                    "value": "[parameters('sshKey')]"
-                },
                 "authType" : {
                     "value": "[parameters('authenticationType')]"
                 },
