@@ -77,7 +77,6 @@ chmod 600 ~/.ssh/authorized_keys
 cat ~mapr/.ssh/id_launch.pub >> ~/.ssh/authorized_keys
 
 
-
 export MAPR_CLUSTER=AZtest
 [ -f /tmp/mkclustername ] && MAPR_CLUSTER=`cat /tmp/mkclustername` 
 
@@ -85,13 +84,8 @@ chmod a+x $BINDIR/deploy-installer.sh
 $BINDIR/deploy-installer.sh
 [ $? -ne 0 ] && exit 1
 
-# **** TBD *****
-#	Confirm that all nodes are alive and have completed
-#	the "prepare-node.sh" step.  Simplest check for that
-#	is to look for prepare-mapr-node.log in /home/mapr
-#		*** so long as mapr user is created by prepare-node ***
-#
-# For now, kludge this to just make sure the names resolve
+# Make sure the hostnames in our cluster resolve.   There
+# was a DNS issue in Azure at one point that caused problems here.
 CF_HOSTS_FILE=/tmp/maprhosts 
 cp -p $CF_HOSTS_FILE ${CF_HOSTS_FILE}.orig
 truncate --size 0 $CF_HOSTS_FILE
@@ -113,6 +107,39 @@ if [ -n "${excluded_hosts}" ] ; then
 	echo ""
 	echo "Those nodes will be exempted from the deployment"
 	echo ""
+fi
+
+# Now make sure that all the nodes have successfully 
+# completed the "prepare" step.  The evidence of that is
+# the existence of /home/mapr/prepare-mapr-node.log
+#	NOTE: This depends on the execution of gendist-sshkey 
+#	for the mapr user above .
+MAPR_USER=mapr
+MAPR_USER_DIR=`eval "echo ~${MAPR_USER}"`
+MY_SSH_OPTS="-i $MAPR_USER_DIR/.ssh/id_launch -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o BatchMode=yes"
+
+prepared_nodes=0
+nnodes=`wc -l $CF_HOSTS_FILE | awk '{print $1}'`
+
+PTIME=10
+PWAIT=900                # wait no more than 15 minutes
+while [ $prepared_nodes -ne $nnodes  -a  $PWAIT -gt 0 ] ; do
+	echo "$prepared_nodes systems successfully prepared; waiting for $nnodes"
+
+	sleep $PTIME
+	PWAIT=$[PWAIT - $PTIME]
+	prepared_nodes=0
+	for h in `awk '{print $1}' ${CF_HOSTS_FILE}` ; do
+		ssh $MY_SSH_OPTS $MAPR_USER@${h} \
+			-n "ls ${MAPR_USER_DIR}/prepare-node.log" &> /dev/null
+		[ $? -ne 0 ] && break
+		prepared_nodes=$[prepared_nodes+1]
+	done
+done
+
+if [ $PWAIT -eq 0 ] ; then
+	echo "prepare-node.sh failed on some nodes; cannot proceed"
+	exit 1
 fi
 
 
