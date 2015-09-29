@@ -14,7 +14,18 @@ PROVISIONING MODEL
 
 	Alternatively, you can use az_scripted.json that invokes
 	a simple set of shell scripts to deploy a MapR M3 Edition
-	cluster.   
+	cluster.  The only difference is the use of bootstrap_scripted.json
+	instead of the bootstrap.json for the earlier deployment
+
+	NOTE:
+		The limitations of the Azure template structure make for 
+		some complex "include" logic for the different instance types
+		and other parameter settings.   The <instance>*.json files
+		are almost identical ... just minor differences for the 
+		storage configuration for each instance type (since different
+		numbers of volumes are supported) and the different authentication
+		mechanisms.
+
 
 
 TOOLS
