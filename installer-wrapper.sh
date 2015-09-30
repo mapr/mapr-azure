@@ -131,7 +131,7 @@ while [ $prepared_nodes -ne $nnodes  -a  $PWAIT -gt 0 ] ; do
 	prepared_nodes=0
 	for h in `awk '{print $1}' ${CF_HOSTS_FILE}` ; do
 		ssh $MY_SSH_OPTS $MAPR_USER@${h} \
-			-n "ls ${MAPR_USER_DIR}/prepare-node.log" &> /dev/null
+			-n "ls ${MAPR_USER_DIR}/prepare-mapr-node.log" &> /dev/null
 		[ $? -ne 0 ] && break
 		prepared_nodes=$[prepared_nodes+1]
 	done
