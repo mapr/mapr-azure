@@ -78,7 +78,7 @@
         "imagePublisher" : "OpenLogic",
         "imageOffer" : "CentOS",
         "imageSKU" : "7.0",        
-        "scriptsUri" : "[parameters('artifactsBaseUrl')]",
+        "scriptsUri" : "[concat(parameters('artifactsBaseUrl'),'/')]",
         "nicBasename": "[concat(parameters('clusterName'),'-nic')]",
         "publicIPAddressBasename": "[concat(parameters('clusterName'),'-publicIP')]",
         "storageAccountBasename": "[concat(parameters('clusterName'),'sa')]",
