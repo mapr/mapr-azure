@@ -31,6 +31,9 @@
     },
     "authenticationType": {
             "value": "password"
+    },
+    "artifactsBaseUrl": {
+            "value": "https://raw.githubusercontent.com/mapr/mapr-azure/master"
     }
 }
 
