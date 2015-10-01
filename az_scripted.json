@@ -208,6 +208,9 @@
                 "scriptsUri" : {
                     "value": "[variables('scriptsUri')]"
                 },
+                "maprPassword" : {
+                    "value": "[parameters('maprPassword')]"
+                },
                 "location" : {
                     "value": "[parameters('location')]"
                 },

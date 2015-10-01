@@ -17,6 +17,9 @@
         "scriptsUri": {
             "type": "string"
         },
+        "maprPassword": {
+            "type": "string"
+        },
         "location": {
             "type": "string"
         }
