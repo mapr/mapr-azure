@@ -1,4 +1,7 @@
 ﻿{
+    "artifactsBaseUrl": {
+        "value": "https://raw.githubusercontent.com/mapr/mapr-azure/master"
+    },
     "clusterName": {
         "value": "maprazure"
     },
