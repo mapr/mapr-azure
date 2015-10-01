@@ -522,11 +522,13 @@ CDPATH=.:$HOME
 export CDPATH
 
 # PATH updates based on settings in MapR env file
+#	NOTE: MapR installer sometimes removes MAPR_ENV= line ...
+#	so we need to be careful about our execution here.
 MAPR_HOME=${MAPR_HOME:-/opt/mapr}
 MAPR_ENV=\${MAPR_HOME}/conf/env.sh
-[ -f \${MAPR_ENV} ] && . \${MAPR_ENV} 
-[ -n "\${JAVA_HOME}:-" ] && PATH=\$PATH:\$JAVA_HOME/bin
-[ -n "\${MAPR_HOME}:-" ] && PATH=\$PATH:\$MAPR_HOME/bin
+[ -n "\${MAPR_ENV:-}" ] && [ -f \${MAPR_ENV} ] && . \${MAPR_ENV} 
+[ -n "\${JAVA_HOME:-}" ] && PATH=\$PATH:\$JAVA_HOME/bin
+[ -n "\${MAPR_HOME:-}" ] && PATH=\$PATH:\$MAPR_HOME/bin
 
 set -o vi
 
