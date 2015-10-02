@@ -22,6 +22,12 @@
         },
         "location": {
             "type": "string"
+        },
+        "authType": {
+            "type": "string"
+        },
+        "adminUser": {
+            "type": "string"
         }
     },
     "variables": {
@@ -48,6 +54,8 @@
                     "[concat(parameters('scriptsUri'), '6node.lst')]",
                     "[concat(parameters('scriptsUri'), '10node.lst')]",
                     "[concat(parameters('scriptsUri'), 'gen-cluster-hosts.sh')]",
+                    "[concat(parameters('scriptsUri'), 'gen-create-lock.sh')]",
+                    "[concat(parameters('scriptsUri'), 'gen-lock-cluster.sh')]",
                     "[concat(parameters('scriptsUri'), 'gendist-sshkey.sh')]",
                     "[concat(parameters('scriptsUri'), 'prepare-disks.sh')]",
                     "[concat(parameters('scriptsUri'), 'prepare-node.sh')]",
