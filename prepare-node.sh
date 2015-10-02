@@ -502,8 +502,8 @@ passwdEOF
 		# Create sshkey for $MAPR_USER (must be done AS MAPR_USER)
 	su $MAPR_USER -c "mkdir ~${MAPR_USER}/.ssh ; chmod 700 ~${MAPR_USER}/.ssh"
 	su $MAPR_USER -c "ssh-keygen -q -t rsa -f ~${MAPR_USER}/.ssh/id_rsa -P '' "
-	su $MAPR_USER -c "cat ~${MAPR_USER}/.ssh/id_rsa.pub >> ~${MAPR_USER}/.ssh/authorized_keys"
-	su $MAPR_USER -c "chmod 600 ~${MAPR_USER}/.ssh/authorized_keys"
+#	su $MAPR_USER -c "cat ~${MAPR_USER}/.ssh/id_rsa.pub >> ~${MAPR_USER}/.ssh/authorized_keys"
+#	su $MAPR_USER -c "chmod 600 ~${MAPR_USER}/.ssh/authorized_keys"
 		
 		# TBD : copy the key-pair used to launch the instance directly
 		# into the mapr account to simplify connection from the
