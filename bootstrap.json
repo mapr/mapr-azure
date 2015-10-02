@@ -29,7 +29,6 @@
         "adminUser": {
             "type": "string"
         }
-
     },
     "variables": {
         "vmBasename": "[concat(parameters('clusterName'),'node')]"
