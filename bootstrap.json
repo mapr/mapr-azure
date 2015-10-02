@@ -58,7 +58,6 @@
                     "[concat(parameters('scriptsUri'), 'gendist-sshkey.sh')]",
                     "[concat(parameters('scriptsUri'), 'prepare-disks.sh')]",
                     "[concat(parameters('scriptsUri'), 'prepare-node.sh')]",
-                    "[concat(parameters('scriptsUri'), 'mapr-setup.sh')]",
                     "[concat(parameters('scriptsUri'), 'deploy-installer.sh')]",
                     "[concat(parameters('scriptsUri'), 'deploy-mapr-ami.sh')]",
                     "[concat(parameters('scriptsUri'), 'deploy-mapr-cluster.py')]",
