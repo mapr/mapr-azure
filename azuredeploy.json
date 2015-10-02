@@ -226,6 +226,9 @@
                 },
                 "adminUser" : {
                     "value": "[parameters('adminUsername')]"
+                },
+                "adminPassword" : {
+                    "value": "[parameters('adminPassword')]"
                 }
             }
         }
