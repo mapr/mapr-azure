@@ -3,7 +3,6 @@
     "contentVersion": "1.0.0.0",
     "parameters" : {
 		"artifactsBaseUrl": {
-			"defaultValue": "",
 			"type": "string",
 			"metadata": {
 				"artifactsBaseUrl": "Base URL of the Publisher Template gallery package"
@@ -224,6 +223,9 @@
                 },
                 "adminUser" : {
                     "value": "[parameters('adminUsername')]"
+                },
+                "adminPassword" : {
+                    "value": "[parameters('adminPassword')]"
                 }
             }
         }
