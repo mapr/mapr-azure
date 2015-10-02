@@ -17,10 +17,16 @@
 #
 #
 # USAGE :
-#	$0 [ <basename> ] [ <size> ] [ <edition> ] [ <mapr_version> ]
+#	$0 [ <basename> ] [ <size> ] [ <edition> ] [ <mapr_version> ] \
+#	  [ <mapr_password> ] [ <auth_type> ] [ <admin_uer> ] [ <admin_password> ]
 #
 #		<edition> defaults to M3
 #		<mapr_version> defaults to 5.0.0
+#		<mapr_password> defaults to MapRAZ
+#
+#		<auth_type> : password or sshPublicKey (defaults to password)
+#		<admin_user> defaults to azadmin
+#		<admin_password> defaults to MapRAzur3
 #
 # EXAMPLE :
 #	$0 testnode 4 M5
@@ -39,7 +45,7 @@ BINDIR=`dirname $THIS`
 # These admin user settings must match the template
 #	(or be passed in)
 SUDO_USER=${7:-azadmin}
-SUDO_PASSWD=${5:-MapRAzur3}
+SUDO_PASSWD=${8:-MapRAzur3}
 
 # We need to set the password, because it is *not* set in the case where
 # we use PKI. We are going to later turn it off
