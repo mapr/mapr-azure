@@ -68,20 +68,10 @@ sh $BINDIR/gen-cluster-hosts.sh ${1:-$CLUSTER_HOSTNAME_BASE} ${2:-}
 sh $BINDIR/gen-create-lock.sh $SUDO_USER
 
 # At this point, we only need to configure the installer service
-# and launch the process on the one node.
+# and launch the process on the one node ... the first one in the cluster
 
 # Simple test ... are we node 0 ?
 [ "$HOSTNAME" != "${CLUSTER_HOSTNAME_BASE}0" ] && exit 0
-
-# Let's distribute some ssh keys for our known accounts
-#
-sh $BINDIR/gendist-sshkey.sh $SUDO_USER $SUDO_PASSWD id_rsa
-sh $BINDIR/gendist-sshkey.sh mapr $MAPR_PASSWD id_launch
-ssh-keygen -t rsa -P '' -f ~/.ssh/id_rsa
-cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
-chmod 600 ~/.ssh/authorized_keys
-cat ~mapr/.ssh/id_launch.pub >> ~/.ssh/authorized_keys
-
 
 export MAPR_CLUSTER=AZtest
 [ -f /tmp/mkclustername ] && MAPR_CLUSTER=`cat /tmp/mkclustername` 
@@ -115,14 +105,28 @@ if [ -n "${excluded_hosts}" ] ; then
 	echo ""
 fi
 
+# Let's distribute some ssh keys for our known accounts
+#	NOTE: We should really confirm that all the nodes have
+#	the mapr user configured BEFORE doing this ... but that's
+#	a chicken-and-egg problem that we can't easily solve.
+#
+sh $BINDIR/gendist-sshkey.sh $SUDO_USER $SUDO_PASSWD id_rsa
+sh $BINDIR/gendist-sshkey.sh mapr $MAPR_PASSWD id_launch
+ssh-keygen -t rsa -P '' -f ~/.ssh/id_rsa
+cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
+chmod 600 ~/.ssh/authorized_keys
+cat ~mapr/.ssh/id_launch.pub >> ~/.ssh/authorized_keys
+
+
 # Now make sure that all the nodes have successfully 
 # completed the "prepare" step.  The evidence of that is
 # the existence of /home/mapr/prepare-mapr-node.log
-#	NOTE: This depends on the execution of gendist-sshkey 
-#	for the mapr user above .
+#	NOTE: This depends on the successful execution of
+#	gendist-sshkey for the mapr user above .
 MAPR_USER=mapr
 MAPR_USER_DIR=`eval "echo ~${MAPR_USER}"`
 MY_SSH_OPTS="-i $MAPR_USER_DIR/.ssh/id_launch -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o BatchMode=yes"
+SSHPASS_OPTS="-o PasswordAuthentication=yes   -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
 
 prepared_nodes=0
 nnodes=`wc -l $CF_HOSTS_FILE | awk '{print $1}'`
@@ -138,7 +142,20 @@ while [ $prepared_nodes -ne $nnodes  -a  $PWAIT -gt 0 ] ; do
 	for h in `awk '{print $1}' ${CF_HOSTS_FILE}` ; do
 		ssh $MY_SSH_OPTS $MAPR_USER@${h} \
 			-n "ls ${MAPR_USER_DIR}/prepare-mapr-node.log" &> /dev/null
-		[ $? -ne 0 ] && break
+		sshRtn=$?
+		if [ $sshRtn -eq 255 ] ; then
+				# There is an race condition where the ssh key
+				# does not get distributed by gendist-sshkey because
+				# the mapr user is not provisioned on the some nodes 
+				# by the time this node (node0) runs gendist-sshkey.
+				# To deal with that, we'll try sshpass during the
+				# if the initial ssh returns -1 (key-based access failing)
+			SSHPASS=$MAPR_PASSWD /usr/bin/sshpass -e ssh $SSHPASS_OPTS $MAPR_USER@${h} \
+				-n "ls ${MAPR_USER_DIR}/prepare-mapr-node.log" &> /dev/null
+			[ $? -ne 0 ] && break
+		elif [ $sshRtn -ne 0 ] ; then
+			break
+		fi
 		prepared_nodes=$[prepared_nodes+1]
 	done
 done
