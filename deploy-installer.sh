@@ -52,7 +52,7 @@ function main() {
 		cp $BINDIR/mapr-setup.sh /tmp
 	fi
 
-	reset_epel
+#	reset_epel
 
 		# We may need to disable the requiretty constraint on sudo
 #	sed -i 's/ requiretty/ !requiretty/' /etc/sudoers
