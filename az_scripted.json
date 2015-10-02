@@ -2,6 +2,13 @@
     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters" : {
+		"artifactsBaseUrl": {
+			"defaultValue" : "https://raw.githubusercontent.com/mapr/mapr-azure/master/",
+			"type": "string",
+			"metadata": {
+				"artifactsBaseUrl": "Base URL of the Publisher Template gallery package"
+			}
+		},
         "clusterName": {
             "defaultValue": "mapraz",
             "type": "string",
@@ -12,7 +19,7 @@
         "clusterSize": {
             "defaultValue": 3,
             "type": "int",
-            "allowedValues": [3, 4, 5, 6, 8, 10, 20, 30]
+            "allowedValues": [3, 6, 10, 20, 30]
         },
         "clusterEdition": {
             "defaultValue": "M3",
@@ -73,7 +80,7 @@
         "imagePublisher" : "OpenLogic",
         "imageOffer" : "CentOS",
         "imageSKU" : "7.0",        
-        "scriptsUri" : "https://raw.githubusercontent.com/mapr/mapr-azure/master/",
+        "scriptsUri" : "[concat(parameters('artifactsBaseUrl'),'/')]",
         "nicBasename": "[concat(parameters('clusterName'),'-nic')]",
         "publicIPAddressBasename": "[concat(parameters('clusterName'),'-publicIP')]",
         "storageAccountBasename": "[concat(parameters('clusterName'),'sa')]",
@@ -175,7 +182,7 @@
                 },
                 "sshKey" : {
                     "value" : "[parameters('sshKey')]"
-                }
+                }    
             }
         }
     },
@@ -216,6 +223,9 @@
                 },
                 "authType" : {
                     "value": "[parameters('authenticationType')]"
+                },
+                "adminUser" : {
+                    "value": "[parameters('adminUsername')]"
                 }
             }
         }
