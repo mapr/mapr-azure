@@ -852,7 +852,7 @@ remove() {
 set -x
 
 # Need to set terminal
-[ -z $TERM ] && export TERM=ansi
+[ -z "${TERM:-}" ] && export TERM=ansi
 
 tput init
 
