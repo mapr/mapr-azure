@@ -22,12 +22,6 @@
         },
         "location": {
             "type": "string"
-        },
-        "authType": {
-            "type": "string"
-        },
-        "adminUser": {
-            "type": "string"
         }
     },
     "variables": {
