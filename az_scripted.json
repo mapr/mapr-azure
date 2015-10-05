@@ -3,7 +3,7 @@
     "contentVersion": "1.0.0.0",
     "parameters" : {
 		"artifactsBaseUrl": {
-			"defaultValue" : "https://raw.githubusercontent.com/mapr/mapr-azure/master/",
+			"defaultValue" : "https://raw.githubusercontent.com/mapr/mapr-azure/master",
 			"type": "string",
 			"metadata": {
 				"artifactsBaseUrl": "Base URL of the Publisher Template gallery package"
@@ -19,14 +19,17 @@
         "clusterSize": {
             "defaultValue": 3,
             "type": "int",
-            "allowedValues": [1, 2, 3, 4, 5, 6, 10, 20, 30]
+            "allowedValues": [1, 2, 3, 4, 5, 6, 10, 20, 30],
+            "metadata": {
+                 "description": "Number of instances to deploy for the cluster"
+            }
         },
         "clusterEdition": {
             "defaultValue": "M3",
             "type": "string",
             "allowedValues": ["M3", "M5", "M7"],
             "metadata": {
-                 "description": "MapR License Edition {Community, Enterprise, or Enterprise Database}"
+                 "description": "MapR License Edition {Community (M3), Enterprise (M5), or Enterprise Database (M7)}"
             }
         },
         "maprVersion": {
@@ -39,26 +42,38 @@
         },
         "adminUsername": {
             "defaultValue": "azadmin",
-            "type": "string"
+            "type": "string",
+            "metadata": {
+                 "description": "System Administrator for deployed nodes"
+            }
         },
         "adminPassword": {
             "defaultValue": "MapRAzur3",
-            "type": "securestring"
+            "type": "securestring",
+            "metadata": {
+                 "description": "Password for System Administrator"
+            }
         },
         "maprPassword": {
             "defaultValue": "MapRAZ",
-            "type": "securestring"
+            "type": "securestring",
+            "metadata": {
+                 "description": "Password for MapR Administrator (mapr user account)"
+            }
         },
         "sshKey": {
             "defaultValue": "",
-            "type": "securestring"
+            "type": "securestring",
+            "metadata": {
+                 "description": "SSH Key for System Administrator"
+            }
         },
         "authenticationType": {
             "type": "string",
             "defaultValue" : "password",
             "allowedValues": ["password", "sshPublicKey"],
             "metadata": {
-                "description": "Authentication to use."
+                "description": "Authentication to use for System Administrator."
             }
         },
         "location": {
@@ -73,7 +88,10 @@
             "type": "string",
             "defaultValue": "Standard_D12",
             "allowedValues": ["Standard_D3", "Standard_D4", "Standard_D12", "Standard_D13", "Standard_D14",
-                "Standard_DS3", "Standard_DS4", "Standard_DS12", "Standard_DS13", "Standard_DS14"]
+				"Standard_DS3", "Standard_DS4", "Standard_DS12", "Standard_DS13", "Standard_DS14"]
+            "metadata": {
+                "description": "InstanceType to use for this deployment"
+            }
         }
     },
     "variables": {
@@ -220,12 +238,6 @@
                 },
                 "location" : {
                     "value": "[parameters('location')]"
-                },
-                "authType" : {
-                    "value": "[parameters('authenticationType')]"
-                },
-                "adminUser" : {
-                    "value": "[parameters('adminUsername')]"
                 }
             }
         }
