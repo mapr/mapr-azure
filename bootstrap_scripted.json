@@ -67,7 +67,7 @@
                     "[concat(parameters('scriptsUri'), 'azure-wrapper.sh')]",
                     "[concat(parameters('scriptsUri'), 'installer-wrapper.sh')]"
                 ],
-                "commandToExecute": "[concat('sh azure-wrapper.sh ', variables('vmBasename'), ' ', parameters('clusterSize'), ' ', parameters('clusterEdition'), ' ', parameters('maprVersion'))]"
+                "commandToExecute": "[concat('sh azure-wrapper.sh ', variables('vmBasename'), ' ', parameters('clusterSize'), ' ', parameters('clusterEdition'), ' ', parameters('maprVersion'), ' ', parameters('maprPassword'))]"
             }
         }
     }        
