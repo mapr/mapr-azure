@@ -57,7 +57,7 @@ CLUSTER_HOSTNAME_BASE="${HOSTNAME%node*}node"
 sh $BINDIR/prepare-disks.sh
 
 # These should be passed in via metadata
-export MAPR_PASSWD=${5:-MapRAzur3}
+export MAPR_PASSWD=${5:-MapRAZ}
 export AUTH_METHOD=${6:-password}
 export MAPR_VERSION=${4:-5.0.0} 
 sh $BINDIR/prepare-node.sh
