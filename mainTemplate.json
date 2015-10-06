@@ -77,7 +77,6 @@
         },
         "location": {
             "type": "string",
-            "allowedValues": ["East US2", "West US", "West Europe", "South East Asia", "Japan East", "Japan West", "Australia East"],
             "metadata": {
                 "description": "Deployment location"
             }
