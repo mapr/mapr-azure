@@ -96,11 +96,6 @@
               "Standard_D4",
               "Standard_D3",
               "Standard_D14",
-              "Standard_DS3",
-              "Standard_DS4",
-              "Standard_DS12",
-              "Standard_DS13",
-              "Standard_DS14",
               "Standard_D12",
               "Standard_D13"
 
@@ -111,13 +106,7 @@
                 "Standard_D4",
                 "Standard_D12",
                 "Standard_D13",
-                "Standard_D14",
-                "Standard_DS3",
-                "Standard_DS4",
-                "Standard_DS12",
-                "Standard_DS13",
-                "Standard_DS14"
-
+                "Standard_D14"
               ]
             },
             "osPlatform": "Linux",
