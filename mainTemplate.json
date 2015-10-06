@@ -47,21 +47,18 @@
             }
         },
         "adminPassword": {
-            "defaultValue": "MapRAzur3",
             "type": "securestring",
             "metadata": {
                  "description": "Password for System Administrator"
             }
         },
         "maprPassword": {
-            "defaultValue": "MapRAZ",
             "type": "securestring",
             "metadata": {
                  "description": "Password for MapR Administrator (mapr user account)"
             }
         },
         "sshKey": {
-            "defaultValue": "",
             "type": "securestring",
             "metadata": {
                  "description": "SSH Key for System Administrator"
