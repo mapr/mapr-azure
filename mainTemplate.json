@@ -47,6 +47,7 @@
             }
         },
         "adminPassword": {
+            "defaultValue": "",
             "type": "securestring",
             "metadata": {
                  "description": "Password for System Administrator"
@@ -59,6 +60,7 @@
             }
         },
         "sshKey": {
+            "defaultValue": "",
             "type": "securestring",
             "metadata": {
                  "description": "SSH Key for System Administrator"
