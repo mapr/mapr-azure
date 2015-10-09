@@ -7,7 +7,7 @@
         "name": "clusterName",
         "type": "Microsoft.Common.TextBox",
         "label": "MapR Cluster name",
-        "toolTip": "The name of the new Sample Linux cluster.",
+        "toolTip": "Unique identifier for the MapR cluster.",
         "constraints": {
           "required": true,
           "regex": "^[a-z0-9]{3,24}$",
@@ -17,7 +17,7 @@
       {
         "name": "adminUsername",
         "type": "Microsoft.Compute.UserNameTextBox",
-        "label": "Username",
+        "label": "SysAdmin Username",
         "toolTip": "Admin username for the virtual machines. Same Credientials is to SSH to the box.",
         "osPlatform": "Linux"
       },
@@ -141,8 +141,8 @@
 
             "name": "MapRPassword",
             "type": "Microsoft.Common.PasswordBox",
-            "label": "MapR softwares password",
-            "toolTip": "The password for MapR software.",
+            "label": "MapR Admin password",
+            "toolTip": "The password for MapR administrator (mapr).",
             "constraints": {
               "required": true,
               "regex": "^(?:(?=.*[a-z])(?:(?=.*[A-Z])(?=.*[\\d\\W])|(?=.*\\W)(?=.*\\d))|(?=.*\\W)(?=.*[A-Z])(?=.*\\d)).{6,30}$",
@@ -155,7 +155,7 @@
             "type": "Microsoft.Common.DropDown",
             "label": "MapR Edition",
             "defaultValue": "M3",
-            "toolTip": "The License of MapR Software that you want to use for this cluster.",
+            "toolTip": "MapR license edition for this deployment: Community (M3), Enterprise (M5), or Enterprise Database (M7)",
             "constraints": {
               "allowedValues": [
                 {
