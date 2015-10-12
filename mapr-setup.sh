@@ -49,6 +49,7 @@ ID=$(id -u)
 PAGER=${PAGER:-more}
 USER=$(id -n -u)
 INSTALLER=$(cd $(dirname $0) 2>/dev/null && echo $(pwd)/$(basename $0))
+export TERM=${TERM:-ansi}
 
 MAPR_ENVIRONMENT=
 MAPR_UID=${MAPR_UID:-5000}
@@ -75,8 +76,8 @@ MAPR_ARCHIVE_DEB=${MAPR_ARCHIVE_DEB:-mapr-latest-*.deb.tar.gz}
 MAPR_ARCHIVE_RPM=${MAPR_ARCHIVE_RPM:-mapr-latest-*.rpm.tar.gz}
 
 DEPENDENCY_DEB="python-pycurl openssh-client libssl1.0.0 sshpass sudo wget"
-DEPENDENCY_RPM="python-pycurl openssh-clients openssh-server openssl sshpass sudo wget which"
-DEPENDENCY_SUSE="java-1_8_0-ibm-devel libopenssl1_0_0 sudo wget which" # python[py]curl
+DEPENDENCY_RPM="nss python-pycurl openssh-clients openssh-server openssl sshpass sudo wget which"
+DEPENDENCY_SUSE="libopenssl1_0_0 sudo wget which" # python[py]curl
 
 HTTPD_DEB=${HTTPD_DEB:-apache2}
 HTTPD_RPM=${HTTPD_RPM:-httpd}
@@ -85,6 +86,7 @@ HTTPD_REPO_RPM=${HTTPD_REPO_RPM:-/var/www/html/mapr}
 
 OPENJDK_DEB=${OPENJDK_DEB:-openjdk-7-jdk}
 OPENJDK_RPM=${OPENJDK_RPM:-java-1.8.0-openjdk}
+OPENJDK_SUSE=${OPENJDK_SUSE:-java-1_8_0-openjdk-devel}
 
 #
 # return Codes
@@ -279,7 +281,7 @@ fetchDependencies() {
     formatMsg "\nInstalling package dependencies ($DEPENDENCY)"
     case $OS in
     redhat)
-        yum -q clean metadata
+        yum -q clean expire-cache
         if ! rpm -qa | grep -q epel-release; then
             yum -q -y install epel-release
             if [ $? -ne 0 ]; then
@@ -337,6 +339,7 @@ checkOS() {
         OS=redhat
     elif [ -f /etc/SuSE-release ]; then
         OS=suse
+        OSVER=$(grep VERSION /etc/SuSE-release | cut -d' ' -f3)
     elif uname -a | grep -q -i "ubuntu"; then
         OS=ubuntu
     else
@@ -355,10 +358,15 @@ checkOS() {
         ;;
     suse)
         DEPENDENCY=$DEPENDENCY_SUSE
+	if [ $OSVER -ge 12 ]; then
+            DEPENDENCY="python-pycurl $DEPENDENCY"
+        else
+            DEPENDENCY="python-curl $DEPENDENCY"
+        fi
         HTTPD=$HTTPD_RPM
         HTTPD_REPO=$HTTPD_REPO_RPM
         MAPR_ARCHIVE=${MAPR_ARCHIVE:-$MAPR_ARCHIVE_RPM}
-        OPENJDK=$OPENJDK_RPM
+        OPENJDK=$OPENJDK_SUSE
         ;;
     ubuntu)
         DEPENDENCY=$DEPENDENCY_DEB
@@ -621,7 +629,7 @@ createUser() {
     MAPR_GID=$TMP_GID
 
     # prompt for password
-    [ -z "$MAPR_PASSWORD" ] && MAPR_PASSWORD=$MAPR_USER
+    [ -z "$MAPR_PASSWORD" -a $PROMPT_SILENT = $YES ] && MAPR_PASSWORD=$MAPR_USER
     prompt "Enter '$MAPR_USER' password (\"q!\" to quit)" "$MAPR_PASSWORD" -s
     MAPR_PASSWORD=$ANSWER
     if [ $PROMPT_SILENT = $YES ]; then
@@ -632,7 +640,7 @@ createUser() {
     fi
     while [ "$MAPR_PASSWORD" != "$TMP_PASSWORD" ]; do
         messenger $WARN "Password for '$MAPR_USER' does not match"
-        prompt "Enter '$MAPR_USER' password (\"q!\" to quit)" "$MAPR_PASSWORD" -s
+        prompt "Enter '$MAPR_USER' password (\"q!\" to quit)" "" -s
         MAPR_PASSWORD=$ANSWER
         prompt "Confirm '$MAPR_USER' password (\"q!\" to quit)" "" -s
         TMP_PASSWORD=$ANSWER
@@ -669,7 +677,7 @@ baseurl=$MAPR_INSTALLER_URL$subdir
 gpgcheck=0
 
 EOM
-        yum -q -y makecache
+        yum -q -y makecache fast
         yum --disablerepo=* --enablerepo=epel,MapR_Installer -q -y install mapr-installer-definitions mapr-installer
     else
         (cd $HTTPD_REPO/installer/redhat ; yum -q -y --nogpgcheck localinstall mapr-installer*)
@@ -748,13 +756,13 @@ EOM
 }
 
 fetchVersions_redhat() {
-    MAPR_DEF_VERSION=$(rpm -q --queryformat '%{VERSION}' mapr-installer-definitions)
-    MAPR_SERVER_VERSION=$(rpm -q --queryformat '%{VERSION}' mapr-installer)
+    MAPR_DEF_VERSION=$(rpm -q --queryformat '%{VERSION}\n' mapr-installer-definitions | tail -n1)
+    MAPR_SERVER_VERSION=$(rpm -q --queryformat '%{VERSION}\n' mapr-installer | tail -n1)
 }
 
 fetchVersions_suse() {
-    MAPR_DEF_VERSION=$(rpm -q --queryformat '%{VERSION}' mapr-installer-definitions)
-    MAPR_SERVER_VERSION=$(rpm -q --queryformat '%{VERSION}' mapr-installer)
+    MAPR_DEF_VERSION=$(rpm -q --queryformat '%{VERSION}\n' mapr-installer-definitions | tail -n1)
+    MAPR_SERVER_VERSION=$(rpm -q --queryformat '%{VERSION}\n' mapr-installer | tail -n1)
 }
 
 fetchVersions_ubuntu() {
@@ -779,21 +787,26 @@ createPropertiesFile() {
     "port": $MAPR_PORT,
     "repo_core_url": "$MAPR_CORE_URL",
     "repo_eco_url": "$MAPR_ECO_URL",
-    "installer_version": "$MAPR_DEF_VERSION",
-    "services_version": "$MAPR_SERVER_VERSION"
+    "installer_version": "$MAPR_SERVER_VERSION",
+    "services_version": "$MAPR_DEF_VERSION"
 }
 EOM
     fi
 }
 
 reloadPropertiesFile() {
-    if [ ! -f /etc/init.d/mapr-installer ]; then
-        messenger "$ERROR" "/etc/init.d/mapr-installer: no such file"
+    if [ -f /etc/init.d/mapr-installer ]; then
+        RESULTS=$(service mapr-installer condreload)
+        if [ $? -ne 0 ]; then
+            messenger $ERROR "mapr-installer reload failed: $RESULTS"
+        fi
     fi
+}
 
-    RESULTS=$(service mapr-installer start || service mapr-installer reload)
+startServer() {
+    RESULTS=$(service mapr-installer condstart)
     if [ $? -ne 0 ]; then
-        messenger $ERROR "mapr-installer startup failed: $RESULTS"
+        messenger $ERROR "mapr-installer start failed: $RESULTS"
     fi
 }
 
@@ -848,11 +861,6 @@ remove() {
 ##
 ## MAIN
 ##
-
-set -x
-
-# Need to set terminal
-[ -z "${TERM:-}" ] && export TERM=ansi
 
 tput init
 
@@ -920,7 +928,7 @@ case "$1" in
     fetchInstaller_$OS
     fetchVersions_$OS
     createPropertiesFile
-    reloadPropertiesFile
+    startServer
     epilogue
     ;;
 reload)
@@ -944,6 +952,7 @@ update)
     fetchVersions_$OS
     updatePropertiesFile
     reloadPropertiesFile
+    startServer
     epilogue
     ;;
 *)
@@ -951,4 +960,3 @@ update)
     ;;
 esac
 
-set +x
