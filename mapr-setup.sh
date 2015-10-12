@@ -49,7 +49,6 @@ ID=$(id -u)
 PAGER=${PAGER:-more}
 USER=$(id -n -u)
 INSTALLER=$(cd $(dirname $0) 2>/dev/null && echo $(pwd)/$(basename $0))
-export TERM=${TERM:-ansi}
 
 MAPR_ENVIRONMENT=
 MAPR_UID=${MAPR_UID:-5000}
@@ -862,6 +861,10 @@ remove() {
 ## MAIN
 ##
 
+set -x
+
+[ -z "${TERM:-}" ] && export TERM=ansi
+
 tput init
 
 # Parse command line and set globals
@@ -959,4 +962,6 @@ update)
     usage
     ;;
 esac
+
+set +x
 
