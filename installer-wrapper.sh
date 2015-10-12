@@ -80,6 +80,12 @@ chmod a+x $BINDIR/deploy-installer.sh
 $BINDIR/deploy-installer.sh
 [ $? -ne 0 ] && exit 1
 
+# Bug in initial release of MapR 1.1 installer; need to 
+# restart the service here.
+#	TBD : Remove after official release
+service mapr-installer restart
+
+
 # Make sure the hostnames in our cluster resolve.   There
 # was a DNS issue in Azure at one point that caused problems here.
 CF_HOSTS_FILE=/tmp/maprhosts 
