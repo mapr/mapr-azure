@@ -73,3 +73,11 @@ AZURE RESOURCE NAMESPACE
 	different resource groups or subscriptions (you'll get a resource 
 	creation error for the storage accounts).
 
+
+TESTING UI
+	You can upload the createUiDefinition file to the public github 
+	and then test using the following URL.  Note the explicit link
+	to our mapr-azure/master repository for now.
+
+https://portal.azure.com/?clientOptimizations=false#blade/Microsoft_Azure_Compute/CreateMultiVmWizardBlade/internal_bladeCallId/anything/internal_bladeCallerParams/{"initialData":{},"providerConfig":{"createUiDefinition":"https%3A%2F%2Fraw.githubusercontent.com%2Fmapr%2Fmapr-azure%2Fmaster%2FcreateUiDefinition.json" }}
+
