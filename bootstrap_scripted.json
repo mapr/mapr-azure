@@ -9,10 +9,10 @@
             "type": "string"
         },
         "clusterEdition": {
-            "type": "string",
+            "type": "string"
         },
         "maprVersion": {
-            "type": "string",
+            "type": "string"
         },
         "scriptsUri": {
             "type": "string"
