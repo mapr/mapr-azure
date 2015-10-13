@@ -62,6 +62,19 @@ TESTING
 			-e ap.json \
 			-d <DeploymentName>
 
+	Each Azure instance has an agent process that handles
+	the extra steps defined in the template.   The scripts are
+	downloaded to
+		/var/lib/waagent/Microsoft*/download/0
+	You can confirm that everything shows up there for proper
+	execution of post-deployment configuration.
+
+	The logs are in
+		/var/log/azure/Microsoft*/<azure-ver>/*.log
+	<azure-ver> is usually a simple multi-level version string
+	(eg 1.2.2.0).   The key log for this deployment is
+		extension.log
+
 
 AZURE RESOURCE NAMESPACE
 	The templates create a series of resources within the specified
