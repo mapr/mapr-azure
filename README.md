@@ -15,13 +15,13 @@ currently defined in the template itself (scaled to 2 1TB volumes
 per vcore for each instance type).
 
 The Control System interface to the cluster will be available at
-	https://[cluster_node_0]:8443
+    https://[cluster_node_0]:8443
 
 The installation itself utilizes the MapR Installer service
 (deployed on node0).   Should you wish to install additional
 ecosystem components on the cluster, you can connect to that 
 service at 
-	https://[cluster_node_0]:9443
+    https://[cluster_node_0]:9443
 
 For more details on the template itself and customizing it to your
 needs, please reference DEVELOPERS.txt in this repository.
