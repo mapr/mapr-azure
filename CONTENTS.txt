@@ -1,0 +1,46 @@
+
+The files in this repo support the templatized deployment of a 
+MapR cluster within Azure. 
+
+Summary:
+	At the top level, the azuredeploy.json (or az_scripte.json) 
+	template is selected, and a set of parameters provided 
+	(aligning with the azuredeploy-parameters.json file).
+		NOTE: Multiple other json files are "included" in the
+		template, but other than the bootstrap*json files, there
+		is little need to change any of them.
+
+
+azuredeploy.json :
+bootstrap.json :
+installer-wrapper.sh :
+	Azure template for MapR installation driven by MapR Installer service.
+
+az_scripted.json :
+bootstrap_scripted.json :
+azure-wrapper.sh :
+	Azure template for scripted installation (see the deploy-mapr*.sh scripts).
+		NOTE: This framework is best supported by a WASB copy of
+		the github repo as the artifactsBaseUrl rather than the 
+		public github repo itself.   We have seen many problems with
+		download failures from https://raw.githubusercontent.com
+		when multiple nodes are spun up in parallel
+
+<instance_type>*.json :
+	Clones of the different instance configuration details.   The
+	goal is to mazimize the storage capacity of each node (2 virtual
+	disk spindles per virtual core).
+
+mainTemplate.json :
+createUiDefinition.json :
+	Support for Azure Marketplace.   mainTemplate is simply  a clone
+	of azuredeploy.json or az_scripted.json ... with the following
+	changes :
+		- remove default for "artifactsBaseUrl"
+		- remove default and allowedValues for "location" parameter
+		- remove default for "maprPassword" 
+		- set default for "sshKey" and "adminPassword" to "" 
+			(required because the GUI won't pass both in to template).
+		- adjust default and allowedValues for "vmSize" if you
+			need to constrain the set of supported VM's
+
