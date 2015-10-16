@@ -177,8 +177,15 @@ sh $BINDIR/gen-lock-cluster.sh $SUDO_USER $AUTH_METHOD
 	# Invoke installer
 	#	By default, it will go to https://localhost:9443 ... which is fine
 	#	ssh-user/ssh-password has to match what is in the template
+	#
+	# PYTRACE enables python tracing to stdout
+	#	--trace [-t] traces everything
+	#	--trackcalls posts cross-file function references
+
+PYTRACE="/opt/mapr/installer/build/python/bin/python -m trace -t "
+
 chmod a+x $BINDIR/deploy-mapr-cluster.py
-echo $BINDIR/deploy-mapr-cluster.py -y \
+echo $PYTRACE $BINDIR/deploy-mapr-cluster.py -y \
 	--ssh-user $SUDO_USER \
 	--ssh-password $SUDO_PASSWD \
 	--cluster $MAPR_CLUSTER \
@@ -188,7 +195,7 @@ echo $BINDIR/deploy-mapr-cluster.py -y \
 	--mapr-edition ${3:-M3} \
 	--mapr-version ${4:-5.0.0} 
 
-$BINDIR/deploy-mapr-cluster.py -y \
+$PYTRACE $BINDIR/deploy-mapr-cluster.py -y \
 	--ssh-user $SUDO_USER \
 	--ssh-password $SUDO_PASSWD \
 	--cluster $MAPR_CLUSTER \
