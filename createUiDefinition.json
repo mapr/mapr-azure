@@ -19,6 +19,11 @@
         "type": "Microsoft.Compute.UserNameTextBox",
         "label": "SysAdmin Username",
         "toolTip": "Admin username for the virtual machines. Same Credientials is to SSH to the box.",
+        "constraints": {
+          "required": true,
+          "regex": "^[A-z][A-z0-9]{4,15}$",
+          "validationMessage": "Admin username between 5 and 16 characters long, and can contain only letters and numbers."
+        },
         "osPlatform": "Linux"
       },
       {
