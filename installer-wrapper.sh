@@ -182,7 +182,10 @@ sh $BINDIR/gen-lock-cluster.sh $SUDO_USER $AUTH_METHOD
 	#	--trace [-t] traces everything
 	#	--trackcalls posts cross-file function references
 
-PYTRACE="/opt/mapr/installer/build/python/bin/python -m trace -t "
+MIPKG=`rpm -qa --qf "%{NAME}-%{VERSION}\n" mapr-installer`
+if [ "{MIPKG%.*}" = "mapr-installer-1.0" ] ; then
+	PYTRACE="/opt/mapr/installer/build/python/bin/python -m trace -t "
+fi
 
 chmod a+x $BINDIR/deploy-mapr-cluster.py
 echo $PYTRACE $BINDIR/deploy-mapr-cluster.py -y \
