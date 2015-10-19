@@ -183,7 +183,7 @@ sh $BINDIR/gen-lock-cluster.sh $SUDO_USER $AUTH_METHOD
 	#	--trackcalls posts cross-file function references
 
 MIPKG=`rpm -qa --qf "%{NAME}-%{VERSION}\n" mapr-installer`
-if [ "{MIPKG%.*}" = "mapr-installer-1.0" ] ; then
+if [ "${MIPKG%.*}" = "mapr-installer-1.0" ] ; then
 	PYTRACE="/opt/mapr/installer/build/python/bin/python -m trace -t "
 fi
 
