@@ -190,11 +190,12 @@ fi
 chmod a+x $BINDIR/deploy-mapr-cluster.py
 echo $PYTRACE $BINDIR/deploy-mapr-cluster.py -y \
 	--ssh-user $SUDO_USER \
-	--ssh-password $SUDO_PASSWD \
+	--ssh-password \$SUDO_PASSWD \
 	--cluster $MAPR_CLUSTER \
 	--hosts-file /tmp/maprhosts \
 	--disks-file /tmp/MapR.disks \
-	--mapr-password $MAPR_PASSWD \
+	--eco-version hive=none \
+	--mapr-password \$MAPR_PASSWD \
 	--mapr-edition ${3:-M3} \
 	--mapr-version ${4:-5.0.0} 
 
@@ -204,8 +205,12 @@ $PYTRACE $BINDIR/deploy-mapr-cluster.py -y \
 	--cluster $MAPR_CLUSTER \
 	--hosts-file /tmp/maprhosts \
 	--disks-file /tmp/MapR.disks \
+	--eco-version hive=none \
 	--mapr-password $MAPR_PASSWD \
 	--mapr-edition ${3:-M3} \
 	--mapr-version ${MAPR_VERSION:-5.0.0} 
 
-exit 0
+dmcRet=$?
+echo "Cluster Installation returned $dmcRet"
+
+exit $dmcRet
