@@ -555,10 +555,22 @@ update_site_config() {
 	CORE_CONF_FILE=${HADOOP_CONF_DIR}/core-site.xml
 	YARN_CONF_FILE=${HADOOP_CONF_DIR}/yarn-site.xml
 
-		# core-site changes need to include namespace mappings
+		# core-site changes 
+		#	- enable impersonation
+		#	- include namespace mappings
     sed -i '/^<\/configuration>/d' ${CORE_CONF_FILE}
 
 	echo "
+<property>
+  <name>hadoop.proxyuser.mapr.hosts</name>
+  <value>*</value>
+</property> 
+
+<property>
+  <name>hadoop.proxyuser.mapr.groups</name>
+  <value>*</value>
+</property> 
+
 <property>
   <name>hbase.table.namespace.mappings</name>
   <value>*:/tables</value>
