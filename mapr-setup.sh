@@ -861,9 +861,7 @@ remove() {
 ## MAIN
 ##
 
-set -x
-
-[ -z "${TERM:-}" ] && export TERM=ansi
+export TERM=${TERM:-ansi}
 
 tput init
 
@@ -963,5 +961,5 @@ update)
     ;;
 esac
 
-set +x
+exit 0
 
