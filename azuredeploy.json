@@ -97,7 +97,7 @@
     "variables": {
         "imagePublisher" : "OpenLogic",
         "imageOffer" : "CentOS",
-        "imageSKU" : "7.0",        
+        "imageSKU" : "6.6",
         "scriptsUri" : "[concat(parameters('artifactsBaseUrl'),'/')]",
         "nicBasename": "[concat(parameters('clusterName'),'-nic')]",
         "publicIPAddressBasename": "[concat(parameters('clusterName'),'-publicIP')]",
