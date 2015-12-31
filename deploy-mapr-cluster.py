@@ -1,34 +1,39 @@
 #!/opt/mapr/installer/build/python/bin/python
 #
-#   # Use installer python for now inestead of #!/usr/bin/env python
+#   local python     #!/usr/bin/env python
 #
 #   NOTE: Requires Python 2.7 and "requests" package
 #
 # Usage
+#
+# Exit Codes :
+#   0 : Success (or interactive decision to abort)
+#   1 : Failure : Failed initialization phase (INIT)
+#   2 : Failure : Cluster validation failed (CHECK phase)
+#   3 : Failure : INSTALLATION failed
 #
 # Important details about defaults
 #   There are multiple levels of attribute defaults in this
 #   script.  The MIDriver class __could__ be leveraged elsewhere, 
 #   so it has a simple set of defaults:
 #       installer_url = https://localhost:9443
-#       mapr_version : 4.1.0
+#       mapr_version : 5.0.0
 #       mapr_edition = 'M3'
 #       mapr_user = mapr
 #       mapr_password = mapr
 #       cluster = 'my.cluster.com'
 #       ecosystem defaults
-#           { 'drill' : '1.2', 'hbase' : '0.98', 'pig' : '0.14' }
+#           { 'drill' : '1.2', 'hbase' : '0.98', 'hive' : '1.2', 'pig' : '0.14' }
 #
 #   The command line parsing also has some defaults ... which 
 #   help when setting up the driver object in this temp wrapper.
 #       installer_url = https://localhost:9443
-#       mapr_version : 4.1.0
+#       mapr_version : 5.0.0
 #       mapr_edition = 'M3'
 #       mapr_user = mapr
 #       mapr_password = MapR
 #       cluster = 'MyCluster'
 #       ssh-user = 'ec2-user'
-#       ssh-keyfile = "~/.ssh/id_launch
 #
 # TBD
 #   Add logic to support "--eco-verison <product>=latest" ... for latest 
@@ -45,7 +50,45 @@ import ssl
 import requests,json
 requests.packages.urllib3.disable_warnings()
 
+import logging
+import logging.config 
+
 __author__ = "MapR"
+ 
+
+# We'll use this struct to initialize logging below.
+# We accept command line options to set log level and output file.
+#
+#   We can't be smarter about the logfile here.
+#   See below for how we handle overriding the default location.
+#
+logging_config = dict(
+    version = 1,
+    formatters = {
+        'f_console': {'format':
+              '%(name)-12s %(levelname)-8s %(message)s'},
+        'f_file': {'format':
+              '%(asctime)s %(name)-12s %(levelname)-8s %(message)s'}
+        },
+    handlers = {
+        'ch': {'class': 'logging.StreamHandler',
+              'stream': 'ext://sys.stdout',
+              'formatter': 'f_console',
+              'level': logging.DEBUG},
+        'fh': {'class': 'logging.FileHandler',
+              'filename': '/tmp/dmc.log',
+              'formatter': 'f_file',
+              'level': logging.INFO}
+        },
+    loggers = {
+        '': {'handlers': ['ch', 'fh'],
+                 'level': logging.DEBUG},
+        'root': {'handlers': ['ch', 'fh'],
+                 'level': logging.DEBUG},
+        'app': {'handlers': ['ch','fh'],
+                 'level': logging.INFO}
+        }
+)
 
 
 # Simple class to drive the MapR Installer service
@@ -57,9 +100,9 @@ class MIDriver:
         self.mapr_user = user
         self.mapr_password = passwd
         self.cluster = 'my.cluster.com'
-        self.mapr_version = '4.1.0'
+        self.mapr_version = '5.0.0'
         self.mapr_edition = 'M3'
-        self.eco_defaults = { 'drill' : '1.2', 'hbase' : '0.98', 'pig' : '0.14' }
+        self.eco_defaults = { 'drill' : '1.2', 'hbase' : '0.98', 'hive' : '1.2', 'pig' : '0.14' }
         self.disks = []
         self.hosts = []
         self.services = {}
@@ -78,12 +121,15 @@ class MIDriver:
         self.current_state = None
         self.license_uploaded = False
 
+            # And our logger (use global default logger for now)
+        self.logger = logging.getLogger()
+
         # Disable status messages during load
     def setSilentRunning (self, newSilent) :
         if newSilent == True :
-            silent_running = True
+            self.silent_running = True
         elif newSilent == False :
-            silent_running = False
+            self.silent_running = False
 
         # TBD : Be smarter for setting cluster and edition
         #   check for 0-lenghth string or list.
@@ -121,14 +167,19 @@ class MIDriver:
             self.stage_password = newPassword
 
     def setHosts(self, newHosts) :
+        self.logger.debug ("MIDriver::setHosts(%s)", ','.join(newHosts))
         if newHosts != None :
             self.hosts = newHosts
+            self.logger.debug ("  self.hosts = %s", ','.join(self.hosts))
 
     def setDisks(self, newDisks) :
+        self.logger.debug ("MIDriver::setDisks(%s)", ','.join(newDisks))
         if newDisks != None :
             self.disks = newDisks
+            self.logger.debug ("  self.disks = %s", ','.join(self.disks))
 
     def swagger_get(self,target) :
+        self.logger.debug ("MIDriver::swagger_get(%s)", target)
         errcnt = 0
         while errcnt < 5 :
             try :
@@ -138,7 +189,9 @@ class MIDriver:
                     verify = False)
             except requests.ConnectionError :
                 errcnt += 1
+                self.logger.debug ("  connection error %d", errcnt)
             else :
+                self.logger.debug ("  rval: "+json.dumps(r.json(),indent=4,sort_keys=True))
                 return r
 
     def swagger_patch(self, target, payload) :
@@ -260,7 +313,7 @@ class MIDriver:
         # Hive (with only local MySQL supported for now)
     def addHiveServices (self, hive_version = None, hive_user = None, hive_password = None, hive_db = "local") :
         if hive_version == None :
-            hive_version = self.eco_defaults.get('hive', "0.13")
+            hive_version = self.eco_defaults.get('hive', "1.2")
         elif hive_version.lower() == "none" :
             if 'mapr-mysql' in self.services :
                 del self.services['mapr-mysql']
@@ -272,7 +325,7 @@ class MIDriver:
                 del self.services['mapr-hiveserver2']
             return
         elif self.service_available ('hive', hive_version) == False : 
-            hive_version = self.eco_defaults.get('hive', "0.13")
+            hive_version = self.eco_defaults.get('hive', "1.2")
 
         if hive_db == 'local' :
             self.services["mapr-mysql"] = { "enabled" : True }
@@ -324,13 +377,11 @@ class MIDriver:
 
 
     def initializeClusterConfig(self) :
+        self.logger.debug ("MIDriver::initializeClusterConfig()")
         payload = { 'cluster_admin_password' : self.mapr_password } 
         self.config_patch(payload)
 
         payload = { 'cluster_name' : self.cluster } 
-        self.config_patch(payload)
-
-        payload = { 'disks' : self.disks } 
         self.config_patch(payload)
 
         payload = { 'ssh_id' : self.ssh_user }
@@ -346,6 +397,12 @@ class MIDriver:
         if len(self.hosts) > 0 : 
             payload = { 'hosts' : self.hosts } 
             self.config_patch(payload)
+
+        if len(self.disks) > 0 :
+            payload = { 'disks' : self.disks }
+            self.config_patch(payload)
+        else :
+            self.logger.warn ("initializeClusterConfig called when no disks were specified")
 
         # For automated license installation, we'll use an internal
         # account (as a temporary workaround)
@@ -370,7 +427,7 @@ class MIDriver:
             # (long term, we'll drop this)
         r = self.config_get()
         if self.silent_running == False :
-            print json.dumps(r.json(),indent=4,sort_keys=True)
+            self.logger.info ("\n"+json.dumps(r.json(),indent=4,sort_keys=True))
 
             # Handle the case where a CHECK has failed and
             # we're just trying again
@@ -386,11 +443,19 @@ class MIDriver:
         return rc
 
 
-        # The default service provisioning can leave "gaps",
-        # nodes that don't have fileserver/nodemanager/nfs on them.
-        # For most small/mid-size clusters, that's not a good plan
-        # For now, make sure that ALL nodes have those services
+        # The default service provisioning can leave "gaps";
+        # fix those here.
+        #   1.  node0 always has webserver 
+        #   2.  all nodes have fileserver/nodemanager/nfs
+        #       (makes sense for even 6-10 node clusters in the cloud)
     def updateClusterConfig(self) :
+        self.logger.debug ("MIDriver::updateClusterConfig")
+        self.logger.debug ("  hosts:"+','.join(self.hosts))
+
+            # webserver
+        svc_target="/api/services/"+"mapr-webserver-"+self.mapr_version
+        self.swagger_patch (svc_target, {"hosts" : self.hosts[0]})
+
             # fileserver
         svc_target="/api/services/"+"mapr-fileserver-"+self.mapr_version
         self.swagger_patch (svc_target, {"hosts" : self.hosts})
@@ -416,6 +481,8 @@ class MIDriver:
         if self.stage_user == None  or  self.mapr_edition == 'M3' :
             return 
 
+        self.logger.info ( "configureTrialLicense: user %s for edition %s", self.stage_user, self.mapr_edition )
+
         license_url = self.stage_license_url + "/LatestDemoLicense-" + self.mapr_edition + ".txt"
 
         license = requests.get(license_url,
@@ -423,7 +490,7 @@ class MIDriver:
                 headers = { 'Content-Type' : 'text/plain' }) 
 
         if license.reason != 'OK' :
-            print ( "Failed to retrieve trial license" )
+            self.logger.info ( "Failed to retrieve trial license" )
             return False
 
         self.config_patch ( {'license' : license.text} )
@@ -444,7 +511,7 @@ class MIDriver:
                 curTime = datetime.datetime.now()
                 timeHdr = datetime.datetime.strftime (curTime, "%H:%M:%S")
                 if self.silent_running == False :
-                    print ("%s  : Waiting for %s (current state %s)" % (timeHdr, tgtState, curState) )
+                    self.logger.info ("%s  : Waiting for %s (current state %s)", timeHdr, tgtState, curState )
                     sys.stdout.flush()
 
                 maxWait -= waitInterval
@@ -454,7 +521,7 @@ class MIDriver:
                 break
 
         if self.silent_running == False :
-            print ( "Installer state %s" % (curState) )
+            self.logger.info ( "Installer state %s", curState )
             sys.stdout.flush()
 
         self.current_state = curState 
@@ -462,6 +529,15 @@ class MIDriver:
 
 
     def checkClusterConfig(self) :
+        self.logger.debug ("MIDriver::checkClusterConfig()")
+        if self.hosts == None :
+            logger.critical ("No hosts specified")
+            return (False)
+
+        if self.disks == None  or  len(self.disks) <= 0 :
+            logger.critical ("No disks specified")
+            return (False)
+
         payload = { 'state' : 'CHECKING' } 
         self.process_patch (payload)
         rc = self.waitForProcessState( 'CHECKED' )
@@ -484,7 +560,16 @@ class MIDriver:
         return (True)
 
     def doInstall(self) :
-        payload = { 'state' : 'INSTALLING' } 
+        self.logger.debug ("MIDriver::doInstall()")
+
+            # Handle case were earlier invocation has
+            # left us in INSTALL_ERROR state and we should
+            # simply retry the install.   This happens in
+            # cloud environments when ssh connections time out
+        if self.current_state == "INSTALL_ERROR" :
+            payload = { 'state' : 'RETRYING' } 
+        else :
+            payload = { 'state' : 'INSTALLING' } 
         self.process_patch (payload)
         rc = self.waitForProcessState( 'INSTALLED' , 5400, 20)
         if rc != True :
@@ -503,23 +588,23 @@ class MIDriver:
         return (True)
 
     def printCoreServiceLayout(self, svc_list=["zookeeper","cldb","fileserver","nodemanager","resourcemanager" ]) :
-        print ("")
-        print ("Cluster Services Configuration: ")
+        self.logger.info ("")
+        self.logger.info ("Cluster Services Configuration: ")
         for svc in svc_list :
             svc_hosts = self.get_service_hosts (svc, self.mapr_version)
-            print (svc + ": " + ','.join(svc_hosts))
-        print ("")
+            self.logger.info (svc + ": " + ','.join(svc_hosts))
+        self.logger.info ("")
         sys.stdout.flush()
 
     def printMCS(self) :
         mcs_hosts = self.get_service_hosts ('webserver', self.mapr_version)
-        print ("MCS console(s) available at:")
+        self.logger.info ("MCS console(s) available at:")
         for h in mcs_hosts :
-            print ("    https://"+h+":8443") 
+            self.logger.info ("    https://"+h+":8443") 
         sys.stdout.flush()
 
     def printSuccessUrl(self) :
-        print ("MapR Installer Service available at "+self.installer_url+"/#/complete") 
+        self.logger.info ("MapR Installer Service available at "+self.installer_url+"/#/complete") 
         sys.stdout.flush()
 
 # Variable we should be grabbing based on customer input or deployment infrastructure
@@ -581,9 +666,13 @@ def gatherArgs () :
         help="Execute silently, without any status output")
     parser.add_argument("-y","--yes", default=False, action="store_true",
         help="Execute without prompting user (status messages will still be printed).")
+    parser.add_argument("-l", "--log-level", default="INFO",
+        help="Relative logging level (DEBUG,INFO,WARN,ERROR,CRITICAL")
+    parser.add_argument("--log-file", 
+        help="log file for this execution")
     parser.add_argument("--cluster", default="MyCluster",
         help="Cluster name")
-    parser.add_argument("--mapr-version", default="4.1.0",
+    parser.add_argument("--mapr-version", default="5.0.0",
         help="MapR Software Version")
     parser.add_argument("--mapr-edition", default="M3",
         help="MapR License Edition (M3 {community}, M5 {enterprise}, or M7 {database})")
@@ -595,7 +684,7 @@ def gatherArgs () :
         help="URI for MapR installer service")
     parser.add_argument("--ssh-user", default="ec2-user",
         help="ssh user for system access")
-    parser.add_argument("--ssh-keyfile",
+    parser.add_argument("--ssh-keyfile", 
         help="ssh private key file")
     parser.add_argument("--ssh-password",
         help="password for ssh user (if no key file is given)")
@@ -622,87 +711,129 @@ def gatherArgs () :
     return (args)
 
 
-# Read in hosts file.  If file doesn't exist, simply return
+# Read in hosts/disks file.  If file doesn't exist, simply return
 # empty list (we should do better here).
 # NOTE:
 #   This is of the form it is to handle the legacy condition where
 #   the list of hosts is generated by the Amazon Cloud Formation 
 #   template (and the host name is accompanied by other info for
-#   assisting in system configuration)
-def genHostsList (hostsFile) :
-    hosts = [] 
+#   assisting in system configuration).  For disks lists, this
+#   is actually overkill ... but cleaner to have a single 
+#   framework.
+def genItemsList (itemsFile) :
+    items = [] 
 
-    if not os.path.isfile(hostsFile) :
-        return (hosts)
+    if not os.path.isfile(itemsFile) :
+        return (items)
 
         # Careful with Popen here.   The "$1" in the awk command
         # needs to make it all the way through the shell invocation,
         # and that was a bit problematic.
-    proc = subprocess.Popen('/usr/bin/env awk "{print \$1}" '+hostsFile, shell=True, stdout=subprocess.PIPE)
+    proc = subprocess.Popen('/usr/bin/env awk "{print \$1}" '+itemsFile, shell=True, stdout=subprocess.PIPE)
 
     while ( True ) :
-        h = proc.stdout.readline() 
-        if h == '' :
+        nextItem = proc.stdout.readline() 
+        if nextItem == '' :
             break
         else :
-            h = h.rstrip()
+            nextItem = nextItem.rstrip()
 
-        if ( len (h) > 0 ) :
-            hosts.append (h)
+        if ( len (nextItem) > 0 ) :
+            items.append (nextItem)
 
-    return (hosts)
+    return (items)
 
 
 # Expand the arguments that need expanding just in case.
 # Actual validation of will be done in the MIDriver class
 # (since we can set some rational defaults there)
+#
+#   TBD : log rational errors if files specified but not found
 def checkArgs (argList) :
-    if argList.hosts == None :
-        if argList.hosts_file != None :
-            argList.hosts = genHostsList (argList.hosts_file)
+    if argList.hosts == None  and  argList.hosts_file != None :
+        if os.path.isfile(argList.hosts_file) :
+            argList.hosts = genItemsList (argList.hosts_file)
     else :
         newHosts = argList.hosts.split(",")
         argList.hosts = newHosts
 
-    if argList.disks == None :
-        if argList.disks_file != None :
-            if os.path.isfile(argList.disks_file) :
-                newDisks = []
-                proc = subprocess.Popen('/usr/bin/env cat '+argList.disks_file, shell=True, stdout=subprocess.PIPE)
-                while ( True ) :
-                    d = proc.stdout.readline() 
-                    if d == '' :
-                        break
-                    else :
-                        d = d.rstrip()
-
-                    if ( len (d) > 0 ) :
-                        newDisks.append (d)
-
-                argList.disks = newDisks
+    if argList.disks == None  and  argList.disks_file != None :
+        if os.path.isfile(argList.disks_file) :
+            argList.disks = genItemsList (argList.disks_file)
     else :
         newDisks = argList.disks.split(",")
         argList.disks = newDisks
 
         # Extract key file (if possible)
     if argList.ssh_keyfile != None : 
-        with open (argList.ssh_keyfile, "r") as keyfile:
-            ssh_key = keyfile.read()
-        argList.ssh_key = ssh_key
+        if os.path.isfile(argList.ssh_keyfile) :
+            with open (argList.ssh_keyfile, "r") as keyfile:
+                ssh_key = keyfile.read()
+            argList.ssh_key = ssh_key
 
     return argList
 
 
 
-# Parse our command line, do some minimal error checking
-# and variable expansion
+#  logging.basicConfig(filename="/tmp/dmc.log", level=logging.INFO, filemode="w")
+
+logging.config.dictConfig(logging_config)
+logger = logging.getLogger()
+logger.info('Launching deploy-mapr-cluster.py')
+
+
+# Parse our command line (tough to log to an external file at this point)
 myArgs = gatherArgs()
+
+# Set log file and level (since we just parsed them
+# from the the command line args).
+#   NOTE: This logic only works for a SINGLE FileHandler
+#   object within our logger.
+sLogFile = myArgs.log_file
+if sLogFile != None  and  os.access(os.path.dirname(sLogFile), os.W_OK) :
+    formatter = None
+    for hdlr in logger.handlers :
+        if isinstance (hdlr, logging.FileHandler) :
+            formatter = hdlr.formatter
+            logger.removeHandler (hdlr)
+
+    if formatter == None :
+        formatter = logging.Formatter('%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
+
+    newh = logging.FileHandler(sLogFile)
+    newh.setFormatter(formatter)
+    logger.addHandler (newh)
+    logger.info ("Log output file set to %s", sLogFile)
+
+iLogLevel = getattr (logging, myArgs.log_level.upper(), None)
+if not isinstance (iLogLevel, int) :
+    logger.info('Invalid log level (%s)', myArgs.log_level)
+else :
+    logger.setLevel(iLogLevel)
+    logger.info('Log level set to %s', myArgs.log_level)
+
+
+# Next, so some minimal error checking and variable expansion
 checkedArgs = checkArgs (myArgs)
 
     # Convert Namespace to a Dictionary (to get rid of our
-    # "null" values" and allow iteration).
-# argDict = vars(checkedArgs)
-# print json.dumps(argDict,indent=4,sort_keys=True)
+    # "null" values" and allow iteration).  For now, this is just debug
+    #   Mask out ssh_key and account passwords
+    #   NOTE: must be a new object, otherwise we overwrite checkedArgs)
+argDict = dict(vars(checkedArgs))
+pentry = argDict.pop ('ssh_key', None)
+if pentry != None :
+    argDict['ssh_key'] = pentry[:8]+'...'
+
+for pkey in [ 'mapr_password', 'ssh_password', 'portal_password', 'stage_password' ] :
+    pentry = argDict.pop (pkey, None)
+    if pentry == None :
+        argDict[pkey] = None                # leave empty entry in dict
+    else :
+        argDict[pkey] = '********'
+
+logger.debug ("Launching MIDriver with these arguments:")
+logger.debug ("\n"+json.dumps(argDict,indent=4,sort_keys=True))
 
 # cont = query_yes_no ("Continue with installation ?", "no")
 # if cont != True :
@@ -739,7 +870,7 @@ if eco_overrides != None :
         entry = el[0].split ('=')
         eco_versions[entry[0]] = entry[1]
 
-# print eco_versions
+logger.debug ("Ecosystem Package Overrides: "+json.dumps(eco_versions))
 
 # Set up services ... could be much smarter here 
 #   (especially about the versioning for each service).
@@ -779,25 +910,33 @@ if operationOK == True :
         if cont != True :
             exit (0)
 else :
-    print ( "Failed to initialized installer services; aborting" )
-    exit (0)
+    logger.error ( "Failed to initialized installer services; aborting" )
+    exit (1)
 
-operationOK = driver.checkClusterConfig()
-if operationOK == True :
-    if checkedArgs.yes == False : 
-        cont = query_yes_no ("Configuration validated; continue with INSTALL ?", "yes")
-        if cont != True :
-            exit (0)
-else :
-    print ( "Failed to validate configuration; aborting" )
-    exit (0)
+# If the Installer service is in "INSTALL_ERROR" mode, we should
+# skip the checkClusterConfig step and just "retry" the install.
+# The doInstall routine handles that logic.
+#
+if driver.current_state != "INSTALL_ERROR" :
+    operationOK = driver.checkClusterConfig()
+    if operationOK == True :
+        if checkedArgs.yes == False : 
+            cont = query_yes_no ("Configuration validated; continue with INSTALL ?", "yes")
+            if cont != True :
+                exit (0)
+    else :
+        logger.error ( "Failed to validate configuration; aborting" )
+        exit (2)
 
 operationOK = driver.doInstall()
 if operationOK == False :
-    print ( "Failed to complete cluster installation; aborting" )
-    exit (0)
+    logger.error ( "Failed to complete cluster installation; aborting" )
+    exit (3)
 
 if checkedArgs.quiet == False : 
-    print ( "" )
+    logger.info ( "" )
     driver.printSuccessUrl()
     driver.printMCS()
+
+logger.info('deploy-mapr-cluster.py completed')
+exit (0)
