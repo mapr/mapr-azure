@@ -1,7 +1,13 @@
 
+	NOTE: This is the private development version (mapr/private-azure).
+	The public repository is mapr/mapr-azure.  Because the repo is
+    private, the artifactsBaseUrl MUST include proper credentials
+    in order for the deployment to work.
+
+
 The files in this repo support the templatized deployment of a 
 MapR cluster within Azure. 
-
+	
 Summary:
 	At the top level, the azuredeploy.json (or az_scripte.json) 
 	template is selected, and a set of parameters provided 

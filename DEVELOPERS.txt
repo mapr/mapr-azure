@@ -90,7 +90,8 @@ AZURE RESOURCE NAMESPACE
 TESTING UI
 	You can upload the createUiDefinition file to the public github 
 	and then test using the following URL.  Note the explicit link
-	to our mapr-azure/master repository for now.
+	to our mapr/mapr-azure/master repository for now.
+		(testing the private repository would require mapr/private-azure/master)
 
 https://portal.azure.com/?clientOptimizations=false#blade/Microsoft_Azure_Compute/CreateMultiVmWizardBlade/internal_bladeCallId/anything/internal_bladeCallerParams/{"initialData":{},"providerConfig":{"createUiDefinition":"https%3A%2F%2Fraw.githubusercontent.com%2Fmapr%2Fmapr-azure%2Fmaster%2FcreateUiDefinition.json" }}
 
