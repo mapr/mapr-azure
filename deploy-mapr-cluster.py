@@ -97,6 +97,7 @@ class MIDriver:
             # All our REST traffic to the Installer uses these headers
         self.headers = { 'Content-Type' : 'application/json' } 
         self.installer_url = url
+        self.installer_session = requests.Session()
         self.mapr_user = user
         self.mapr_password = passwd
         self.cluster = 'my.cluster.com'
@@ -183,7 +184,7 @@ class MIDriver:
         errcnt = 0
         while errcnt < 5 :
             try :
-                r = requests.get(self.installer_url + target,
+                r = self.installer_session.get(self.installer_url + target,
                     auth = (self.mapr_user, self.mapr_password),
                     headers = self.headers,
                     verify = False)
@@ -195,7 +196,7 @@ class MIDriver:
                 return r
 
     def swagger_patch(self, target, payload) :
-        requests.patch(self.installer_url + target,
+        self.installer_session.patch(self.installer_url + target,
                 auth = (self.mapr_user, self.mapr_password),
                 headers = self.headers,
                 verify = False,
@@ -214,7 +215,7 @@ class MIDriver:
         self.swagger_patch ("/api/process", payload)
 
     def services_get(self,payload=None) :
-        r = requests.get(self.installer_url + "/api/services",
+        r = self.installer_session.get(self.installer_url + "/api/services",
                 auth = (self.mapr_user, self.mapr_password),
                 headers = self.headers,
                 params = payload, 
