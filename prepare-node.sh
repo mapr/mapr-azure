@@ -165,6 +165,15 @@ function update_os_rpm() {
 	yum install -y bind-utils less lsof
 	yum install -y clustershell pdsh
 	yum install -y sshpass
+
+		# Patch for CentOS 7.0; force mapr-* init scripts to 
+		# avoid use of systemctl (needed for MapR 4.1.0 and 5.0.0)
+		#	... DISABLED FOR NOW ... 
+#	initfuncs=/etc/init.d/functions
+#	if [ -f $initfuncs ] ; then
+#		[ grep -q _use_systemctl=1 $initfuncs ] &&
+#		  sed -i -e '/\/etc\/init.d\/\*/i\/etc/init.d/mapr-*)\n_use_systemctl=0\n;;' $initfuncs
+#	fi
 }
 
 # Make sure that NTP service is sync'ed and running

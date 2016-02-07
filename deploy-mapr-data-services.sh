@@ -48,6 +48,11 @@ MAPR_USER_DIR=`eval "echo ~${MAPR_USER}"`
 HADOOP_HOME="$(ls -d ${MAPR_HOME}/hadoop/hadoop-2*)"
 HADOOP_CONF_DIR=${HADOOP_HOME}/etc/hadoop
 
+# For secure clusters, leverage the admin user's ticket for our
+# maprcli operations
+grep -q -e "secure=true" /opt/mapr/conf/mapr-clusters.conf
+[ $? -eq 0 ] && export MAPR_TICKETFILE_LOCATION=/opt/mapr/conf/mapruserticket
+
 
 # Helper utility to log the commands that are being run and
 # save any errors to a log file
@@ -64,6 +69,9 @@ c() {
 }
 
 # Wait for hive services to come on line
+#	Warden reports "running" well before the service is really
+#	running.   We'll wait for the listen port port to be active 
+#	as well.
 function wait_for_hive_service()
 {
 	svc=$1
@@ -75,8 +83,42 @@ function wait_for_hive_service()
 	while [ $i -lt $MAX_WAIT_TIME ] 
 	do
 		hadoop fs -stat /  &> /dev/null
-		meta_running=`maprcli node list -filter "[service==$svc]" -columns name -noheader | wc -l`
-		if [ ${meta_running:-0} -ge 1 ] ; then
+		svc_running=`maprcli node list -filter "[service==$svc]" -columns name -noheader | wc -l`
+		if [ ${svc_running:-0} -ge 1 ] ; then
+			curTime=`date`
+			echo " ... success at $curTime !!!" | tee -a $LOG
+			SVC_ONLINE=1
+			[ $i -gt 0 ] && SVC_ONLINE=$i
+			i=9999
+			break
+		else
+			echo " ... timeout in $[MAX_WAIT_TIME - $i] seconds"
+		fi
+
+		sleep 3
+		i=$[i+3]
+	done
+
+	[ $SVC_ONLINE -eq 0 ] && return 1
+	echo "Hive service $svc started after $SVC_ONLINE seconds" | tee -a $LOG
+
+		# Keep max_wait time cumulative
+	i=$SVC_ONLINE
+	SVC_ONLINE=0
+
+	if [ $svc = "hivemeta" ] ; then
+		svc_port=9083
+	elif [ $svc = "hs2" ] ; then
+		svc_port=10000
+	fi
+
+	[ -z "$svc_port" ] && return 0
+	echo "Confirm that service is listening on port $svc_port" | tee -a $LOG
+
+	while [ $i -lt $MAX_WAIT_TIME ]
+	do
+		lsof -i:$svc_port &> /dev/null
+		if [ $? -eq 0 ] ; then
 			curTime=`date`
 			echo " ... success at $curTime !!!" | tee -a $LOG
 			SVC_ONLINE=1
@@ -92,7 +134,7 @@ function wait_for_hive_service()
 	done
 
 	if [ $SVC_ONLINE -ne 0 ] ; then
-		echo "Hive service $svc on-line after $SVC_ONLINE seconds" | tee -a $LOG
+		echo "Hive service $svc listening on port $svc_port after $SVC_ONLINE seconds" | tee -a $LOG
 		return 0
 	else
 		return 1
@@ -286,8 +328,18 @@ function deploy_drill()
 	[ -f $JETS3T_JAR ] && \
 		ln -s $JETS3T_JAR $DRILL_HOME/jars/3rdparty
 
+		# Object Stores 
+		#	AWS SDK jars needed to support s3 interfaces.
+		#	Azure SDK jars needed to support WASB interfaces.
 	TOOLS_LIB=${HADOOP_HOME}/share/hadoop/tools/lib
 	for f in ${TOOLS_LIB}/*aws* ; do
+		jar=`basename $f`
+		if [ ! -r $DRILL_HOME/jars/3rdparty/$jar ] ; then
+			ln -s $f $DRILL_HOME/jars/3rdparty
+		fi
+	done
+
+	for f in ${TOOLS_LIB}/*azure* ; do
 		jar=`basename $f`
 		if [ ! -r $DRILL_HOME/jars/3rdparty/$jar ] ; then
 			ln -s $f $DRILL_HOME/jars/3rdparty
@@ -338,7 +390,7 @@ function stage_drill_data()
 	hadoop fs -test -d /data
 	[ $? -ne 0 ] && return
 
-	for f in ${MAPR_USER_DIR}/workloads/*.json
+	for f in ${MAPR_USER_DIR}/workloads/*.json ${MAPR_USER_DIR}/workloads/drill/*.json 
 	do
 		su $MAPR_USER -c "hadoop fs -put $f /data"
 	done

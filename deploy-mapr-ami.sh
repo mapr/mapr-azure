@@ -50,6 +50,11 @@ if [ -z "${AMI_LAUNCH_INDEX}" ] ; then
 	AMI_LAUNCH_INDEX=$(curl -f $murl_top/ami-launch-index) 
 	[ -z "${AMI_LAUNCH_INDEX}" ] && \
 		AMI_LAUNCH_INDEX=${THIS_HOST#*node}
+
+		# Special case for Sandbox launches (where the template
+		# did not set hostname to "<cluster>node<n>"
+	[ "${AMI_LAUNCH_INDEX}" = "${THIS_HOST}" ] && \
+		AMI_LAUNCH_INDEX=0
 fi
 
 # A comma separated list of packages (without the "mapr-" prefix)
@@ -84,7 +89,7 @@ CF_HOSTS_FILE=/tmp/maprhosts			# must match file from CF Template
 CF_LICENSE_TYPE=/tmp/maprlicensetype	# must match file from CF Template
 
 
-LOG=/tmp/deploy-mapr.log
+LOG=/tmp/deploy-mapr-ami.log
 
 # Make sure sbin tools are in PATH
 PATH=/sbin:/usr/sbin:/usr/bin:/bin:$PATH
@@ -162,7 +167,7 @@ function verify_instance_hostname() {
 #	CF_LICENSE_TYPE	# contains M3, M5, or M7
 #
 function generate_mapr_param_file() {
-	echo Generating MapR installation parameter file >> $LOG
+	echo Generating MapR installation parameter file | tee -a $LOG
 
 	local OFILE=$1
 
@@ -315,7 +320,7 @@ EOF_m3config
 #	Input: MAPR_PACKAGES  (global)
 #
 install_mapr_packages() {
-	echo Installing MapR software components >> $LOG
+	echo Installing MapR software components | tee -a $LOG
 
 	installMetrics=0
 	MAPR_TO_INSTALL=""
@@ -337,9 +342,55 @@ install_mapr_packages() {
 		fi
 	fi
 
-	echo MapR software installation complete >> $LOG
+	echo MapR software installation complete | tee -a $LOG
 
 	return 0
+}
+
+# Retrieve the latest patch from the MapR repo and install it.
+# This should be done AFTER the software is installed,
+# but BEFORE the services are started.
+#
+install_mapr_patch()
+{
+	[ ! -f $MAPR_HOME/MapRBuildVersion ] && return
+
+	echo Retrieving and installing latest MapR patch | tee -a $LOG
+
+	MAPR_VERSION=`cat $MAPR_HOME/MapRBuildVersion | awk -F'.' '{print $1"."$2"."$3}'`
+
+	REPO_URL=http://package.mapr.com
+	PATCHES_TOP=$REPO_URL/patches/releases/v${MAPR_VERSION}
+	if which dpkg &> /dev/null; then
+		PATCHES_TOP=${PATCHES_TOP}/ubuntu
+	elif which rpm &> /dev/null; then
+		PATCHES_TOP=${PATCHES_TOP}/redhat
+	fi
+
+	pkg=$(curl -f ${PATCHES_TOP}/ | grep mapr-patch-${MAPR_VERSION} |  cut -d\" -f8)
+	if [ -z "$pkg" ] ; then
+		echo "  no patch found for $MAPR_VERSION; returning" | tee -a $LOG
+		return
+	fi
+
+	curl -o /tmp/$pkg ${PATCHES_TOP}/$pkg
+	if [ $? -ne 0 ] ; then
+		echo "  failed to retrieve ${PATCHES_TOP}/$pkg; returning" | tee -a $LOG
+		return
+	fi
+
+	yum install -y /tmp/$pkg
+	if [ $? -ne 0 ] ; then
+		echo MapR patch installation failed | tee -a $LOG
+		return
+	fi
+
+	ORIG_CONFIG_SH="$(ls $MAPR_HOME/.patch/server/configure.sh.*)"
+	if [ -n "$ORIG_CONFIG_SH" ] ; then
+		$MAPR_HOME/server/configure.sh -R -noDB
+	fi
+
+	echo MapR patch installation complete | tee -a $LOG
 }
 
 function regenerate_mapr_hostid() {
@@ -468,10 +519,10 @@ provision_mapr_disks() {
 }
 
 
-# Simple script to do any config file customization prior to 
+# Simple function to do any config file customization prior to 
 # program launch
 configure_mapr_services() {
-	echo "Updating configuration for MapR services" >> $LOG
+	echo "Updating configuration for MapR services" | tee -a $LOG
 
 # Additional customizations ... to be customized based
 # on instane type and other deployment details.   This is only
@@ -494,7 +545,7 @@ configure_mapr_services() {
 
 		# Change mapr-warden initscript to create use "hostname"
 		# instead of "hostname --fqdn".  Since the micro-dns
-		# in the GCE environment does the right thing with
+		# in the cloud environment does the right thing with
 		# name resolution, it's OK to use short hostnames
 	sed -i 's/ --fqdn//' $MAPR_HOME/initscripts/mapr-warden
 
@@ -511,8 +562,8 @@ configure_mapr_services() {
 # Hadoop 2.7 and beyond have simpler mechanisms for enabling
 # cloud object stores.   We'll make sure the libraries are in
 # the proper location here.
-#	NOTE: For now, we'll make a copy (since there's lots of cross-talk
-#	between these files).
+#	NOTE: For now, we'll make a copy (since there's lots of 
+#	cross-contamination between these directories).
 #
 enable_object_stores() {
 	HADOOP_HOME="$(ls -d ${MAPR_HOME}/hadoop/hadoop-2*)"
@@ -529,7 +580,10 @@ enable_object_stores() {
 		fi
 	done
 
-		# S3 store
+		# S3 store ... we need both the AWS SDK jars and some jackson
+		# jars to support the s3a interfaces;
+		# 	Be careful with jackson jars ... some MapR builds had 
+		#	different versions in the two directories
 	for f in $TOOLS_LIB/*aws*.jar ; do
 		jar=`basename $f`
 		if [ ! -r $COMMON_LIB/$jar ] ; then
@@ -537,10 +591,17 @@ enable_object_stores() {
 		fi
 	done
 
+	for f in $TOOLS_LIB/*jackson*.jar ; do
+		jar=`basename $f`
+		[ -r $COMMON_LIB/$jar ] && continue
+		[ -r $COMMON_LIB/${jar%-*.jar}-[1-9]*.jar ] && continue
+
+		cp -p $f $COMMON_LIB
+	done
 }
 
 update_site_config() {
-	echo "Updating site configuration files" >> $LOG
+	echo "Updating site configuration files" | tee -a $LOG
 
 		# Default hadoop version changed with 4.x
 	if [ ${MAPR_VERSION%%.*} -le 3 ] ; then
@@ -551,9 +612,16 @@ update_site_config() {
 		HADOOP_CONF_DIR=${HADOOP_HOME}/etc/hadoop
 	fi
 
+	LOG4J_PROP_FILE=${HADOOP_CONF_DIR}/log4j.properties
 	MAPRED_CONF_FILE=${HADOOP_CONF_DIR}/mapred-site.xml
 	CORE_CONF_FILE=${HADOOP_CONF_DIR}/core-site.xml
 	YARN_CONF_FILE=${HADOOP_CONF_DIR}/yarn-site.xml
+
+	echo "
+# Minimize extraneous INFO messages from WASB access
+#
+log4j.logger.org.apache.hadoop.metrics2.impl.MetricsSystemImpl=WARN
+log4j.logger.org.apache.hadoop.metrics2.impl.MetricsConfig=WARN" | tee -a ${LOG4J_PROP_FILE}
 
 		# core-site changes 
 		#	- enable impersonation
@@ -599,23 +667,49 @@ update_site_config() {
 	echo "" | tee -a ${MAPRED_CONF_FILE}
 	echo '</configuration>' | tee -a ${MAPRED_CONF_FILE}
 
-
-		# yarn-site changes needed for early 4.x releases, where 
-		# yarn.resourcemanager.hostname is not properly recognized
-		# by the web proxying services.   If we have only one
-		# resource manager, force this fix to avoid the problem
 	[ ! -f $YARN_CONF_FILE ] && return
 
-	num_rms=`echo ${rmnodes//,/ } | wc -w`
-	[ ${MAPR_VERSION%%.*} -gt 4  -o  ${num_rms:-0} -ne 1 ] && return
+		# Enable YARN log aggregation
+	echo "export MAPR_IMPERSONATION_ENABLED=true" >> ${HADOOP_CONF_DIR}/yarn-env.sh
 
     sed -i '/^<\/configuration>/d' ${YARN_CONF_FILE}
 
 	echo "
 <property>
-  <name>yarn.resourcemanager.hostname</name>
-  <value>$rmnodes</value>
+<name>min.user.id</name>
+<value>400</value>
+</property>
+
+<property>
+<name>yarn.log-aggregation-enable</name>
+<value>true</value>
+</property>
+
+<property>
+<name>yarn.nodemanager.remote-app-log-dir</name>
+<value>maprfs:///tmp/logs</value>
+</property>
+
+<property>
+<name>yarn.nodemanager.log.retain</name>
+<value>8640000</value>
+<description>Log file retention (in seconds); set for 100 days</description>
+</property>
+" | tee -a ${YARN_CONF_FILE}
+
+		# yarn-site changes needed for early 4.x releases, where 
+		# yarn.resourcemanager.hostname is not properly recognized
+		# by the web proxying services.   If we have only one
+		# resource manager, force this fix to avoid the problem
+	num_rms=`echo ${rmnodes//,/ } | wc -w`
+	if [ ${MAPR_VERSION%%.*} -le 4  -a  ${num_rms:-0} -eq 1 ] ; then
+		echo "
+<property>
+<name>yarn.resourcemanager.hostname</name>
+<value>$rmnodes</value>
 </property>" | tee -a ${YARN_CONF_FILE}
+
+	fi
 
 	echo "" | tee -a ${YARN_CONF_FILE}
 	echo '</configuration>' | tee -a ${YARN_CONF_FILE}
@@ -629,11 +723,11 @@ update_site_config() {
 #		of mapr.parm.  Other parameters found in maprdstore
 #
 update_hive_config() {
-	echo "Updating hive-site configuration file" >> $LOG
+	echo "Updating hive-site configuration file" | tee -a $LOG
 
 	HIVE_SITE_XML=/opt/mapr/hive/hive-*/conf/hive-site.xml
 	if [ ! -r $HIVE_SITE_XML ] ; then
-		echo "  Config file ($HIVE_SITE_XML) not found; returning" >> $LOG
+		echo "  Config file ($HIVE_SITE_XML) not found; returning" | tee -a $LOG
 		return 1
 	fi
 
@@ -714,23 +808,23 @@ mysqlEOF
 #	Should put a timeout ont this ... it's really not well designed
 #
 function resolve_zknodes() {
-	echo "WAITING FOR DNS RESOLUTION of zookeeper nodes {$zknodes}" >> $LOG
+	echo "WAITING FOR DNS RESOLUTION of zookeeper nodes {$zknodes}" | tee -a $LOG
 	zkready=0
 	while [ $zkready -eq 0 ]
 	do
 		zkready=1
 		echo testing DNS resolution for zknodes
-		for i in ${zknodes//,/ }
+		for z in ${zknodes//,/ }
 		do
-			grep -q -w $i /etc/hosts		# check /etc/hosts first
-			[ $? -eq 0 ] && continue
-			[ -z "$(dig -t a +search +short $i)" ] && zkready=0
+			if [ "$z" != "$THIS_HOST" -a "$z" != "$THIS_FQDN" ] ; then
+				[ -z "$(dig -t a +search +short $z)" ] && zkready=0
+			fi
 		done
 
 		echo zkready is $zkready
 		[ $zkready -eq 0 ] && sleep 5
 	done
-	echo "DNS has resolved all zknodes {$zknodes}" >> $LOG
+	echo "DNS has resolved all zknodes {$zknodes}" | tee -a $LOG
 	return 0
 }
 
@@ -808,7 +902,7 @@ configure_mapr_nfs() {
 
 function enable_mapr_services() 
 {
-	echo Enabling MapR services >> $LOG
+	echo Enabling MapR services | tee -a $LOG
 
 	if which update-rc.d &> /dev/null; then
 		[ -f $MAPR_HOME/conf/warden.conf ] && \
@@ -851,7 +945,7 @@ function wait_for_user_ticket()
 
 function start_mapr_services() 
 {
-	echo "Starting MapR services" >> $LOG
+	echo "Starting MapR services" | tee -a $LOG
 
 	if [ -f $MAPR_HOME/roles/zookeeper ] ; then
 		c service mapr-zookeeper start
@@ -893,7 +987,7 @@ function start_mapr_services()
 	done
 
 	if [ ${HDFS_ONLINE} -eq 0 ] ; then
-		echo "ERROR: MapR File Services did not come on-line" >> $LOG
+		echo "ERROR: MapR File Services did not come on-line" | tee -a $LOG
 		return 1
 	fi
 
@@ -916,6 +1010,8 @@ function store_ssh_keys()
 	clusterKeyDir=/cluster-info/keys
 	rootKeyFile=/root/.ssh/id_rsa.pub
 	maprKeyFile=${MAPR_USER_DIR}/.ssh/id_rsa.pub
+
+	hadoop fs -mkdir -p $clusterKeyDir 
 
 	if [ ${AMI_LAUNCH_INDEX:-2} -le 1  -a  -f ${rootKeyFile} ] ; then 
 		echo "  Pushing $rootKeyFile to $clusterKeyDir" >> $LOG
@@ -1023,7 +1119,7 @@ set_maprfs_replication_factor()
 # is up and running (we have access to the distributed file system)
 function finalize_mapr_cluster() 
 {
-	echo "Entering finalize_mapr_cluster" >> $LOG
+	echo "Entering finalize_mapr_cluster" | tee -a $LOG
 
 	which maprcli  &> /dev/null
 	if [ $? -ne 0 ] ; then
@@ -1074,6 +1170,15 @@ function finalize_mapr_cluster()
 		[ $? -ne 0 ] && \
 			echo "Error: unable to create /user directory for $MAPR_USER" >> $LOG
 
+		su $MAPR_USER -c "maprcli volume create -name hive_vol -path /user/hive"
+		if [ $? -eq 0 ] ; then
+			hadoop fs -chmod 777 /user/hive
+			su $MAPR_USER -c "hadoop fs -mkdir /user/hive/warehouse"
+			hadoop fs -chmod 777 /user/hive/warehouse
+		else
+			echo "Error: unable to create /user/hive directory for Hive Tables" >> $LOG
+		fi
+
 		su $MAPR_USER -c "maprcli volume create -name tables_vol -path /tables"
 		if [ $? -eq 0 ] ; then
 			hadoop fs -chmod 777 /tables			
@@ -1086,6 +1191,21 @@ function finalize_mapr_cluster()
 			hadoop fs -chmod 777 /data			
 		else
 			echo "Error: unable to create /data directory for $MAPR_USER" >> $LOG
+		fi
+
+			# Enable "sysadmin" user to login and 
+			# create a /user directory so they can run jobs
+			# Enable a password so they can authenticate to secure clusters
+			#	(default is INSTANCE_ID with "a" instead of "i" so
+			#	that there's no overlap with mapr user)
+		[ -d /home/ec2-user ] && SYSADMIN=ec2-user
+		[ -d /home/ubuntu ] && SYSADMIN=ubuntu
+		[ -d /home/azadmin ] && SYSADMIN=azadmin
+		if [ -n "${SYSADMIN:-}" ] ; then
+			su $MAPR_USER -c "maprcli acl edit -type cluster -user $SYSADMIN:login"
+			su $MAPR_USER -c "maprcli volume create -name ${SYSADMIN}_home -path /user/${SYSADMIN}"
+			su $MAPR_USER -c "hadoop fs -chown ${SYSADMIN}:${SYSADMIN} /user/${SYSADMIN}"
+
 		fi
 	fi
 }
@@ -1177,6 +1297,15 @@ EOF_bashrc
   # We could take this opportunity to copy the public key of 
   # the mapr user into root's authorized key file ... but let's not for now
   return 0
+}
+
+function update_sudo_config() {
+	echo "  updating sudo configuration" >> $LOG
+
+	# allow sudo with ssh (we'll need to later)
+  sed -i 's/^Defaults .*requiretty$/# Defaults requiretty/' /etc/sudoers
+
+  echo "$MAPR_USER ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 }
 
 function setup_mapr_repo_deb() {
@@ -1298,10 +1427,10 @@ function retrieve_mapr_security_credentials()
 	echo "Retrieving MapR security credentials from $MAPR_SEC_MASTER" >> $LOG
 	if [ -z "${MAPR_SSH_KEY}" ] ; then
 		echo "  Error: no SSH_KEY specified; cannot copy credentials" >> $LOG
-		return
+		return 1
 	elif [ ! -r "${MAPR_USER_DIR}/.ssh/${MAPR_SSH_KEY}" ] ; then
 		echo "  Error: SSH_KEY (${MAPR_USER_DIR}/.ssh/${MAPR_SSH_KEY}) not found; cannot copy credentials" >> $LOG
-		return
+		return 1
 	fi
 
 		# The presence of maprserverticket and ssl_truststore on the master
@@ -1313,39 +1442,39 @@ function retrieve_mapr_security_credentials()
 	exec_and_retry \
 		"ssh -i $MAPR_USER_DIR/.ssh/${MAPR_SSH_KEY} -n -o StrictHostKeyChecking=no ${MAPR_USER}@${MAPR_SEC_MASTER} ls $MAPR_HOME/conf/maprserverticket" \
 		"No master security ticket found"
-	[ $? -ne 0 ] && return $?
+	[ $? -ne 0 ] && return 1
 
 	exec_and_retry \
 		"ssh -i $MAPR_USER_DIR/.ssh/${MAPR_SSH_KEY} -n -o StrictHostKeyChecking=no ${MAPR_USER}@${MAPR_SEC_MASTER} ls $MAPR_HOME/conf/ssl_truststore" \
 		"No ssl_truststore found"
-	[ $? -ne 0 ] && return $?
+	[ $? -ne 0 ] && return 1
 
 		# Copying these over is a kludge, since we only have
 		# clean ssh back to the Master node as the MapR user
 		#
 		# TO BE DONE : better error checking on these retrievals
 	scp -i $MAPR_USER_DIR/.ssh/${MAPR_SSH_KEY} \
-		${MAPR_USER}@${MAPR_SEC_MASTER}:$MAPR_HOME/conf/maprserverticket $HOME
-	chown -R ${MAPR_USER}:${MAPR_GROUP} $HOME/maprserverticket
-	mv $HOME/maprserverticket $MAPR_HOME/conf
+		${MAPR_USER}@${MAPR_SEC_MASTER}:$MAPR_HOME/conf/maprserverticket $MAPR_HOME
+	chown -R ${MAPR_USER}:${MAPR_GROUP} $MAPR_HOME/maprserverticket
+	mv $MAPR_HOME/maprserverticket $MAPR_HOME/conf
 	if [ $? -ne 0 ] ; then
 		exitFailure "Could not save maprserverticket to ${MAPR_HOME}/conf"
 		return 1
 	fi
 
 	scp -i $MAPR_USER_DIR/.ssh/${MAPR_SSH_KEY} -r \
-		${MAPR_USER}@${MAPR_SEC_MASTER}:$MAPR_HOME/conf/ssl_keystore $HOME
-	chown -R ${MAPR_USER}:${MAPR_GROUP} $HOME/ssl_keystore
-	mv $HOME/ssl_keystore $MAPR_HOME/conf
+		${MAPR_USER}@${MAPR_SEC_MASTER}:$MAPR_HOME/conf/ssl_keystore $MAPR_HOME
+	chown -R ${MAPR_USER}:${MAPR_GROUP} $MAPR_HOME/ssl_keystore
+	mv $MAPR_HOME/ssl_keystore $MAPR_HOME/conf
 	if [ $? -ne 0 ] ; then
 		exitFailure "Could not save ssl_keystore to ${MAPR_HOME}/conf"
 		return 1
 	fi
 
 	scp -i $MAPR_USER_DIR/.ssh/${MAPR_SSH_KEY} -r \
-		${MAPR_USER}@${MAPR_SEC_MASTER}:$MAPR_HOME/conf/ssl_truststore $HOME
-	chown -R ${MAPR_USER}:${MAPR_GROUP} $HOME/ssl_truststore
-	${SUDO:-} mv $HOME/ssl_truststore $MAPR_HOME/conf
+		${MAPR_USER}@${MAPR_SEC_MASTER}:$MAPR_HOME/conf/ssl_truststore $MAPR_HOME
+	chown -R ${MAPR_USER}:${MAPR_GROUP} $MAPR_HOME/ssl_truststore
+	${SUDO:-} mv $MAPR_HOME/ssl_truststore $MAPR_HOME/conf
 	if [ $? -ne 0 ] ; then
 		exitFailure "Could not save ssl_keystore to ${MAPR_HOME}/conf"
 		return 1
@@ -1354,9 +1483,9 @@ function retrieve_mapr_security_credentials()
 		# For both CLDB and ZK nodes, we need the cldb.key
 	if [ -f $MAPR_HOME/roles/cldb  -o  -f $MAPR_HOME/roles/zookeeper ] ; then
 		scp -i $MAPR_USER_DIR/.ssh/${MAPR_SSH_KEY} \
-			${MAPR_USER}@${MAPR_SEC_MASTER}:$MAPR_HOME/conf/cldb.key $HOME
-		chown -R ${MAPR_USER}:${MAPR_GROUP} $HOME/cldb.key
-		mv $HOME/cldb.key $MAPR_HOME/conf
+			${MAPR_USER}@${MAPR_SEC_MASTER}:$MAPR_HOME/conf/cldb.key $MAPR_HOME
+		chown -R ${MAPR_USER}:${MAPR_GROUP} $MAPR_HOME/cldb.key
+		mv $MAPR_HOME/cldb.key $MAPR_HOME/conf
 		if [ $? -ne 0 ] ; then
 			echo "Could not save cldb.key to ${MAPR_HOME}/conf" | tee -a $LOG
 			return 1
@@ -1482,6 +1611,21 @@ function main()
 	    -u $MAPR_USER -g $MAPR_GROUP \
 		$AUTOSTARTARG $SECARG $VMARG
 
+		# Best to grab the latest patch HERE, after running
+		# configure.sh but before disksetup (and our customization
+		# of the config files).  install_mapr_patch
+		# will re-run configure.sh if it has been updated.
+		# configure.sh in case it has been updated.
+	[ -f /tmp/maprversion ] && cft_maprversion=`cat /tmp/maprversion`
+	[ "${cft_maprversion#*-}" = "EBF" ] && install_mapr_patch
+
+		# Bug 21897 : M3 and M7 clusters reserver 4 cpus for MFS.
+		# Never useful in Virtual environments
+		#	(where we don't have that many cores)
+	ISC_FILE=$MAPR_HOME/server/initscripts-common.sh
+	sed -i "s/mfscpus=2/mfscpus=1/g" $ISC_FILE
+	sed -i "s/mfscpus=4/mfscpus=1/g" $ISC_FILE
+
 	configure_mapr_services
 	enable_object_stores
 	update_site_config
@@ -1510,6 +1654,7 @@ function main()
 	return 0
 }
 
+
 main $@
 exitCode=$?
 
@@ -1522,3 +1667,4 @@ if [ -n "${MAPR_USER_DIR}"  -a  -d ${MAPR_USER_DIR} ] ; then
 fi
 
 exit $exitCode
+

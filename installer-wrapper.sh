@@ -111,6 +111,16 @@ if [ -n "${excluded_hosts}" ] ; then
 	echo ""
 fi
 
+# On node0, let's get a real /etc/hosts.   This is a kludge
+# until reverse address lookup works in Azure
+for h in `cat $CF_HOSTS_FILE` ; do
+	if [ $h = $HOSTNAME ] ; then
+		echo `hostname -i`"        ${h}."`hostname -d` >> /etc/hosts
+	else
+		getent hosts $h >> /etc/hosts
+	fi
+done
+
 # Let's distribute some ssh keys for our known accounts
 #	NOTE: We should really confirm that all the nodes have
 #	the mapr user configured BEFORE doing this ... but that's
@@ -188,9 +198,9 @@ if [ "${MIPKG%.*}" = "mapr-installer-1.0" ] ; then
 fi
 
 # Minor issue with hive on M5/M7 clusters ... disable for now
-if [ ${3:-M3} != "M3" ] ; then
-	ECO_HIVE='--eco-version hive=none'
-fi
+# if [ ${3:-M3} != "M3" ] ; then
+#	ECO_HIVE='--eco-version hive=none'
+# fi
 
 chmod a+x $BINDIR/deploy-mapr-cluster.py
 echo $PYTRACE $BINDIR/deploy-mapr-cluster.py -y \
