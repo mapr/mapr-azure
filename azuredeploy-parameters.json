@@ -3,7 +3,7 @@
         "value": "https://raw.githubusercontent.com/mapr/mapr-azure/master"
     },
     "clusterName": {
-        "value": "mv104"
+        "value": "mapr20160207"
     },
     "clusterSize": {
         "value": 3

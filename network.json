@@ -35,7 +35,7 @@
     },
     "variables": {},
     "resources": [{
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[concat(parameters('publicIPAddressBasename'), copyIndex())]",
       "location": "[parameters('location')]",
@@ -46,12 +46,12 @@
       "properties": {
           "publicIPAllocationMethod": "[parameters('publicIPAddressType')]",
           "dnsSettings": {
-              "domainNameLabel": "[concat(parameters('clusterName'),'-node',copyIndex())]"
+              "domainNameLabel": "[concat(resourceGroup().name,'-',parameters('clusterName'),'-node',copyIndex())]"
           }
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[concat(parameters('clusterName'), '-vnet')]",
       "location": "[parameters('location')]",
@@ -72,7 +72,7 @@
       }
     },
     {
-        "apiVersion": "2015-05-01-preview",
+        "apiVersion": "2015-06-15",
         "type": "Microsoft.Network/networkInterfaces",
         "name": "[concat(parameters('nicBasename'), copyIndex())]",
         "location": "[parameters('location')]",

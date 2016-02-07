@@ -41,7 +41,7 @@
         },
         "adminUsername": {
             "defaultValue": "azadmin",
-            "type": "string",
+            "type": "securestring",
             "metadata": {
                  "description": "System Administrator for deployed nodes"
             }
@@ -92,11 +92,11 @@
     "variables": {
         "imagePublisher" : "OpenLogic",
         "imageOffer" : "CentOS",
-        "imageSKU" : "7.0",        
+        "imageSKU" : "6.6",
         "scriptsUri" : "[concat(parameters('artifactsBaseUrl'),'/')]",
         "nicBasename": "[concat(parameters('clusterName'),'-nic')]",
         "publicIPAddressBasename": "[concat(parameters('clusterName'),'-publicIP')]",
-        "storageAccountBasename": "[concat(parameters('clusterName'),'sa')]",
+        "storageAccountBasename": "[concat(uniquestring(resourceGroup().id),parameters('clusterName'),'sa')]",
         "networkSpec" : {
             "vnetCIDR":"10.0.0.0/16",
             "subnet1Name": "Privnet-1",

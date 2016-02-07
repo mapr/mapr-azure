@@ -18,7 +18,7 @@
             "type": "string"
         },
         "maprPassword": {
-            "type": "string"
+            "type": "securestring"
         },
         "location": {
             "type": "string"
@@ -31,7 +31,7 @@
     {
         "name": "[concat(variables('vmBasename'),copyIndex(),'/extension')]",
         "type": "Microsoft.Compute/virtualMachines/extensions",
-        "apiVersion": "2015-05-01-preview",
+        "apiVersion": "2015-06-15",
         "location": "[parameters('location')]",
         "copy" : {
             "name" : "extLoop",
@@ -40,7 +40,7 @@
         "properties": {
             "publisher": "Microsoft.OSTCExtensions",
             "type": "CustomScriptForLinux",
-            "typeHandlerVersion": "1.3",
+            "typeHandlerVersion": "1.4",
             "settings": {
                 "fileUris": [
                     "[concat(parameters('scriptsUri'), 'M3.lst')]",
@@ -60,7 +60,9 @@
                     "[concat(parameters('scriptsUri'), 'mapr-setup.sh')]",
                     "[concat(parameters('scriptsUri'), 'azure-wrapper.sh')]",
                     "[concat(parameters('scriptsUri'), 'installer-wrapper.sh')]"
-                ],
+                ]
+            },
+            "protectedSettings": {
                 "commandToExecute": "[concat('sh azure-wrapper.sh ', variables('vmBasename'), ' ', parameters('clusterSize'), ' ', parameters('clusterEdition'), ' ', parameters('maprVersion'), ' ', parameters('maprPassword'))]"
             }
         }
