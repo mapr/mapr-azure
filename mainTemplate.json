@@ -96,7 +96,7 @@
         "scriptsUri" : "[concat(parameters('artifactsBaseUrl'),'/')]",
         "nicBasename": "[concat(parameters('clusterName'),'-nic')]",
         "publicIPAddressBasename": "[concat(parameters('clusterName'),'-publicIP')]",
-        "storageAccountBasename": "[concat(uniquestring(resourceGroup().id),parameters('clusterName'),'sa')]",
+        "storageAccountBasename": "[concat(trim(substring(concat(parameters('clusterName'),'        '),0,8)),substring(uniquestring(resourceGroup().id),0,8),'sa')]",
         "networkSpec" : {
             "vnetCIDR":"10.0.0.0/16",
             "subnet1Name": "Privnet-1",

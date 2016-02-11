@@ -46,7 +46,7 @@
       "properties": {
           "publicIPAllocationMethod": "[parameters('publicIPAddressType')]",
           "dnsSettings": {
-              "domainNameLabel": "[concat(resourceGroup().name,'-',parameters('clusterName'),'-node',copyIndex())]"
+       	      "domainNameLabel": "[concat(parameters('clusterName'),'-',substring(uniquestring(resourceGroup().id),0,8),'-node',copyIndex())]",
           }
       }
     },
