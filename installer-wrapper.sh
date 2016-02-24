@@ -202,13 +202,16 @@ fi
 #	ECO_HIVE='--eco-version hive=none'
 # fi
 
+[ "${MAPR_VERSION:-5.0.0}" = "5.0.0" ] && \
+	ECO_PIG="--eco-version pig=0.15"
+
 chmod a+x $BINDIR/deploy-mapr-cluster.py
 echo $PYTRACE $BINDIR/deploy-mapr-cluster.py -y \
 	--ssh-user $SUDO_USER \
 	--ssh-password \$SUDO_PASSWD \
 	--cluster $MAPR_CLUSTER \
 	--hosts-file /tmp/maprhosts \
-	--disks-file /tmp/MapR.disks ${ECO_HIVE:-} \
+	--disks-file /tmp/MapR.disks ${ECO_HIVE:-} ${ECO_PIG:-} \
 	--mapr-password \$MAPR_PASSWD \
 	--mapr-edition ${3:-M3} \
 	--mapr-version ${MAPR_VERSION:-5.0.0} 
@@ -222,7 +225,7 @@ while [ $attempt -le $MAX_TRIES ] ; do
 		--ssh-password $SUDO_PASSWD \
 		--cluster $MAPR_CLUSTER \
 		--hosts-file /tmp/maprhosts \
-		--disks-file /tmp/MapR.disks ${ECO_HIVE:-} \
+		--disks-file /tmp/MapR.disks ${ECO_HIVE:-} ${ECO_PIG:-} \
 		--stage-user msazure \
 		--stage-password MyCl0ud.ms \
 		--mapr-password $MAPR_PASSWD \

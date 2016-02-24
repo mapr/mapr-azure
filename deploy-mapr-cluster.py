@@ -23,7 +23,7 @@
 #       mapr_password = mapr
 #       cluster = 'my.cluster.com'
 #       ecosystem defaults
-#           { 'drill' : '1.2', 'hbase' : '0.98', 'hive' : '1.2', 'pig' : '0.14' }
+#           { 'drill' : '1.4', 'hbase' : '0.98', 'hive' : '1.2', 'pig' : '0.14' }
 #
 #   The command line parsing also has some defaults ... which 
 #   help when setting up the driver object in this temp wrapper.
@@ -103,7 +103,7 @@ class MIDriver:
         self.cluster = 'my.cluster.com'
         self.mapr_version = '5.0.0'
         self.mapr_edition = 'M3'
-        self.eco_defaults = { 'drill' : '1.2', 'hbase' : '0.98', 'hive' : '1.2', 'pig' : '0.14' }
+        self.eco_defaults = { 'drill' : '1.4', 'hbase' : '0.98', 'hive' : '1.2', 'pig' : '0.14' }
         self.disks = []
         self.hosts = []
         self.services = {}
@@ -347,7 +347,7 @@ class MIDriver:
         # Spark service
     def addSparkServices (self, spark_version = None) :
         if spark_version == None :
-            spark_version = self.eco_defaults.get('spark', "1.2.1")
+            spark_version = self.eco_defaults.get('spark', "1.5.2")
         elif spark_version.lower() == "none" :
             if 'mapr-spark-client' in self.services :
                 del self.services['mapr-spark-client']
@@ -355,7 +355,7 @@ class MIDriver:
                 del self.services['mapr-spark-historyserver']
             return
         elif self.service_available ('spark', spark_version) == False : 
-            spark_version = self.eco_defaults.get('spark', "1.2.1")
+            spark_version = self.eco_defaults.get('spark', "1.5.2")
 
         self.services["mapr-spark-client"] = { "enabled" : True, "version" : spark_version }
         self.services["mapr-spark-historyserver"] = { "enabled" : True, "version" : spark_version }
