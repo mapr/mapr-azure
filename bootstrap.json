@@ -60,6 +60,7 @@
                     "[concat(parameters('scriptsUri'), 'prepare-node.sh')]",
                     "[concat(parameters('scriptsUri'), 'deploy-installer.sh')]",
                     "[concat(parameters('scriptsUri'), 'deploy-mapr-ami.sh')]",
+                    "[concat(parameters('scriptsUri'), 'MIDriver.py')]",
                     "[concat(parameters('scriptsUri'), 'deploy-mapr-cluster.py')]",
                     "[concat(parameters('scriptsUri'), 'deploy-mapr-data-services.sh')]",
                     "[concat(parameters('scriptsUri'), 'mapr-setup.sh')]",

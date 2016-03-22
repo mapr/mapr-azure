@@ -151,17 +151,27 @@ function deploy_hiveserver()
 {
 	echo "Deploying Hive Metastore and Hiveserver2" | tee -a $LOG
 
+	if [ -d /opt/mapr/hive ] ; then
+    	HIVE_VER=$(cd /opt/mapr/hive; ls -d hive-*)
+		HIVE_VER=${HIVE_VER#hive}
+		HIVEMETA_PKG=mapr-hivemetastore${HIVE_VER}*
+		HIVESERVER_PKG=mapr-hiveserver2${HIVE_VER}*
+	else
+		HIVEMETA_PKG=mapr-hivemetastore
+		HIVESERVER_PKG=mapr-hiveserver2
+	fi
+
 		# We've seen many problems where the MySQL database
 		# is corrupted by too-quick installations.   We'll 
 		# go NICE AND SLOW.
-	c yum install -y --disablerepo=* --enablerepo=MapR* mapr-hivemetastore
+	c yum install -y --disablerepo=* --enablerepo=MapR* $HIVEMETA_PKG
 
 		# If the metastore does not come on line, bail out 
 	wait_for_hive_service hivemeta 300
 	[ $? -ne 0 ] && return
 
 		# Install hiveserver2 (waiting for service to come on line)
-	c yum install -y --disablerepo=* --enablerepo=MapR* mapr-hiveserver2
+	c yum install -y --disablerepo=* --enablerepo=MapR* $HIVESERVER_PKG
 	wait_for_hive_service hs2 120
 
 		# Make sure the database is properly initialized
@@ -262,11 +272,31 @@ function deploy_spark()
 	echo "log4j.rootCategory=WARN, console" >> $SLOGPROPS
 	grep "appender.console" ${SLOGPROPS}.template >> $SLOGPROPS
 
-		# Copy hive-site.xml into conf directory if it exists
+		# Update Spark configuration to support Hive Metastore for Spark SQL
 	HIVE_HOME=$(ls -d /opt/mapr/hive/hive-*)
+	HIVE_VER_STRING=$(grep Version $HIVE_HOME/RELEASE_NOTES.txt | head -1)
+	HIVE_VERSION="${HIVE_VER_STRING#*Version }"
 	if [ -f $HIVE_HOME/conf/hive-site.xml ] ; then
 		cp $HIVE_HOME/conf/hive-site.xml $SPARK_HOME/conf
+		DIST_FILES=$HIVE_HOME/conf/hive-site.xml
 	fi
+
+	DNLIBS=$(ls $HIVE_HOME/lib/datanucleus-*.jar | paste -sd "," -)
+	[ -n "$DNLIBS" ] && DIST_FILES=${DIST_FILES},$DNLIBS
+
+		# Update spark-defaults.conf
+		# No need to set historyserver.address on node where
+		# where spark-historyserver has been installed ... 
+		# only on other spark nodes
+	echo "spark.yarn.jar    maprfs:///apps/spark/lib/$SJAR" >> $SDEFAULTS
+	[ -n "$DIST_FILES" ] && \
+		echo "spark.yarn.dist.files  $DIST_FILES" >> $SDEFAULTS
+	[ -n "$HIVE_VERSION" ] && \
+		echo "spark.sql.hive.metastore.version  $HIVE_VERSION" >> $SDEFAULTS
+
+	[ ! -f $MAPR_HOME/roles/historyserver  -a  -n "$SHISTORYSERVER" ] && \
+		echo "spark.yarn.historyserver.address http://$SHISTORYSERVER:18080" >> $SDEFAULTS
+
 }
 
 
@@ -300,7 +330,7 @@ function deploy_drill()
 		# Warden will automatically start drill here ... a bit
 		# of a problem given that we haven't adjusted the deployment
 
-		# Adjust Drill config for Amazon
+		# Adjust Drill config for Cloud
 	echo "  and updating Drill configuration" | tee -a $LOG
 	DRILL_HOME="$(ls -d /opt/mapr/drill/drill-*)"
 	DRILL_ENV=$DRILL_HOME/conf/drill-env.sh
@@ -321,8 +351,12 @@ function deploy_drill()
 		# Lastly, enable S3 support (need credentials from core-site)
 	sed -i -e "s/jets3t/#jets3t/" ${DRILL_EXCLUDES}
 
-	[ -f $HADOOP_CONF_DIR/core-site.xml ] && \
+	if [ -f $HADOOP_CONF_DIR/core-site.xml ] ; then 
+		if [ -f $DRILL_HOME/conf/core-site.xml ] ; then 
+		  mv $DRILL_HOME/conf/core-site.xml $DRILL_HOME/conf/core-site.xml.orig
+		fi
 		ln -s $HADOOP_CONF_DIR/core-site.xml $DRILL_HOME/conf
+	fi
 
 	JETS3T_JAR="$(ls ${HADOOP_HOME}/share/hadoop/common/lib/jets3t-*.jar)"
 	[ -f $JETS3T_JAR ] && \
@@ -346,8 +380,15 @@ function deploy_drill()
 		fi
 	done
 
+		# Make sure service is registered with warden
+		# Restart the service to incorporate our changes above
+		#	NOTE: while "maprcli" should work to restart the service,
+		#	we've seen numerous examples in cloud deployments where
+		#	warden does not acknowledge that the service is running.
+		#	Hard-code the drillbit script for now.
 	$MAPR_HOME/server/configure.sh -R		# force reload of services
-	maprcli node services -name drill-bits -action restart -nodes `cat /opt/mapr/hostname`
+#	maprcli node services -name drill-bits -action restart -nodes `cat /opt/mapr/hostname`
+	su $MAPR_USER -c "${DRILL_HOME}/bin/drillbit.sh restart"
 	[ $? -eq 0 ] && sleep 10
 
 		# Configure the Drill plug-ins (after drill on-line)
@@ -372,6 +413,7 @@ function deploy_drill()
 
 	configure_drill_plugin maprdb
 	configure_drill_plugin s3amplab
+	configure_drill_plugin wasbmaprpublic
 
 	[ ! -f /opt/mapr/roles/hivemetastore ] && return
 
@@ -390,7 +432,10 @@ function stage_drill_data()
 	hadoop fs -test -d /data
 	[ $? -ne 0 ] && return
 
-	for f in ${MAPR_USER_DIR}/workloads/*.json ${MAPR_USER_DIR}/workloads/drill/*.json 
+	ls ${MAPR_USER_DIR}/workloads/drill/*.json &> /dev/null
+	[ $? -ne 0 ] && return
+
+	for f in ${MAPR_USER_DIR}/workloads/drill/*.json 
 	do
 		su $MAPR_USER -c "hadoop fs -put $f /data"
 	done

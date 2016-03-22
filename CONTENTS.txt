@@ -1,9 +1,22 @@
 
-	NOTE: This is the private development version (mapr/private-azure).
-	The public repository is mapr/mapr-azure.  Because the repo is
-    private, the artifactsBaseUrl MUST include proper credentials
-    in order for the deployment to work.
+	NOTE: This is a private development version (mapr/private-azure).
 
+	As of 15-Mar-2016, there are two public repositories
+	that "shadow" this development.   There is mapr/mapr-azure, 
+	that leverages the core Installer-driven model for BYOL
+	deployments.   There is also the mapr/azure repo, that is 
+	based on the custom MapR images that will eventually allow
+	for hourly licensing models.   
+
+	Because the repo is private, the artifactsBaseUrl 
+	CANNOT reference the github location directly.   This is 
+	a limitation of Azure.   The work-around is to upload
+	the files to a WASB blob and have the scripts reference 
+	that.  The WASB bucket is not "public" in the same way
+	that S3 buckets are, but any deployment from within the
+	same Azure account that created the bucket should work.
+		see upload-repo.sh and upload-repo-file.sh
+    
 
 The files in this repo support the templatized deployment of a 
 MapR cluster within Azure. 
@@ -15,6 +28,21 @@ Summary:
 		NOTE: Multiple other json files are "included" in the
 		template, but other than the bootstrap*json files, there
 		is little need to change any of them.
+
+		The reason for all the similar json files defining the
+		infrastructure options is that there is no conditional
+		logic in Azure templates.   So instead of having "variables"
+		in the template that control number of storage volumes
+		independent of the instance type, everything winds up
+		hard-coded based on file names (since the "include"
+		logic will support variables).
+
+
+DEVELOPERS.txt :
+	More notes on the design model of the template.
+
+AMI.txt :
+	Notes on the design of the custom VM Image
 
 
 azuredeploy.json :
@@ -32,10 +60,26 @@ azure-wrapper.sh :
 		download failures from https://raw.githubusercontent.com
 		when multiple nodes are spun up in parallel
 
+az_sandbox.json :
+bootstrap_sandbox.json :
+initiate-sandbox.sh :
+	Azure template for installing a single-instance cluster
+	based on a pre-defined image.  
+		NOTE: the specification of an image is DIFFERENT for 
+		a custom AMI vs the core CentOS AMI's ... so the
+		<instance_type>*.json files must be modified slightly
+		(see notes on "plan" resource).
+
 <instance_type>*.json :
 	Clones of the different instance configuration details.   The
 	goal is to mazimize the storage capacity of each node (2 virtual
 	disk spindles per virtual core).
+
+network.json
+	Defines the network resources
+
+*storage.json
+	Defines different storage resources for the node types.
 
 mainTemplate.json :
 createUiDefinition.json :
@@ -50,3 +94,11 @@ createUiDefinition.json :
 		- adjust default and allowedValues for "vmSize" if you
 			need to constrain the set of supported VM's
 
+
+azvmcreate.sh
+azvmdelete.sh:
+	Helper scripts to simplify the creation/deletion
+	of a single VM image.   This tools have hard-coded
+	storage accounts to be used since VM Images under
+	development MUST share a storage account for the
+	boot disk (see notes in Azure).

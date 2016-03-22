@@ -115,11 +115,6 @@
               ]
             },
             "osPlatform": "Linux",
-            "imageReference": {
-              "publisher": "OpenLogic",
-              "offer": "CentOS",
-              "sku": "7.0"
-            },
             "count": "[steps('MapRClusterConfig').clusterNodeCount]"
           },
           {

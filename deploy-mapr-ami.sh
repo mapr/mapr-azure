@@ -73,7 +73,7 @@ MAPR_UID=${MAPR_UID:-2000}
 MAPR_USER=${MAPR_USER:-mapr}
 MAPR_GROUP=`id -gn ${MAPR_USER}`
 MAPR_GROUP=${MAPR_GROUP:-mapr}
-MAPR_PASSWD=${MAPR_PASSWD:-${INSTANCE_ID}}
+MAPR_PASSWD=${MAPR_PASSWD:-${INSTANCE_ID:-"MapR-${THIS_HOST}"}}
 MAPR_METRICS_DEFAULT=metrics
 
 MAPR_BUILD=`cat $MAPR_HOME/MapRBuildVersion 2> /dev/null`
@@ -86,7 +86,7 @@ MAPR_USER_DIR=${MAPR_USER_DIR:-/home/mapr}
 
 # CloudFormation support
 CF_HOSTS_FILE=/tmp/maprhosts			# must match file from CF Template
-CF_LICENSE_TYPE=/tmp/maprlicensetype	# must match file from CF Template
+CF_EDITION_SETTING=/tmp/maprlicensetype	# must match file from CF Template
 
 
 LOG=/tmp/deploy-mapr-ami.log
@@ -164,7 +164,7 @@ function verify_instance_hostname() {
 #	CF_HOSTS_FILE	# must exist
 #
 # Optional Inputs
-#	CF_LICENSE_TYPE	# contains M3, M5, or M7
+#	CF_EDITION_SETTING	# contains M3, M5, or M7
 #
 function generate_mapr_param_file() {
 	echo Generating MapR installation parameter file | tee -a $LOG
@@ -175,9 +175,7 @@ function generate_mapr_param_file() {
 	CFG_DIR=$MAPR_USER_DIR/cfg
 
 	CLUSTER_SIZE=`grep -c -e " $NODE_PREFIX" $CF_HOSTS_FILE`
-	[ -n "${CF_LICENSE_TYPE:-}"  -a  -f "${CF_LICENSE_TYPE}" ] && LIC_TYPE=`head -1 $CF_LICENSE_TYPE`
-
-	[ -z "$LIC_TYPE" ] && LIC_TYPE=M3
+	[ -n "${CF_EDITION_SETTING:-}"  -a  -f "${CF_EDITION_SETTING}" ] && LIC_TYPE=`head -1 $CF_EDITION_SETTING`
 
 		# Find the cluster file most closely matching our 
 		# target size and license type
@@ -237,7 +235,7 @@ EOF_m3config
 
 	packages=${cfg_entry#*:}
 	[ -f /tmp/mkclustername ] && cluster=`cat /tmp/mkclustername`   
-	cluster=${cluster:-awsmk}
+	cluster=${cluster:-azuremk}
 
 	fidx=0
 	while [ $fidx -lt $CLUSTER_SIZE ] ; do
@@ -393,6 +391,13 @@ install_mapr_patch()
 	echo MapR patch installation complete | tee -a $LOG
 }
 
+# hostid is required to be unique across nodes in a cluster,
+# so our AMI starts WITHOUT one.   Create it here.
+#
+# We've seen plenty of issues with /opt/mapr/hostname not
+# being properly initialized by warden, so we'll seed
+# here with a rational value.
+#
 function regenerate_mapr_hostid() {
 	HOSTID=$($MAPR_HOME/server/mruuidgen)
 	echo $HOSTID > $MAPR_HOME/hostid
@@ -600,6 +605,11 @@ enable_object_stores() {
 	done
 }
 
+# Simple function to add useful parameters to the
+# Hadoop *.xml configuration files.   This should be done
+# as a separate Python or Perl script to better handle
+# the xml format !!!
+#
 update_site_config() {
 	echo "Updating site configuration files" | tee -a $LOG
 
@@ -731,6 +741,11 @@ update_hive_config() {
 		return 1
 	fi
 
+		# Be sure to update the hive to the latest eco release
+		# (maintaining the same Hive version)
+	HIVE_PKG="mapr-$(cd /opt/mapr/hive; ls -d hive-*)*"
+	yum update -y $HIVE_PKG
+
 	DB_PARAM_FILE=/tmp/maprdstore
 	if [ -f $CF_HOSTS_FILE  -a ! -r $DB_PARAM_FILE ] ; then
 		DB_HOST=`tail -1 $CF_HOSTS_FILE | awk '{print $1}'`
@@ -744,8 +759,15 @@ dbhost=$DB_HOST
 dbport=3306
 EOF_mysqldb
 	elif [ ! -r $DB_PARAM_FILE ] ; then
-		test -f /etc/init.d/mysql -o -f /etc/init.d/mysqld
-		[ $? -eq 0 ] && cat >> $DB_PARAM_FILE << EOF_localdb
+		if which systemctl &> /dev/null; then
+			systemctl list-unit-files | grep -q -w -e mariadb -e mysql
+			[ $? -eq 0 ] && DB_SERVICE=1
+		else
+			test -f /etc/init.d/mysql -o -f /etc/init.d/mysqld
+			[ $? -eq 0 ] && DB_SERVICE=1
+		fi
+
+		[ ${DB_SERVICE:-0} -eq 1 ] && cat >> $DB_PARAM_FILE << EOF_localdb
 username=$MAPR_USER
 password=$MAPR_PASSWD
 dbhost=localhost
@@ -769,14 +791,15 @@ EOF_localdb
 	sed -e "s/zknodes/$zknodes/g" \
 		-e "s/dbhost/$dbhost/" \
 		-e "s/dbport/$dbport/" \
-		-e "s/cluster/$cluster/" \
+		-e "s/cluster/${cluster/-/}/" \
 		-e "s/dbuser/$dbuser/" \
 		-e "s/dbpassword/$dbpassword/" -i $HIVE_SITE_XML
 
 		# Resolve the aux jars properly.
-	HANDLER_JAR=$(ls $MAPR_HOME/hive/hive-*/lib/hive-hbase-handler-*.jar)
-	HBASE_JAR=$(ls $MAPR_HOME/hbase/hbase-*/lib/hbase-client-*.jar)
-	ZK_JAR=$(ls ${MAPR_HOME}/lib/zookeeper*.jar)
+	HADOOP_HOME="$(ls -d ${MAPR_HOME}/hadoop/hadoop-2*)"
+	HANDLER_JAR=$(ls ${MAPR_HOME}/hive/hive-*/lib/hive-hbase-handler-*.jar)
+	HBASE_JAR=$(ls ${MAPR_HOME}/hbase/hbase-*/lib/hbase-client-*.jar)
+	ZK_JAR=$(ls ${HADOOP_HOME}/share/hadoop/common/lib/zookeeper*.jar)
 
 	if [ -n "$HANDLER_JAR"  -a  -n "$HBASE_JAR"  -a  -n "$ZK_JAR" ] ; then
 		sed -e "s|HANDLER_JAR|$HANDLER_JAR|" \
@@ -790,13 +813,18 @@ EOF_localdb
 		# update the MapR user password (the database was initialized
 		# in the ami).
 	chkconfig mysqld on
-	service mysqld start
+	if [ $? -eq 0 ] ; then
+		service mysqld start
+	else
+		chkconfig mariadb on
+		[ $? -eq 0 ] && service mariadb start
+	fi
 	
 	if [ $? -eq 0 ] ; then
 		sleep 5					# let database come up cleanly
 		mysql << mysqlEOF
-grant all on hive_$cluster.* to '$dbuser'@'localhost' identified by '$dbpassword';
-grant all on hive_$cluster.* to '$dbuser'@'%' identified by '$dbpassword';
+grant all on hive_${cluster/-/}.* to '$dbuser'@'localhost' identified by '$dbpassword';
+grant all on hive_${cluster/-/}.* to '$dbuser'@'%' identified by '$dbpassword';
 quit
 mysqlEOF
 	fi
@@ -841,7 +869,7 @@ MAPR_FSTAB=$MAPR_HOME/conf/mapr_fstab
 SYSTEM_FSTAB=/etc/fstab
 
 configure_mapr_nfs() {
-	echo "Configuring MapR NFS service" >> $LOG
+	echo "Configuring MapR NFS service" | tee -a $LOG
 
 	if [ -f $MAPR_HOME/roles/nfs ] ; then
 		MAPR_NFS_SERVER=localhost
@@ -1200,7 +1228,8 @@ function finalize_mapr_cluster()
 			#	that there's no overlap with mapr user)
 		[ -d /home/ec2-user ] && SYSADMIN=ec2-user
 		[ -d /home/ubuntu ] && SYSADMIN=ubuntu
-		[ -d /home/azadmin ] && SYSADMIN=azadmin
+		[ -f /etc/sudoers.d/waagent ] && SYSADMIN=`head /etc/sudoers.d/waagent | awk '{print $1}'`
+
 		if [ -n "${SYSADMIN:-}" ] ; then
 			su $MAPR_USER -c "maprcli acl edit -type cluster -user $SYSADMIN:login"
 			su $MAPR_USER -c "maprcli volume create -name ${SYSADMIN}_home -path /user/${SYSADMIN}"
@@ -1257,20 +1286,6 @@ passwdEOF
 
 	fi
 
-		# Enhance the login with rational stuff
-    cat >> $MAPR_USER_DIR/.bashrc << EOF_bashrc
-
-# PATH updates based on settings in MapR env file
-MAPR_HOME=${MAPR_HOME:-/opt/mapr}
-MAPR_ENV=\${MAPR_HOME}/conf/env.sh
-[ -f \${MAPR_ENV} ] && . \${MAPR_ENV} 
-[ -n "\${JAVA_HOME}:-" ] && PATH=\$PATH:\$JAVA_HOME/bin
-[ -n "\${MAPR_HOME}:-" ] && PATH=\$PATH:\$MAPR_HOME/bin
-
-set -o vi
-
-EOF_bashrc
-
 	return 0
 }
 
@@ -1293,6 +1308,7 @@ EOF_bashrc
   sed -i -e "s/^.*ssh-rsa /ssh-rsa /g" /root/.ssh/authorized_keys
 
   ssh-keygen -q -t rsa -P "" -f /root/.ssh/id_rsa
+  echo "StrictHostKeyChecking no" >> /root/.ssh/config
 
   # We could take this opportunity to copy the public key of 
   # the mapr user into root's authorized key file ... but let's not for now
@@ -1421,6 +1437,48 @@ function setup_mapr_repo() {
   fi
 }
 
+# This update is needed in order to access AWS S3 buckets.
+# Failure to do this results in a "peer not authenticated" error
+# when trying to use hadoop commands against the S3 buckets.
+# The timing needs to be such that the core credentials
+# from the node where genkeys was run are already in place
+# before this function gets called.
+#
+function update_ssl_truststore()
+{
+	[ -z "${MAPR_SECURITY:-}" ] && return
+
+	echo "Updating MapR's SSL TrustStore with core java authorities" >> $LOG
+
+	[ -z "$JAVA_HOME"  -a   -f /etc/profile.d/javahome.sh ]  && . /etc/profile.d/javahome.sh
+	KEYTOOL=$JAVA_HOME/bin/keytool
+	if [ ! -x $KEYTOOL ] ; then
+		echo "  Error: cannot find $KEYTOOL" >> $LOG
+		return
+	fi
+
+	JRE_TRUSTSTORE=$JAVA_HOME/jre/lib/security/cacerts
+	JRE_STOREPASS=changeit
+
+	MAPR_TRUSTSTORE=$MAPR_HOME/conf/ssl_truststore
+	MAPR_STOREPASS=mapr123
+
+	ENTRUST_LIST="entrustsslca entrust2048ca entrustevca"
+	DIGICERT_LIST="digicertassuredidrootca digicerthighassuranceevrootca digicertglobalrootca"
+
+	XFER_FILE=/tmp/xfer.cer
+	for cert in $ENTRUST_LIST $DIGICERT_LIST ; do
+		rm -f $XFER_FILE
+		$KEYTOOL -exportcert -keystore $JRE_TRUSTSTORE -storepass $JRE_STOREPASS \
+			-alias $cert -rfc -file $XFER_FILE
+
+		[ $? -eq 0 ] && $KEYTOOL -importcert -keystore $MAPR_TRUSTSTORE -storepass $MAPR_STOREPASS \
+			-alias $cert -file $XFER_FILE -trustcacerts -noprompt
+	done
+	rm -f $XVER_FILE
+
+	echo "  update complete" >> $LOG
+}
 
 function retrieve_mapr_security_credentials()
 {
@@ -1528,6 +1586,8 @@ function main()
 
 	if [ ! -f $MAPR_PARAM_FILE  -a  -f $CF_HOSTS_FILE ] ; then
 		generate_mapr_param_file $MAPR_PARAM_FILE
+		nhosts=$(wc -l $CF_HOSTS_FILE | awk '{print $1}')
+		[ ${nhosts:-0} -eq 1 ] && MAPR_SANDBOX=1
 	fi
 
 	ONENODE_PARAM_FILE=$MAPR_USER_DIR/cfg/onenode.parm
@@ -1626,6 +1686,7 @@ function main()
 	sed -i "s/mfscpus=2/mfscpus=1/g" $ISC_FILE
 	sed -i "s/mfscpus=4/mfscpus=1/g" $ISC_FILE
 
+	[ "${SECARG%% *}" = "-secure" ] && update_ssl_truststore
 	configure_mapr_services
 	enable_object_stores
 	update_site_config

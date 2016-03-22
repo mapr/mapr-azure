@@ -202,7 +202,7 @@ fi
 #	ECO_HIVE='--eco-version hive=none'
 # fi
 
-[ "${MAPR_VERSION:-5.0.0}" = "5.0.0" ] && \
+[ "${MAPR_VERSION%%.*}" = "5" ] && \
 	ECO_PIG="--eco-version pig=0.15"
 
 chmod a+x $BINDIR/deploy-mapr-cluster.py
