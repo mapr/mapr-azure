@@ -60,10 +60,9 @@
                     "[concat(parameters('scriptsUri'), 'prepare-node.sh')]",
                     "[concat(parameters('scriptsUri'), 'deploy-installer.sh')]",
                     "[concat(parameters('scriptsUri'), 'deploy-mapr-ami.sh')]",
+                    "[concat(parameters('scriptsUri'), 'deploy-mapr-data-services.sh')]",
                     "[concat(parameters('scriptsUri'), 'MIDriver.py')]",
                     "[concat(parameters('scriptsUri'), 'deploy-mapr-cluster.py')]",
-                    "[concat(parameters('scriptsUri'), 'deploy-mapr-data-services.sh')]",
-                    "[concat(parameters('scriptsUri'), 'mapr-setup.sh')]",
                     "[concat(parameters('scriptsUri'), 'mount_local_fs.pl')]",
                     "[concat(parameters('scriptsUri'), 'azure-wrapper.sh')]",
                     "[concat(parameters('scriptsUri'), 'installer-wrapper.sh')]"
