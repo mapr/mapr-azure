@@ -33,7 +33,7 @@
             }
         },
         "maprVersion": {
-            "defaultValue": "5.0.0",
+            "defaultValue": "5.1.0",
             "type": "string",
             "allowedValues": ["4.1.0", "5.0.0", "5.1.0"],
             "metadata": {
