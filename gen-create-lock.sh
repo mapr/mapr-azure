@@ -34,6 +34,6 @@ chmod +600 $LOCK_SCRIPT
 SUDOERS=/etc/sudoers
 cat /etc/sudoers > /tmp/sudoers
 
-echo "Cmnd_Alias LOCK_SCRIPT=/usr/bin/bash $LOCK_SCRIPT" >> $SUDOERS
+echo "Cmnd_Alias LOCK_SCRIPT=/bin/bash $LOCK_SCRIPT" >> $SUDOERS
 echo "$USER ALL=(root) NOPASSWD:LOCK_SCRIPT " >> $SUDOERS
 echo 'Defaults!LOCK_SCRIPT !requiretty' >> $SUDOERS
