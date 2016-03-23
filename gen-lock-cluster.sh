@@ -3,30 +3,32 @@
 # Removes password based SSH on all servers
 #
 # Usage :
-#	$0 <ssh_user> <auth_method>
+#	$0 <admin_user> <auth_method>
 #
 # Examples
-#	$0 mapraz SSHKey
-#
+#	$0 azadmin < password | sshPublicKey >
 #
 # Requirements :
-#	sshpass utility; if run as root user, will install the tool
+#	sshpass utility; if run as root user, will attempt installation
+#	key-based authentication for admin_user between the nodes is configured
+#		(this is done with gendist-sshkey.sh in installer-wrapper.sh)
+#	/tmp/lock.sh script created properly (part of gen-cluster-lock.sh)
 #	
 # Return codes
+#	0 : Success
 #	1 : invalid arguments
 #	2 : sshpass utility not found (or uninstallable)
 #
 
 CF_HOSTS_FILE=/tmp/maprhosts
 LOCK_SCRIPT=/tmp/lock.sh
-THIS_HOST=`/bin/hostname`
 THIS_USER=`id -un`
 
 # Get methos from the command line.
-METHOD=${2:-password}
 USER=${1:-azadmin}
+AUTH_METHOD=${2:-password}
 
-[ $METHOD = "password" ] && exit 0
+[ $AUTH_METHOD = "password" ] && exit 0
 
 which sshpass &> /dev/null
 if [ $? -ne 0 ] ; then
@@ -51,3 +53,4 @@ for h in `awk '{print $1}' $CF_HOSTS_FILE` ; do
 
 done
 
+exit 0
