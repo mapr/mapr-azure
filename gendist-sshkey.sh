@@ -13,7 +13,8 @@
 #	Generated key overwrites pre-existing keys of the same name (on
 #	local and remote nodes)
 #	
-#	.ssh/config and .ssh/known_hosts are overwritten on all nodes
+#	.ssh/config is overwritten on all nodes
+#	.ssh/authorized_keys is updated on all nodes
 #
 # Requirements :
 #	sshpass utility; if run as root user, will install the tool
@@ -25,7 +26,6 @@
 #
 
 CF_HOSTS_FILE=/tmp/maprhosts
-THIS_HOST=`/bin/hostname`
 THIS_USER=`id -un`
 
 # Get user and user's password from the command line.
@@ -69,23 +69,21 @@ scEOF
 	chmod 600 ${USER_DIR}/.ssh/config
 fi
 
-[ $? -ne 0 ] && exit 3
-
 [ ! -r $CF_HOSTS_FILE ] && exit 0
 
 # Copy the key to all nodes ... so that everyone can have equal access
 #
-MY_SSH_OPTS="-o StrictHostKeyChecking=no -o PasswordAuthentication=yes"
+MY_SSH_OPTS="-oStrictHostKeyChecking=no -oPasswordAuthentication=yes"
+SSH_KEY="`cat ${USER_DIR}/${KEYFILE}.pub`"
 for h in `awk '{print $1}' $CF_HOSTS_FILE` ; do
-	if [ -n "${SUDO}" ] ; then
-		$SUDO -c "SSHPASS=$PASSWD sshpass -e ssh-copy-id $MY_SSH_OPTS ${USER}@${h}"
-		$SUDO -c "scp ${USER_DIR}/${KEYFILE}* ${USER}@${h}:.ssh"
-		$SUDO -c "scp ${USER_DIR}/.ssh/config  ${USER}@${h}:.ssh"
-	else
-		SSHPASS=$PASSWD sshpass -e ssh-copy-id $MY_SSH_OPTS ${h}
-		scp ${USER_DIR}/${KEYFILE}* ${h}:.ssh
-		scp ${USER_DIR}/.ssh/config  ${h}:.ssh
-	fi
+#		Can't use ssh-copy-id through the SUDO and sshpass wrappers.
+#		Seed the authorized_keys file on the remote system "by hand"
+#	$SUDO -c "SSHPASS=$PASSWD sshpass -e /usr/bin/ssh-copy-id $MY_SSH_OPTS ${USER}@${h}"
+	SSHPASS=$PASSWD sshpass -e ssh $MY_SSH_OPTS ${USER}@${h} mkdir .ssh
+	SSHPASS=$PASSWD sshpass -e ssh $MY_SSH_OPTS ${USER}@${h} "echo \"$SSH_KEY\" >> .ssh/authorized_keys"
+	SSHPASS=$PASSWD sshpass -e ssh $MY_SSH_OPTS ${USER}@${h} "chmod go-rwx .ssh .ssh/authorized_keys"
+	scp -i ${USER_DIR}/${KEYFILE} ${USER_DIR}/${KEYFILE}* ${USER}@${h}:.ssh
+	scp -i ${USER_DIR}/${KEYFILE} ${USER_DIR}/.ssh/config  ${USER}@${h}:.ssh
 
 done
 

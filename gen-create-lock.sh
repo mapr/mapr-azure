@@ -24,13 +24,17 @@ USER=${1:-azadmin}
 
 cat > $LOCK_SCRIPT <<DELIM
  #!/bin/bash
- sed -i 's/PasswordAuthentication.*/PasswordAuthentication no/g' $SSHD_CONFIG
- [ service ssh status &> /dev/null ]   &&  service ssh restart
- [ service sshd status &> /dev/null ]  &&  service sshd restart
+ sed -i 's/^PasswordAuthentication.*/PasswordAuthentication no/g' $SSHD_CONFIG
+ sed -i 's/^ChallengeResponseAuthentication.*/ChallengeResponseAuthentication no/g' $SSHD_CONFIG
+ \$( service ssh status &> /dev/null )   &&  service ssh restart
+ \$( service sshd status &> /dev/null )  &&  service sshd restart
 DELIM
 
-chmod +600 $LOCK_SCRIPT
+chmod 700 $LOCK_SCRIPT
 
+# The <admin> user needs privileges to run this script
+#	NOTE: This EXACT invocation is called in gen-lock-script.sh
+#
 SUDOERS=/etc/sudoers
 cat /etc/sudoers > /tmp/sudoers
 

@@ -64,7 +64,8 @@ sh $BINDIR/prepare-node.sh
 
 sh $BINDIR/gen-cluster-hosts.sh ${1:-$CLUSTER_HOSTNAME_BASE} ${2:-}
 
-# used to lock the cluster later
+# For sshPublicKey deployments, we'll need to disable the
+# PasswordAuthentication in sshd_config after the installer exits
 sh $BINDIR/gen-create-lock.sh $SUDO_USER
 
 # At this point, we only need to configure the installer service
@@ -79,11 +80,6 @@ export MAPR_CLUSTER=AZtest
 chmod a+x $BINDIR/deploy-installer.sh
 $BINDIR/deploy-installer.sh
 [ $? -ne 0 ] && exit 1
-
-# Bug in initial release of MapR 1.1 installer; need to 
-# restart the service here.
-#	TBD : Remove after official release
-service mapr-installer restart
 
 
 # Make sure the hostnames in our cluster resolve.   There
@@ -182,8 +178,6 @@ if [ $PWAIT -eq 0 ] ; then
 fi
 
 
-sh $BINDIR/gen-lock-cluster.sh $SUDO_USER $AUTH_METHOD
-
 	# Invoke installer
 	#	By default, it will go to https://localhost:9443 ... which is fine
 	#	ssh-user/ssh-password has to match what is in the template
@@ -255,5 +249,10 @@ if [ $dmcRet -eq 0  ] ; then
 	[ $? -eq 0 ] && \
 		maprcli maprcli node services -name nfs -action restart -filter '[csvc==nfs]'
 fi
+
+# For PublicKey-configured clusters, disable password authentication
+#	NOTE: This means that the users will have to take the private
+#	key from the Admin User to run the installer again.
+[ $dmcRet -eq 0 ] && sh $BINDIR/gen-lock-cluster.sh $SUDO_USER $AUTH_METHOD
 
 exit $dmcRet

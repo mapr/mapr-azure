@@ -42,13 +42,15 @@ SUDO="su ${USER}"
 
 
 # Run the lock script on all the nodes
+#	NOTE: the EXACT invocation of the lock script must match the 
+#	sudoers entry added in gen-create-lock.sh
 #
-MY_SSH_OPTS="-o StrictHostKeyChecking=no -o PasswordAuthentication=no"
+MY_SSH_OPTS="-oStrictHostKeyChecking=no -oPasswordAuthentication=no"
 for h in `awk '{print $1}' $CF_HOSTS_FILE` ; do
 	if [ -n "${SUDO}" ] ; then
-		$SUDO -c "ssh $MY_SSH_OPTS ${USER}@${h} sudo -u root /usr/bin/bash ${LOCK_SCRIPT}"
+		$SUDO -c "ssh $MY_SSH_OPTS ${USER}@${h} sudo -u root /bin/bash ${LOCK_SCRIPT}"
 	else
-		ssh $MY_SSH_OPTS ${USER}@${h} sudo -u root /usr/bin/bash ${LOCK_SCRIPT}
+		ssh $MY_SSH_OPTS ${USER}@${h} sudo -u root /bin/bash ${LOCK_SCRIPT}
 	fi
 
 done
