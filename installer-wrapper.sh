@@ -122,6 +122,9 @@ done
 #	the mapr user configured BEFORE doing this ... but that's
 #	a chicken-and-egg problem that we can't easily solve.
 #
+#	NOTE2: keyname for SUDO_USER is used below for invoking
+#	installer.  DO NOT CHANGE !!!
+#
 sh $BINDIR/gendist-sshkey.sh $SUDO_USER $SUDO_PASSWD id_rsa
 sh $BINDIR/gendist-sshkey.sh mapr $MAPR_PASSWD id_launch
 ssh-keygen -t rsa -P '' -f ~/.ssh/id_rsa
@@ -197,15 +200,22 @@ fi
 # fi
 
 [ "${MAPR_VERSION%%.*}" = "5" ] && \
-	ECO_PIG="--eco-version pig=0.15"
+	ECO_PIG='--eco-version pig=0.15'
 
 # 23-Mar-2016: frequent deployment failures with Pig ... skip for now
-ECO_PIG="--eco-version pig=none"
+ECO_PIG='--eco-version pig=none'
+
+if [ $AUTH_METHOD = "password" ] ; then
+	SSH_AUTH="--ssh-password $SUDO_PASSWD"
+else
+	SUDO_USER_DIR=`eval "echo ~${SUDO_USER}"`
+	SSH_AUTH="--ssh-keyfile $SUDO_USER_DIR/.ssh/id_rsa"
+fi
 
 chmod a+x $BINDIR/deploy-mapr-cluster.py
 echo $PYTRACE $BINDIR/deploy-mapr-cluster.py -y \
 	--ssh-user $SUDO_USER \
-	--ssh-password \$SUDO_PASSWD \
+	$SSH_AUTH \
 	--cluster $MAPR_CLUSTER \
 	--hosts-file /tmp/maprhosts \
 	--disks-file /tmp/MapR.disks ${ECO_HIVE:-} ${ECO_PIG:-} \
@@ -219,7 +229,7 @@ while [ $attempt -le $MAX_TRIES ] ; do
 	$PYTRACE $BINDIR/deploy-mapr-cluster.py -y \
 		--log-level INFO --log-file /opt/mapr/installer/logs/dmc.log \
 		--ssh-user $SUDO_USER \
-		--ssh-password $SUDO_PASSWD \
+		$SSH_AUTH \
 		--cluster $MAPR_CLUSTER \
 		--hosts-file /tmp/maprhosts \
 		--disks-file /tmp/MapR.disks ${ECO_HIVE:-} ${ECO_PIG:-} \

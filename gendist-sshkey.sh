@@ -58,6 +58,8 @@ USER_DIR=`eval "echo ~${USER}"`
 if [ -n "${SUDO}" ] ; then
 	$SUDO -c "ssh-keygen -q -t rsa -P '' -f ${USER_DIR}/${KEYFILE}"
 	$SUDO -c "cat << sscEOF >> ${USER_DIR}/.ssh/config 
+StrictHostKeyChecking no
+
 IdentityFile  ~/${KEYFILE} 
 sscEOF"
 	$SUDO -c "chmod 600 ${USER_DIR}/.ssh/config"
