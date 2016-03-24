@@ -199,6 +199,9 @@ fi
 [ "${MAPR_VERSION%%.*}" = "5" ] && \
 	ECO_PIG="--eco-version pig=0.15"
 
+# 23-Mar-2016: frequent deployment failures with Pig ... skip for now
+ECO_PIG="--eco-version pig=none"
+
 chmod a+x $BINDIR/deploy-mapr-cluster.py
 echo $PYTRACE $BINDIR/deploy-mapr-cluster.py -y \
 	--ssh-user $SUDO_USER \
