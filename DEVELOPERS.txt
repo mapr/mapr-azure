@@ -26,7 +26,21 @@ PROVISIONING MODEL
 		numbers of volumes are supported) and the different authentication
 		mechanisms.
 
+	A third mode is available with a custom Virtual Machine Image.
+	This model was developed in line with the Amazon Marketplace 
+	offering and the CloudFormation template.   The specification of
+	the MapR image looks a lot like the specification of a core 
+	Linux image (publisher, offer, and sku).   The problem is that
+	for custom images the virtualMachines resource needs the following
+	additional information 
+        "plan": {
+            "publisher": "[parameters('imagePublisher')]",
+            "name" : "[parameters('imageSKU')]",
+            "product": "[parameters('imageOffer')]"
+        },
 
+	If that information is used for the OpenLogic (or likely Canonical)
+	core offerings, a template error is generated. 
 
 TOOLS
 	The Azure command line toolkit is available from Microsoft
@@ -47,7 +61,10 @@ TESTING
 	(azuredeploy.json and az_scripted.json).   To test
 	your modifications, you'll most likely want to clone the
 	repository and update the scriptsUri link to point to a 
-	location over which you have complete control.
+	location over which you have complete control.   This will
+	likely be a WASB blob.   The "upload-repo*.sh" scripts offer
+	examples of how to do that to a WASB blob that has been created
+	in your account.
 
 	To create a cluster, first create a fully defined set of 
 	parameters for you cluster.   This is done by copying 
@@ -62,6 +79,19 @@ TESTING
 			-e ap.json \
 			-d <DeploymentName>
 
+		azure group deployment create <DeploymentName> \
+			-g <RGname> \
+			-f [az_scripted.json | azuredeploy.json ] \
+			-e ap.json 
+
+		NOTE: There can be only one "Extensions" resource active
+		within a resource group at any one time.  The implication
+		of that is that you CANNOT deploy a second cluster in
+		a resource group UNTIL the first deployment is complete !
+		Remember that the MapR installer can take 30-40 minutes
+		for a complete installation.
+
+
 	Each Azure instance has an agent process that handles
 	the extra steps defined in the template.   The scripts are
 	downloaded to
@@ -75,6 +105,11 @@ TESTING
 	(eg 1.2.2.0).   The key log for this deployment is
 		extension.log
 
+	When testing the MapR installer itself, it's often best to
+	change the "installer-wrapper.sh" script to return success
+	WITHOUT installing the MapR software.   You can access the 
+	download/0 directory noted above to see the EXACT command line
+	for the installation and duplicate that yourself.
 
 AZURE RESOURCE NAMESPACE
 	The templates create a series of resources within the specified
@@ -87,7 +122,7 @@ AZURE RESOURCE NAMESPACE
 	creation error for the storage accounts).
 
 
-TESTING UI
+TESTING MARKETPLACE UI
 	You can upload the createUiDefinition file to the public github 
 	and then test using the following URL.  Note the explicit link
 	to our mapr/mapr-azure/master repository for now.
@@ -95,3 +130,5 @@ TESTING UI
 
 https://portal.azure.com/?clientOptimizations=false#blade/Microsoft_Azure_Compute/CreateMultiVmWizardBlade/internal_bladeCallId/anything/internal_bladeCallerParams/{"initialData":{},"providerConfig":{"createUiDefinition":"https%3A%2F%2Fraw.githubusercontent.com%2Fmapr%2Fmapr-azure%2Fmaster%2FcreateUiDefinition.json" }}
 
+	And this one for the contents in mapr/azure (sandbox deployment)
+https://portal.azure.com/?clientOptimizations=false#blade/Microsoft_Azure_Compute/CreateMultiVmWizardBlade/internal_bladeCallId/anything/internal_bladeCallerParams/{"initialData":{},"providerConfig":{"createUiDefinition":"https%3A%2F%2Fraw.githubusercontent.com%2Fmapr%2Fazure%2Fmaster%2FcreateUiDefinition.json" }}

@@ -49,6 +49,10 @@ azuredeploy.json :
 bootstrap.json :
 installer-wrapper.sh :
 	Azure template for MapR installation driven by MapR Installer service.
+	The installer-wrapper.sh does the following :
+		- on every node, installs key pre-reqs and identifies disks for MapR-FS
+		- on node0, deploys the installer service and runs the installation
+		    using the deploy-mapr-cluster.py script (and MIDriver.py class)
 
 az_scripted.json :
 bootstrap_scripted.json :
@@ -94,6 +98,15 @@ createUiDefinition.json :
 		- adjust default and allowedValues for "vmSize" if you
 			need to constrain the set of supported VM's
 
+gendist-sshkey.sh
+gen-create-lock.sh
+gen-lock-cluster.sh
+	Helper scripts used in Installer-driven installation.
+	gendist-sshkey.sh generates and distributes an ssh key for
+	a user on the cluster (given PasswordAuthentication enabled
+	ssh access between nodes).   The *lock*.sh scripts are used
+	to DISABLE PasswordAuthentication on clusters after 
+	installation (see AUTHENTICATION NOTES below)
 
 azvmcreate.sh
 azvmdelete.sh:
@@ -102,3 +115,25 @@ azvmdelete.sh:
 	storage accounts to be used since VM Images under
 	development MUST share a storage account for the
 	boot disk (see notes in Azure).
+
+
+AUTHENTICATION NOTES
+--------------------
+The Azure template supports configuring the VM's with either
+Password or PublicKey authentication for the admin user (the one
+with sudo privileges).   The problem is that there is no way to
+pass in the private half of the key ... so the installer MUST
+use password authentication.   The model is this (all done
+in the installer wrapper scripts)
+	enable PasswordAuthentication on all nodes
+	run gen-create-lock.sh script on all nodes
+		generate a script (/tmp/lock.sh) to disable PasswordAuthentication
+		update sudoers to allow password-less invocation of that script
+	on NODE0 only
+		generate/distribute an ssh key for Admin User and MapR User
+		perform the installation (with adminuser and adminpassword)
+		run gen-lock-cluster.sh
+			uses key-access to remote nodes to run lock.sh script
+				(remember, we set up key access with gendist-sshkey.sh
+
+	
