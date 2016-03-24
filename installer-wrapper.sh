@@ -250,7 +250,7 @@ if [ $dmcRet -eq 0  ] ; then
 		# Restart NFS (in case we installed trial license)
 	maprcli license apps -noheader | grep -q -w NFS
 	[ $? -eq 0 ] && \
-		maprcli maprcli node services -name nfs -action restart -filter '[csvc==nfs]'
+		maprcli node services -name nfs -action restart -filter '[csvc==nfs]'
 fi
 
 # For PublicKey-configured clusters, disable password authentication
