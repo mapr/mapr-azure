@@ -293,7 +293,7 @@
   "outputs": {
     "Web Console": {
       "type": "string",
-      "value": "[concat('http://',parameters('clusterName'),'-',substring(uniquestring(resourceGroup().id), 0, 8),'-node0.',parameters('location'),'.cloudapp.azure.com:8443')]"
+      "value": "[concat('https://',parameters('clusterName'),'-',substring(uniquestring(resourceGroup().id), 0, 8),'-node0.',parameters('location'),'.cloudapp.azure.com:8443')]"
     },
     "User Name": {
       "type": "string",

@@ -47,7 +47,7 @@ for clusterName and adminPassword
 <li>
 Launch a resource group and deploy the MapR software
 <p>
-azure group create "newgroup" "West US" -f mainTemplate.json -d MapRtest -e ap.json
+azure group create "newgroup" westus -f mainTemplate.json -d MapRtest -e ap.json
 </p
 </li>
 </ol>
