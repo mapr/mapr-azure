@@ -57,6 +57,12 @@ $web= $web . $nbase . $h . ",";
 }
 chop $web;
 
+$sparkhist="sparkhist:";
+foreach $h (@sparkhist){
+$sparkhist= $sparkhist . $nbase . $h . ",";
+}
+chop $sparkhist;
+
 $ot="ot:";
 foreach $h (@ot){
 $ot= $ot . $nbase . $h . ",";
@@ -75,11 +81,12 @@ close(FILE);
 
 $inst_script="
 clush -g zk yum install mapr-zookeeper -y
-clush -a yum install mapr-fileserver mapr-nfs mapr-nodemanager -y
+clush -a yum install mapr-fileserver mapr-nfs mapr-nodemanager mapr-drill mapr-spark -y
 clush -g cldb yum install mapr-cldb -y
 clush -g rm yum install mapr-resourcemanager -y
 clush -g hs yum install mapr-historyserver -y
 clush -g web yum install mapr-webserver -y
+clush -g sparkhist yum install mapr-spark-historyserver -y
 
 echo \"Installing patches....\"
 clush -a rpm -Uvh http://package.mapr.com/patches/releases/v5.2.0/redhat/mapr-patch-5.2.0.39122.GA-39350.x86_64.rpm
@@ -202,10 +209,6 @@ system("hadoop fs -chown -R mapr /user/hive");
 system("hadoop fs -chgrp -R mapr /user/hive");
 system("hadoop fs -chmod -R 777 /user/$sudo_user/tmp");
 system("hadoop fs -chmod -R 777 /user/hive");
-
-#install drill
-print "Installing Drill..\n";
-system("clush -a yum -y install mapr-drill");
 
 } #hiveserver
 
