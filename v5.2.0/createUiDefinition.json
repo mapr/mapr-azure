@@ -185,21 +185,21 @@
             "name": "MapRLicenseType",
             "type": "Microsoft.Common.DropDown",
             "label": "MapR Edition",
-            "defaultValue": "M3",
-            "toolTip": "MapR license edition for this deployment: Community (M3), Enterprise (M5), or Enterprise Database (M7)",
+            "defaultValue": "convergedCommunity",
+            "toolTip": "MapR license edition for this deployment: Converged Community, Enterprise (Enterprise), or Converged Enterprise",
             "constraints": {
               "allowedValues": [
                 {
-                  "label": "M3",
-                  "value": "M3"
+                  "label": "convergedCommunity",
+                  "value": "convergedCommunity"
                 },
                 {
-                  "label": "M5",
-                  "value": "M5"
+                  "label": "Enterprise",
+                  "value": "Enterprise"
                 },
                 {
-                  "label": "M7",
-                  "value": "M7"
+                  "label": "Converged Enterprise",
+                  "value": "Converged Enterprise"
                 }
               ]
             }
