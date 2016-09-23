@@ -148,7 +148,7 @@
             "name": "MapRVersion",
             "type": "Microsoft.Common.DropDown",
             "label": "MapR Version",
-            "defaultValue": "5.1.0",
+            "defaultValue": "5.2.0",
             "toolTip": "The version of MapR Software that you want to use for this cluster.",
             "constraints": {
               "allowedValues": [
@@ -161,8 +161,8 @@
                   "value": "5.0.0"
                 },
                 {
-                  "label": "5.1.0",
-                  "value": "5.1.0"
+                  "label": "5.2.0",
+                  "value": "5.2.0"
                 }
               ]
             }

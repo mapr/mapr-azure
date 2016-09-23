@@ -12,7 +12,7 @@
         "value": "M3"
     },
     "maprVersion": {
-        "value": "5.1.0"
+        "value": "5.2.0"
     },
     "adminUsername": {
         "value": "mapradmin"
@@ -30,7 +30,7 @@
         "value": "Standard_D12"
     },
     "sshKey": {
-            "value": "ssh-rsa AAAAB3NzaC1yc2EAAAABJQAAAQEAhQYjIoOju5sQzFLX/EE5bkZeaeo0vHh0bj3jRhOvuSGRfvR6XsvUQ4kpU1VUWItmVJ0C1Q3Xlv7+PtwiDrkjb6trUThGBP3EN6nRiRyDNVm8M9srnD34iAKmEVMfRSIvPSQiFGsZaPIoFH2gt4dEaIXbMKtdvu84j8v69I1CVxsKXohubXo/kfZiznTyoN2sCeHJIHs07ght7a/I3ANIpv6lKJ7CFv8QtP2/dLdz3peWsA0g40MqYcYWR+U3IXh/Or6O8lknBvP+ibsbjf33GP5PcqZJo0o0sZPu//K/MAJLAYDppbN52ZOELiMnAC2wxQzcaDEtXau1jVMt4eh+MQ=="
+            "value": ""
     },
     "authenticationType": {
             "value": "sshPublicKey"
