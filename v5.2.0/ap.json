@@ -1,0 +1,59 @@
+﻿{
+    "artifactsBaseUrl": {
+        "value": "https://raw.githubusercontent.com/mapr/mapr-azure/master"
+    },
+    "clusterName": {
+        "value": "maprazure"
+    },
+    "clusterSize": {
+        "value": 3
+    },
+    "clusterEdition": {
+        "value": "convergedCommunity"
+    },
+    "maprVersion": {
+        "value": "5.2.0"
+    },
+    "adminUsername": {
+        "value": "mapradmin"
+    },
+    "adminPassword": {
+        "value": "maprazure"
+    },
+    "maprPassword": {
+        "value": "maprazure"
+    },
+    "location": {
+        "value": "West US"
+    },
+    "vmSize": {
+        "value": "Standard_D3"
+    },
+    "sshKey": {
+            "value": ""
+    },
+    "authenticationType": {
+            "value": "password"
+    },
+    "vnetNewOrExisting": {
+        "value": "new"
+    },
+    "vnetName": {
+        "value": "maprvnettest"
+    },
+    "vnetSubnetName": {
+        "value": "maprsubnet"
+    },
+    "vnetRGName": {
+        "value": "maprrg"
+    },
+    "vnetAddressPrefix": {
+        "value": "10.5.0.0/16"
+    },
+    "vnetSubnetAddressPrefix": {
+        "value": "10.5.0.0/24"
+    },
+    "vnetStartAddress": {
+        "value": "10.5.0.4"
+    }
+}
