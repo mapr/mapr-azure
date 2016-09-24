@@ -302,6 +302,10 @@
     "Password": {
       "type": "string",
       "value": "[parameters('adminPassword')]"
+    },
+    "Drill UI": {
+      "type": "string",
+      "value": "[concat('http://',parameters('clusterName'),'-',substring(uniquestring(resourceGroup().id), 0, 8),'-node0.',parameters('location'),'.cloudapp.azure.com:8047')]"
     }
   }
 }

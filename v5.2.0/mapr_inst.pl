@@ -76,17 +76,18 @@ $es= $es . $nbase . $h . ",";
 chop $es;
 
 open(FILE,">>$clushf");
-print FILE "$cldb\n$zk\n$rm\n$hs\n$web\n$ot\n$es\n";
+print FILE "$cldb\n$zk\n$rm\n$hs\n$web\n$ot\n$es\n$sparkhist\n";
 close(FILE);
 
 $inst_script="
+clush -ac /etc/hosts --dest /etc/hosts
 clush -g zk yum install mapr-zookeeper -y
-clush -a yum install mapr-fileserver mapr-nfs mapr-nodemanager mapr-drill mapr-spark -y
+clush -a yum install mapr-fileserver mapr-nfs mapr-nodemanager mapr-spark -y
 clush -g cldb yum install mapr-cldb -y
 clush -g rm yum install mapr-resourcemanager -y
 clush -g hs yum install mapr-historyserver -y
 clush -g web yum install mapr-webserver -y
-clush -g sparkhist yum install mapr-spark-historyserver -y
+#clush -g sparkhist yum install mapr-spark-historyserver -y
 
 echo \"Installing patches....\"
 clush -a rpm -Uvh http://package.mapr.com/patches/releases/v5.2.0/redhat/mapr-patch-5.2.0.39122.GA-39350.x86_64.rpm
@@ -191,6 +192,7 @@ sleep 20;
 `maprcli node services -name hs2 -action stop -nodes $headnode >& /dev/null`;
 `maprcli node services -name hivemeta -action start -nodes $headnode >& /dev/null`;
 `maprcli node services -name hs2 -action start -nodes $headnode >& /dev/null`;
+#`maprcli node services -name spark-historyserver -action restart -nodes $sparkhist[0] >& /dev/null`;
 
 while ($hivetmp != 0 | $hstmp != 0){
 print "Waiting for hivemeta and hs2 to come up....\n";
@@ -203,12 +205,19 @@ sleep 3;
 print "Hive Server is ready.\n";
 system("hadoop fs -mkdir -p /user/$sudo_user/tmp/hive");
 system("hadoop fs -mkdir -p /user/hive");
+system("hadoop fs -mkdir -p /apps/spark");
 system("hadoop fs -chown -R $sudo_user /user/$sudo_user");
 system("hadoop fs -chgrp -R $sudo_user /user/$sudo_user");
 system("hadoop fs -chown -R mapr /user/hive");
 system("hadoop fs -chgrp -R mapr /user/hive");
 system("hadoop fs -chmod -R 777 /user/$sudo_user/tmp");
 system("hadoop fs -chmod -R 777 /user/hive");
+system("hadoop fs -chown -R $sudo_user /apps");
+system("hadoop fs -chgrp -R $sudo_user /apps");
+
+#install drill
+print "Installing Drill..\n";
+system("clush -a yum -y install mapr-drill");
 
 } #hiveserver
 
