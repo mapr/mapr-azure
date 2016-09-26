@@ -218,7 +218,7 @@ system("hadoop fs -chgrp -R $sudo_user /apps");
 #install drill
 print "Installing Drill..\n";
 system("clush -a yum -y install mapr-drill");
-
+system("clush -a /opt/mapr/server/configure.sh -R");
 } #hiveserver
 
 sub post_inst{
