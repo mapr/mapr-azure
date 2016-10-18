@@ -220,7 +220,7 @@ if ($lic eq "convergedEnterprise") {$licf="~mapr/licenses/azureCE_200.txt";}
 if ($lic eq "Enterprise") {$licf="~mapr/licenses/azureE_200.txt";}
 system("maprcli license add -license $licf -is_file true");
 sleep 10;
-system("/home/mapr/sbin/rlc.sh.x");
+system("clush -a /home/mapr/sbin/rlc.sh.x");
 system("clush -a service mapr-warden restart");
 sleep 120;
 print "Cluster is ready.\n";
