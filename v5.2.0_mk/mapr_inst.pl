@@ -221,7 +221,7 @@ $lic=`cat /tmp/maprlicensetype`;chomp $lic;
 if ($lic eq "convergedEnterprise") {$licf="~mapr/licenses/azureCE_200.txt";system("maprcli license add -license $licf -is_file true");}
 if ($lic eq "Enterprise") {$licf="~mapr/licenses/azureE_200.txt";system("maprcli license add -license $licf -is_file true");}
 sleep 10;
-system("/home/mapr/sbin/rlc.sh.x");
+if ($lic ne "convergedCommunity") {system("/home/mapr/sbin/rlc.sh.x");}
 print "Cluster is ready.\n";
 } #post_inst
 
