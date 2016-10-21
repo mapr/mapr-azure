@@ -18,10 +18,10 @@ system("sed -i \"s/^all:.*/all:$nbase\[0-$#tmp]/g\" $clushf");
 switch($nnodes){
 case 1 {@zk=qw(0);@cldb=qw(0);@rm=qw(0);@hs=qw(0);@web=qw(0);@sparkhist=qw(0);}
 case 2 {@zk=qw(0);@cldb=qw(0);@rm=qw(0);@hs=qw(0);@web=qw(0);@sparkhist=qw(0);}
-case 3 {@zk=qw(0 1 2);@cldb=qw(0 1);@rm=qw(1 2);@hs=qw(3);@web=qw(0);@sparkhist=qw(2);}
-case 4 {@zk=qw(0 1 2);@cldb=qw(0 1);@rm=qw(1 2);@hs=qw(3);@web=qw(0);@sparkhist=qw(2);}
-case 5 {@zk=qw(0 1 2);@cldb=qw(0 1);@rm=qw(1 2);@hs=qw(3);@web=qw(0);@sparkhist=qw(2);}
-else {@zk=qw(0 1 2);@cldb=qw(3 4 5);@rm=qw(1 2);@hs=qw(3);@web=qw(0 1);@sparkhist=qw(2);}
+case 3 {@zk=qw(0 1 2);@cldb=qw(0 1);@rm=qw(1 2);@hs=qw(2);@web=qw(0);@sparkhist=qw(2);}
+case 4 {@zk=qw(0 1 2);@cldb=qw(0 1);@rm=qw(1 2);@hs=qw(2);@web=qw(0);@sparkhist=qw(2);}
+case 5 {@zk=qw(0 1 2);@cldb=qw(0 1);@rm=qw(1 2);@hs=qw(2);@web=qw(0);@sparkhist=qw(2);}
+else {@zk=qw(0 1 2);@cldb=qw(3 4 5);@rm=qw(1 2);@hs=qw(2);@web=qw(0 1);@sparkhist=qw(2);}
 }
 
 @ot=@hs;
