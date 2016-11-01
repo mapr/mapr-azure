@@ -205,8 +205,8 @@ system("clush -a /opt/mapr/server/configure.sh -R");
 #install spark
 print "Installing Spark..\n";
 system("clush -a yum -y install mapr-spark");
-#system("clush -g sparkhist yum -y install mapr-spark-historyserver");
 system("hadoop fs -mkdir /apps/spark; hadoop fs -chmod 777 /apps/spark");
+#system("clush -g sparkhist yum -y install mapr-spark-historyserver");
 } #hiveserver
 
 sub post_inst{
