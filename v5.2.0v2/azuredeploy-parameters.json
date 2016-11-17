@@ -1,0 +1,39 @@
+﻿{
+    "artifactsBaseUrl": {
+        "value": "https://raw.githubusercontent.com/mapr/mapr-azure/master"
+    },
+    "clusterName": {
+        "value": "mapr20160207"
+    },
+    "clusterSize": {
+        "value": 3
+    },
+    "clusterEdition": {
+        "value": "M3"
+    },
+    "maprVersion": {
+        "value": "5.0.0"
+    },
+    "adminUsername": {
+        "value": "azadmin"
+    },
+    "adminPassword": {
+        "value": "MapRAzur3"
+    },
+    "maprPassword": {
+        "value": "MapRAZ"
+    },
+    "location": {
+        "value": "West US"
+    },
+    "vmSize": {
+        "value": "Standard_D4"
+    },
+    "sshKey": {
+            "value": ""
+    },
+    "authenticationType": {
+            "value": "password"
+    }
+}
+

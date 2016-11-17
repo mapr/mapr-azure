@@ -1,0 +1,59 @@
+﻿{
+    "artifactsBaseUrl": {
+        "value": "https://maprui.blob.core.windows.net/deploy"
+    },
+    "clusterName": {
+        "value": "mapr510"
+    },
+    "clusterSize": {
+        "value": 3
+    },
+    "clusterEdition": {
+        "value": "M3"
+    },
+    "maprVersion": {
+        "value": "5.2.0"
+    },
+    "adminUsername": {
+        "value": "mapradmin"
+    },
+    "adminPassword": {
+        "value": ""
+    },
+    "maprPassword": {
+        "value": "maprazure"
+    },
+    "location": {
+        "value": "West US"
+    },
+    "vmSize": {
+        "value": "Standard_D12"
+    },
+    "sshKey": {
+            "value": "ssh-rsa AAAAB3NzaC1yc2EAAAABJQAAAQEAhQYjIoOju5sQzFLX/EE5bkZeaeo0vHh0bj3jRhOvuSGRfvR6XsvUQ4kpU1VUWItmVJ0C1Q3Xlv7+PtwiDrkjb6trUThGBP3EN6nRiRyDNVm8M9srnD34iAKmEVMfRSIvPSQiFGsZaPIoFH2gt4dEaIXbMKtdvu84j8v69I1CVxsKXohubXo/kfZiznTyoN2sCeHJIHs07ght7a/I3ANIpv6lKJ7CFv8QtP2/dLdz3peWsA0g40MqYcYWR+U3IXh/Or6O8lknBvP+ibsbjf33GP5PcqZJo0o0sZPu//K/MAJLAYDppbN52ZOELiMnAC2wxQzcaDEtXau1jVMt4eh+MQ=="
+    },
+    "authenticationType": {
+            "value": "sshPublicKey"
+    },
+    "vnetNewOrExisting": {
+        "value": "new"
+    },
+    "vnetName": {
+        "value": "maprvnettest"
+    },
+    "vnetSubnetName": {
+        "value": "mysubnet"
+    },
+    "vnetRGName": {
+        "value": "rgmapr1234"
+    },
+    "vnetAddressPrefix": {
+        "value": "10.5.0.0/16"
+    },
+    "vnetSubnetAddressPrefix": {
+        "value": "10.5.0.0/24"
+    },
+    "vnetStartAddress": {
+        "value": "10.5.0.4"
+    }
+}

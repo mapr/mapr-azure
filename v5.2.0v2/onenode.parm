@@ -1,0 +1,10 @@
+MAPR_USER=${MAPR_USER:-mapr}
+MAPR_PASSWD=${MAPR_PASSWD:-MapR}
+MAPR_PACKAGES=zookeeper,cldb,resourcemanager,historyserver,fileserver,nodemanager,webserver,nfs,hbase
+MAPR_CORE_REPO=
+cluster=azure1
+zknodes=NODE0
+cldbnodes=NODE0
+rmnodes=NODE0
+hsnode=NODE0
+MAPR_LICENSE_FILE=/home/mapr/licenses/MaprMarketplaceM3License.txt

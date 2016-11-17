@@ -1,0 +1,65 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json# ",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "clusterSize": {
+            "type": "int"
+        },
+        "clusterName": {
+            "type": "string"
+        },
+        "clusterEdition": {
+            "type": "string"
+        },
+        "maprVersion": {
+            "type": "string"
+        },
+        "scriptsUri": {
+            "type": "string"
+        },
+        "maprPassword": {
+            "type": "securestring"
+        },
+        "location": {
+            "type": "string"
+        },
+        "authType": {
+            "type": "string"
+        },
+        "adminUser": {
+            "type": "securestring"
+        },
+        "adminPassword": {
+            "type": "securestring"
+        }
+    },
+    "variables": {
+        "vmBasename": "[concat(parameters('clusterName'),'node')]"
+	},
+    "resources": [
+    {
+        "name": "[concat(variables('vmBasename'),copyIndex(),'/extension')]",
+        "type": "Microsoft.Compute/virtualMachines/extensions",
+        "apiVersion": "2016-03-30",
+        "location": "[parameters('location')]",
+        "copy" : {
+            "name" : "extLoop",
+            "count": "[parameters('clusterSize')]"
+        },
+        "properties": {
+            "publisher": "Microsoft.OSTCExtensions",
+            "type": "CustomScriptForLinux",
+            "typeHandlerVersion": "1.5",
+            "autoUpgradeMinorVersion":true,
+            "settings": {
+                "fileUris": [
+                    "[concat(parameters('scriptsUri'), 'start.sh')]"
+                ]
+            },
+            "protectedSettings": {
+                "commandToExecute": "[concat('sh start.sh ', variables('vmBasename'), ' ', parameters('clusterSize'), ' ', parameters('clusterEdition'), ' ', parameters('maprVersion'), ' ', parameters('maprPassword'), ' ', parameters('authType'), ' ', parameters('adminUser'), ' ', parameters('adminPassword'), ' ', '| tee /tmp/stdout')]"
+            }
+        }
+    }        
+    ]
+}

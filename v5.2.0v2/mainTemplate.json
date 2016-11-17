@@ -1,0 +1,317 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters" : {
+		"artifactsBaseUrl": {
+			"type": "string",
+			"metadata": {
+				"artifactsBaseUrl": "Base URL of the Publisher Template gallery package"
+			}
+		},
+        "clusterName": {
+            "defaultValue": "mapraz",
+            "type": "string",
+            "metadata": {
+                 "description": "Unique name for deployed MapR cluster.  Must be all lower case letters or numbers; no spaces or special characters."
+            }
+        },
+        "clusterSize": {
+            "defaultValue": 3,
+            "type": "int",
+            "metadata": {
+                 "description": "Number of instances to deploy for the cluster"
+            }
+        },
+        "clusterEdition": {
+            "defaultValue": "convergedCommunity",
+            "type": "string",
+            "allowedValues": ["convergedCommunity"],
+            "metadata": {
+                 "description": "MapR License Edition {Community Community, Enterprise, or Converged Enterprise}"
+            }
+        },
+        "maprVersion": {
+            "defaultValue": "5.2.0",
+            "type": "string",
+            "allowedValues": ["5.2.0"],
+            "metadata": {
+                 "description": "MapR Software Version"
+            }
+        },
+        "adminUsername": {
+            "defaultValue": "mapradmin",
+            "type": "securestring",
+            "metadata": {
+                 "description": "System Administrator for deployed nodes"
+            }
+        },
+        "adminPassword": {
+            "defaultValue": "",
+            "type": "securestring",
+            "metadata": {
+                 "description": "Password for System Administrator"
+            }
+        },
+        "maprPassword": {
+            "type": "securestring",
+            "metadata": {
+                 "description": "Password for MapR Administrator (mapr user account)"
+            }
+        },
+        "sshKey": {
+            "defaultValue": "",
+            "type": "securestring",
+            "metadata": {
+                 "description": "SSH Key for System Administrator"
+            }
+        },
+        "authenticationType": {
+            "type": "string",
+            "defaultValue" : "password",
+            "allowedValues": ["password", "sshPublicKey"],
+            "metadata": {
+                "description": "Authentication to use for System Administrator."
+            }
+        },
+        "location": {
+            "type": "string",
+            "metadata": {
+                "description": "Deployment location"
+            }
+        },
+        "vmSize": {
+            "type": "string",
+            "metadata": {
+                "description": "InstanceType to use for this deployment"
+            }
+        },
+        "vnetNewOrExisting": {
+            "type": "string",
+            "metadata": {
+                "description": "Use an existing virtual network or create a new one"
+            }            
+        },
+        "vnetName": {
+            "type": "string",
+            "metadata": {
+                "description": "Virtual network name"
+            }            
+        },
+        "vnetSubnetName": {
+            "type": "string",
+            "metadata": {
+                "description": "Subnet name"
+            }            
+        },
+        "vnetAddressPrefix": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "Virtual network address prefix"
+            }            
+        },
+        "vnetSubnetAddressPrefix": {
+            "type": "string",
+            "metadata": {
+                "description": "Subnet address prefix"
+            }            
+        },
+        "vnetStartAddress": {
+            "type": "string",
+            "metadata": {
+                "description": "Initial IP address on the subnet"
+            }            
+        },
+        "vnetRGName": {
+            "type": "string",
+            "metadata": {
+                "description": "Virtual network resource group name"
+            }            
+        }
+    },
+    "variables": {
+        "scriptsUri" : "[concat(parameters('artifactsBaseUrl'), '/')]",
+        "nicBasename": "[concat(parameters('clusterName'),'-nic')]",
+        "publicIPAddressBasename": "[concat(parameters('clusterName'),'-publicIP')]",
+        "publicIPAddressType" : "Dynamic",
+        "uniqueString": "[substring(uniqueString(resourceGroup().id),0,8)]"
+    },
+    "resources": [
+    {
+        "name": "network",
+        "type": "Microsoft.Resources/deployments",
+        "apiVersion": "2016-02-01",
+        "properties": {
+            "mode": "Incremental",
+            "templateLink": {
+                "uri": "[concat(variables('scriptsUri'), 'network.json')]",
+                "contentVersion": "1.0.0.0"
+            },
+            "parameters": {
+                "clusterSize" : {
+                    "value": "[parameters('clusterSize')]"
+                },
+                "clusterName" : {
+                    "value": "[parameters('clusterName')]"
+                },
+                "location" : {
+                    "value": "[parameters('location')]"
+                },
+                "publicIPAddressBasename" : {
+                    "value" : "[variables('publicIPAddressBasename')]"
+                },
+                "publicIPAddressType": {
+                    "value": "[variables('publicIPAddressType')]"
+                },
+                "nicBasename" : {
+                    "value" : "[variables('nicBasename')]"
+                },
+                "vnetNewOrExisting": {
+                    "value": "[parameters('vnetNewOrExisting')]"
+                },
+                "vnetName": {
+                    "value": "[parameters('vnetName')]"
+                },
+                "vnetSubnetName": {
+                    "value": "[parameters('vnetSubnetName')]"
+                },
+                "vnetAddressPrefix": {
+                    "value": "[parameters('vnetAddressPrefix')]"
+                },
+                "vnetSubnetAddressPrefix": {
+                    "value": "[parameters('vnetSubnetAddressPrefix')]"
+                },
+                "vnetStartAddress": {
+                    "value": "[parameters('vnetStartAddress')]"
+                },
+                "vnetRGName": {
+                    "value": "[parameters('vnetRGName')]"
+                },
+                "scriptsUri" : {
+                    "value": "[variables('scriptsUri')]"
+                }                                    
+            }
+        }
+    },
+    {
+        "name": "vms",
+        "type": "Microsoft.Resources/deployments",
+        "apiVersion": "2016-02-01",
+        "dependsOn": [
+            "['Microsoft.Resources/deployments/network']"
+        ],        
+        "properties": {
+            "mode": "Incremental",
+            "templateLink": {
+                "uri": "[concat(variables('scriptsUri'), 'vms.json')]",
+                "contentVersion": "1.0.0.0"
+            },
+            "parameters": {
+                "clusterSize" : {
+                    "value": "[parameters('clusterSize')]"
+                },
+                "clusterName" : {
+                    "value": "[parameters('clusterName')]"
+                },
+                "vmSize": {
+                    "value": "[parameters('vmSize')]"
+                },
+                "adminUsername" : {
+                    "value": "[parameters('adminUsername')]"
+                },
+                "adminPassword" : {
+                    "value": "[parameters('adminPassword')]"
+                },
+                "sshKey" : {
+                    "value" : "[parameters('sshKey')]"
+                },
+                "authenticationType" : {
+                    "value" : "[parameters('authenticationType')]"
+                },                
+                "nicBasename" : {
+                    "value" : "[variables('nicBasename')]"
+                },                
+                "location" : {
+                    "value": "[parameters('location')]"
+                },
+                "scriptsUri" : {
+                    "value": "[variables('scriptsUri')]"
+                }                                    
+            }
+        }
+    },
+    {
+        "name": "extensions",
+        "type": "Microsoft.Resources/deployments",
+        "apiVersion": "2016-02-01",
+        "dependsOn": [
+            "['Microsoft.Resources/deployments/vms']"
+        ],        
+        "properties": {
+            "mode": "Incremental",
+            "templateLink": {
+                "uri": "[concat(variables('scriptsUri'), 'bootstrap.json')]",
+                "contentVersion": "1.0.0.0"
+            },
+            "parameters": {
+                "clusterSize" : {
+                    "value": "[parameters('clusterSize')]"
+                },
+                "clusterName" : {
+                    "value": "[parameters('clusterName')]"
+                },
+                "clusterEdition" : {
+                    "value": "[parameters('clusterEdition')]"
+                },
+                "maprVersion" : {
+                    "value": "[parameters('maprVersion')]"
+                },
+                "scriptsUri" : {
+                    "value": "[variables('scriptsUri')]"
+                },
+                "maprPassword" : {
+                    "value": "[parameters('maprPassword')]"
+                },
+                "location" : {
+                    "value": "[parameters('location')]"
+                },
+                "authType" : {
+                    "value": "[parameters('authenticationType')]"
+                },
+                "adminUser" : {
+                    "value": "[parameters('adminUsername')]"
+                },
+                "adminPassword" : {
+                    "value": "[parameters('adminPassword')]"
+                }
+            }
+        }
+    }
+    ],
+    "outputs": {
+      "SSH User Name": {
+         "type": "string",
+        "value": "[parameters('adminUserName')]"
+      },
+      "SSH Password": {
+        "type": "string",
+        "value": "[parameters('adminPassword')]"
+      },
+      "Web Console": {
+        "type": "string",
+        "value": "[concat('https://',parameters('clusterName'),'-',variables('uniqueString'),'-node0','.',parameters('location'),'.cloudapp.azure.com:8443')]"
+      },
+      "Drill UI": {
+        "type": "string",
+        "value": "[concat('http://',parameters('clusterName'),'-',variables('uniqueString'),'-node0','.',parameters('location'),'.cloudapp.azure.com:8047')]"
+      },
+      "Grafana": {
+        "type": "string",
+        "value": "[concat('http://',parameters('clusterName'),'-',variables('uniqueString'),'-node2','.',parameters('location'),'.cloudapp.azure.com:3000')]"
+      },
+      "Kibana": {
+        "type": "string",
+        "value": "[concat('http://',parameters('clusterName'),'-',variables('uniqueString'),'-node1','.',parameters('location'),'.cloudapp.azure.com:5601')]"
+      }
+  }
+}
