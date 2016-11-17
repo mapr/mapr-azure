@@ -1,0 +1,106 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json# ",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "clusterSize": {
+            "type": "int"
+        },
+        "clusterName": {
+            "type": "string",
+            "defaultValue": ""
+        },
+         "location": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "publicIPAddressBasename" : {
+            "type" : "string",
+            "defaultValue": ""
+        },
+        "publicIPAddressType" : {
+            "type" : "string",
+            "defaultValue": ""
+        },
+        "networkSpec" : {
+            "type" : "object"
+        },
+        "nicBasename" : {
+            "type" : "string",
+            "defaultValue": ""
+        },
+        "subnet1Ref" : {
+            "type" : "string",
+            "defaultValue": ""            
+        }
+    },
+    "variables": {},
+    "resources": [{
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[concat(parameters('publicIPAddressBasename'), copyIndex())]",
+      "location": "[parameters('location')]",
+      "copy": {
+          "name": "publicIPLoop",
+          "count": "[parameters('clusterSize')]"
+      },
+      "properties": {
+          "publicIPAllocationMethod": "[parameters('publicIPAddressType')]",
+          "dnsSettings": {
+       	      "domainNameLabel": "[concat(parameters('clusterName'),'-',substring(uniquestring(resourceGroup().id),0,8),'-node',copyIndex())]",
+          }
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[concat(parameters('clusterName'), '-vnet')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[parameters('networkSpec').vnetCIDR]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[parameters('networkSpec').subnet1Name]",
+            "properties" : {
+                "addressPrefix": "[parameters('networkSpec').subnet1CIDR]"
+            }
+          }
+        ]
+      }
+    },
+    {
+        "apiVersion": "2015-06-15",
+        "type": "Microsoft.Network/networkInterfaces",
+        "name": "[concat(parameters('nicBasename'), copyIndex())]",
+        "location": "[parameters('location')]",
+        "dependsOn": [
+            "[concat('Microsoft.Network/publicIPAddresses/', parameters('publicIPAddressBasename'), copyIndex())]",
+            "[concat('Microsoft.Network/virtualNetworks/', parameters('clusterName'), '-vnet')]"
+        ],
+        "copy": {
+            "name": "nicLoop",
+            "count": "[parameters('clusterSize')]"
+        },
+        "properties": {
+            "ipConfigurations": [
+            {
+                "name": "ipconfig1",
+                "properties": {
+                    "privateIPAllocationMethod": "Dynamic",
+                    "subnet": {
+                        "id": "[parameters('subnet1Ref')]"
+                    },
+                    "publicIPAddress": {
+                        "id": "[resourceId('Microsoft.Network/publicIPAddresses',concat(parameters('publicIPAddressBasename'),copyIndex()))]"
+                    }
+                }
+            }
+            ]
+        }
+    }
+    ]
+}
+

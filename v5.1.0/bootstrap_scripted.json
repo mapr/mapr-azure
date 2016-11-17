@@ -1,0 +1,71 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json# ",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "clusterSize": {
+            "type": "int"
+        },
+        "clusterName": {
+            "type": "string"
+        },
+        "clusterEdition": {
+            "type": "string"
+        },
+        "maprVersion": {
+            "type": "string"
+        },
+        "scriptsUri": {
+            "type": "string"
+        },
+        "maprPassword": {
+            "type": "securestring"
+        },
+        "location": {
+            "type": "string"
+        }
+    },
+    "variables": {
+        "vmBasename": "[concat(parameters('clusterName'),'node')]"
+	},
+    "resources": [
+    {
+        "name": "[concat(variables('vmBasename'),copyIndex(),'/extension')]",
+        "type": "Microsoft.Compute/virtualMachines/extensions",
+        "apiVersion": "2015-06-15",
+        "location": "[parameters('location')]",
+        "copy" : {
+            "name" : "extLoop",
+            "count": "[parameters('clusterSize')]"
+        },
+        "properties": {
+            "publisher": "Microsoft.OSTCExtensions",
+            "type": "CustomScriptForLinux",
+            "typeHandlerVersion": "1.4",
+            "settings": {
+                "fileUris": [
+                    "[concat(parameters('scriptsUri'), 'M3.lst')]",
+                    "[concat(parameters('scriptsUri'), '3node.lst')]",
+                    "[concat(parameters('scriptsUri'), '6node.lst')]",
+                    "[concat(parameters('scriptsUri'), '10node.lst')]",
+                    "[concat(parameters('scriptsUri'), 'gen-cluster-hosts.sh')]",
+                    "[concat(parameters('scriptsUri'), 'gen-create-lock.sh')]",
+                    "[concat(parameters('scriptsUri'), 'gen-lock-cluster.sh')]",
+                    "[concat(parameters('scriptsUri'), 'gendist-sshkey.sh')]",
+                    "[concat(parameters('scriptsUri'), 'prepare-disks.sh')]",
+                    "[concat(parameters('scriptsUri'), 'prepare-node.sh')]",
+                    "[concat(parameters('scriptsUri'), 'deploy-installer.sh')]",
+                    "[concat(parameters('scriptsUri'), 'deploy-mapr-ami.sh')]",
+                    "[concat(parameters('scriptsUri'), 'deploy-mapr-cluster.py')]",
+                    "[concat(parameters('scriptsUri'), 'deploy-mapr-data-services.sh')]",
+                    "[concat(parameters('scriptsUri'), 'mapr-setup.sh')]",
+                    "[concat(parameters('scriptsUri'), 'azure-wrapper.sh')]",
+                    "[concat(parameters('scriptsUri'), 'installer-wrapper.sh')]"
+                ]
+            },
+            "protectedSettings": {
+                "commandToExecute": "[concat('sh azure-wrapper.sh ', variables('vmBasename'), ' ', parameters('clusterSize'), ' ', parameters('clusterEdition'), ' ', parameters('maprVersion'), ' ', parameters('maprPassword'))]"
+            }
+        }
+    }        
+    ]
+}
