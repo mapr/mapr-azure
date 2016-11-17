@@ -3,7 +3,7 @@
     "contentVersion": "1.0.0.0",
     "parameters" : {
 		"artifactsBaseUrl": {
-            "defaultValue" : "https://raw.githubusercontent.com/mapr/mapr-azure/master",
+            "defaultValue" : "https://raw.githubusercontent.com/mapr/mapr-azure/v5.1.0/master",
 			"type": "string",
 			"metadata": {
 				"artifactsBaseUrl": "Base URL of the Publisher Template gallery package"
