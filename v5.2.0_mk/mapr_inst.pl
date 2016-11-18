@@ -163,13 +163,14 @@ sleep 3;
 system("mysqladmin -u $mysql_user password $mysql_passwd");
 
 $hive_srv_config=
-"<property><name>javax.jdo.option.ConnectionURL<\\/name><value>jdbc:mysql:\\/\\/localhost:3306\\/hive?createDatabaseIfNotExist=true<\\/value><\\/property>\\n<property><name>javax.jdo.option.ConnectionDriverName<\\/name><value>com.mysql.jdbc.Driver<\\/value><\\/property>\\n<property><name>javax.jdo.option.ConnectionUserName<\\/name><value>$mysql_user<\\/value><\\/property>\\n<property><name>javax.jdo.option.ConnectionPassword<\\/name><value>$mysql_passwd<\\/value><\\/property>\\n<property><name>hive.metastore.warehouse.dir<\\/name><value>\\/user\\/hive\\/warehouse<\\/value><\\/property>\\n<property><name>hive.metastore.uris<\\/name><value>thrift:\\/\\/localhost:9083<\\/value><\\/property>\\n<property><name>datanucleus.autoCreateSchema<\\/name><value>true<\\/value><\\/property>\\n<property><name>datanucleus.autoCreateTables<\\/name><value>true<\\/value><\\/property>\\n<property><name>hive.server2.enable.doAs<\\/name><value>true<\\/value><\\/property>\\n<property><name>hive.metastore.execute.setugi<\\/name><value>true<\\/value><\\/property>\\n<property><name>hive.server2.authentication.pam.services<\\/name><value>login,sudo<\\/value><\\/property>\\n<property><name>hive.user.install.directory<\\/name><value>maprfs:\\/\\/\\/user\\/<\\/value><\\/property>\\n<property><name>hive.exec.local.scratchdir<\\/name><value>\\/tmp\\/hive<\\/value><\\/property>\\n<property><name>hive.optimize.insert.dest.volume<\\/name><value>true<\\/value><\\/property>\\n<property><name>hive.exec.scratchdir<\\/name><value>\\/tmp\\/hive<\\/value><\\/property>\\n<\\/configuration>";
+"<property><name>javax.jdo.option.ConnectionURL<\\/name><value>jdbc:mysql:\\/\\/localhost:3306\\/hive?createDatabaseIfNotExist=true<\\/value><\\/property>\\n<property><name>javax.jdo.option.ConnectionDriverName<\\/name><value>com.mysql.jdbc.Driver<\\/value><\\/property>\\n<property><name>javax.jdo.option.ConnectionUserName<\\/name><value>$mysql_user<\\/value><\\/property>\\n<property><name>javax.jdo.option.ConnectionPassword<\\/name><value>$mysql_passwd<\\/value><\\/property>\\n<property><name>hive.metastore.warehouse.dir<\\/name><value>\\/user\\/hive\\/warehouse<\\/value><\\/property>\\n<property><name>hive.metastore.uris<\\/name><value>thrift:\\/\\/localhost:9083<\\/value><\\/property>\\n<property><name>datanucleus.autoCreateSchema<\\/name><value>true<\\/value><\\/property>\\n<property><name>datanucleus.autoCreateTables<\\/name><value>true<\\/value><\\/property>\\n<property><name>hive.server2.enable.doAs<\\/name><value>true<\\/value><\\/property>\\n<property><name>hive.metastore.execute.setugi<\\/name><value>true<\\/value><\\/property>\\n<property><name>hive.server2.authentication.pam.services<\\/name><value>login,sudo<\\/value><\\/property>\\n<property><name>hive.user.install.directory<\\/name><value>maprfs:\\/\\/\\/user\\/<\\/value><\\/property>\\n<property><name>hive.exec.local.scratchdir<\\/name><value>\\/tmp\\/hive<\\/value><\\/property>\\n<property><name>hive.optimize.insert.dest.volume<\\/name><value>true<\\/value><\\/property>\\n<property><name>hive.exec.scratchdir<\\/name><value>\\/tmp\\/hive<\\/value><\\/property>\\n<property><name>hive.server2.authentication<\\/name><value>PAM<\\/value><\\/property>\\n<\\/configuration>";
 
 $core_config="<property><name>hadoop.proxyuser.mapr.hosts<\\/name><value>*<\\/value><\\/property>\\n<property><name>hadoop.proxyuser.mapr.groups<\\/name><value>*<\\/value><\\/property>\\n<property><name>hbase.table.namespace.mappings<\\/name><value>*:\\/tables<\\/value><\\/property>\\n<\\/configuration>";
 
 #print "sed -e \"s/<\\/configuration>\/$hive_srv_config\/g\" $hive_config_file\n"; 
 system("sed -i \"s/<\\/configuration>\/$hive_srv_config\/g\" $hive_config_file\n"); 
 system("sed -i \"s/<\\/configuration>\/$core_config\/g\" $core_config_file\n"); 
+system("clush -ac $core_config_file");
 system("yum -y install mapr-hiveserver2");
 system("clush -a /opt/mapr/server/configure.sh -R"); 
 sleep 20;
@@ -188,14 +189,14 @@ sleep 3;
 }
 print "Hive Server is ready.\n";
 system("hadoop fs -mkdir -p /user/$sudo_user/tmp/hive");
-system("hadoop fs -mkdir -p /user/hive");
+system("hadoop fs -mkdir -p /user/hive/warehouse");
 system("hadoop fs -mkdir -p /apps/spark");
 system("hadoop fs -chown -R $sudo_user /user/$sudo_user");
 system("hadoop fs -chgrp -R $sudo_user /user/$sudo_user");
 system("hadoop fs -chown -R mapr /user/hive");
 system("hadoop fs -chgrp -R mapr /user/hive");
-system("hadoop fs -chmod -R 777 /user/$sudo_user/tmp");
 system("hadoop fs -chmod -R 777 /user/hive");
+system("hadoop fs -chmod -R 777 /user/$sudo_user/tmp");
 system("hadoop fs -chown -R $sudo_user /apps");
 system("hadoop fs -chgrp -R $sudo_user /apps");
 
