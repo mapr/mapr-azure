@@ -101,45 +101,7 @@
                 }
             }
         }
-    },
-    {
-      "apiVersion": "2016-06-01",
-      "type": "Microsoft.Network/networkSecurityGroups",
-      "name": "[concat(parameters('clusterName'), '-nsg')]",
-      "location": "[parameters('location')]",
-      "properties": {
-        "securityRules": [
-          {
-            "name": "SSH",
-            "properties": {
-                "description": "SSH",
-                "protocol": "Tcp",
-                "sourcePortRange": "*",
-                "destinationPortRange": "22",
-                "sourceAddressPrefix": "Internet",
-                "destinationAddressPrefix": "*",
-                "access": "Allow",
-                "priority": 100,
-                "direction": "Inbound"
-            }
-          },            
-          {
-            "name": "MCS",
-            "properties": {
-                "description": "MapR Control System",
-                "protocol": "Tcp",
-                "sourcePortRange": "*",
-                "destinationPortRange": "8443",
-                "sourceAddressPrefix": "Internet",
-                "destinationAddressPrefix": "*",
-                "access": "Allow",
-                "priority": 101,
-                "direction": "Inbound"
-            }
-          }
-        ]
-      }
-    },        
+    },    
     {
         "apiVersion": "2016-06-01",
         "type": "Microsoft.Network/networkInterfaces",
@@ -147,7 +109,6 @@
         "location": "[parameters('location')]",
         "dependsOn": [
             "[concat('Microsoft.Network/publicIPAddresses/', parameters('publicIPAddressBasename'), copyIndex())]",
-            "[concat('Microsoft.Network/networkSecurityGroups/', parameters('clusterName'), '-nsg')]",
             "[concat('Microsoft.Resources/deployments/', parameters('clusterName'), '-vnet')]"
         ],
         "copy": {
@@ -155,9 +116,6 @@
             "count": "[parameters('clusterSize')]"
         },
         "properties": {
-            "networkSecurityGroup": {
-                "id": "[concat(resourceId('Microsoft.Network/networkSecurityGroups', concat(parameters('clusterName'), '-nsg')))]"
-            },
             "ipConfigurations": [
             {
                 "name": "ipconfig1",
