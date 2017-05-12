@@ -1,0 +1,50 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json# ",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "roleType": {
+            "type": "string"
+        },
+        "clusterSize": {
+            "type": "int"
+        },
+        "nodeOffset": {
+            "type": "int"
+        },
+        "providerID": {
+            "type": "string"
+        },
+        "clusterName": {
+            "type": "string"
+        },
+        "nicBasename": {
+            "type": "string"
+        },
+        "vmSize": {
+            "type": "string"
+        },
+        "adminUsername": {
+            "type": "securestring"
+        },
+        "adminPassword": {
+            "type": "securestring",
+            "defaultValue": ""
+        },
+        "sshKey": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "authenticationType": {
+            "type": "string"
+        },
+        "location": {
+            "type": "string"
+        },
+        "scriptsUri": {
+            "type": "string"
+        }
+    },
+    "variables": {},
+    "resources": [],
+    "outputs": {}
+}

@@ -1,0 +1,280 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json# ",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "vmSize": {
+            "type": "string",
+            "defaultValue": "Standard_D3"
+        },
+        "providerID": {
+            "type": "string"
+        },
+        "storageAccountType": {
+            "type": "string",
+            "allowedValues": [
+                "Standard_LRS",
+                "Premium_LRS"
+            ]
+        },
+        "vmName": {
+            "type": "string"
+        },
+        "adminUsername": {
+            "type": "securestring"
+        },
+        "adminPassword": {
+            "type": "securestring",
+            "defaultValue": ""
+        },
+        "sshKey": {
+            "type": "securestring",
+            "defaultValue": ""
+        },
+        "authenticationType": {
+            "type": "string"
+        },
+        "numberOfDataDisks": {
+            "type": "int",
+            "allowedValues": [
+                2,
+                4,
+                8,
+                10,
+                16
+            ]
+        },
+        "nicName": {
+            "type": "string"
+        },
+        "availabilitySetName": {
+            "type": "string"
+        },
+        "location": {
+            "type": "string"
+        }
+    },
+    "variables": {
+        "imagePublisher": "mapr-technologies",
+        "imageOffer": "mapr52-base-dev",
+        "imageSKU": "5202",
+        "imageVersion": "latest",
+        "diskSizeGB": 1023,
+        "dataDiskHostCaching": "None",
+        "diskArray": [
+            {
+                "diskSizeGB": "[variables('diskSizeGB')]",
+                "lun": 0,
+                "caching": "[variables('dataDiskHostCaching')]",
+                "createOption": "Empty",
+                "managedDisk": {
+                    "storageAccountType": "[parameters('storageAccountType')]"
+                }
+            },
+            {
+                "diskSizeGB": "[variables('diskSizeGB')]",
+                "lun": 1,
+                "caching": "[variables('dataDiskHostCaching')]",
+                "createOption": "Empty",
+                "managedDisk": {
+                    "storageAccountType": "[parameters('storageAccountType')]"
+                }
+            },
+            {
+                "diskSizeGB": "[variables('diskSizeGB')]",
+                "lun": 2,
+                "caching": "[variables('dataDiskHostCaching')]",
+                "createOption": "Empty",
+                "managedDisk": {
+                    "storageAccountType": "[parameters('storageAccountType')]"
+                }
+            },
+            {
+                "diskSizeGB": "[variables('diskSizeGB')]",
+                "lun": 3,
+                "caching": "[variables('dataDiskHostCaching')]",
+                "createOption": "Empty",
+                "managedDisk": {
+                    "storageAccountType": "[parameters('storageAccountType')]"
+                }
+            },
+            {
+                "diskSizeGB": "[variables('diskSizeGB')]",
+                "lun": 4,
+                "caching": "[variables('dataDiskHostCaching')]",
+                "createOption": "Empty",
+                "managedDisk": {
+                    "storageAccountType": "[parameters('storageAccountType')]"
+                }
+            },
+            {
+                "diskSizeGB": "[variables('diskSizeGB')]",
+                "lun": 5,
+                "caching": "[variables('dataDiskHostCaching')]",
+                "createOption": "Empty",
+                "managedDisk": {
+                    "storageAccountType": "[parameters('storageAccountType')]"
+                }
+            },
+            {
+                "diskSizeGB": "[variables('diskSizeGB')]",
+                "lun": 6,
+                "caching": "[variables('dataDiskHostCaching')]",
+                "createOption": "Empty",
+                "managedDisk": {
+                    "storageAccountType": "[parameters('storageAccountType')]"
+                }
+            },
+            {
+                "diskSizeGB": "[variables('diskSizeGB')]",
+                "lun": 7,
+                "caching": "[variables('dataDiskHostCaching')]",
+                "createOption": "Empty",
+                "managedDisk": {
+                    "storageAccountType": "[parameters('storageAccountType')]"
+                }
+            },
+            {
+                "diskSizeGB": "[variables('diskSizeGB')]",
+                "lun": 8,
+                "caching": "[variables('dataDiskHostCaching')]",
+                "createOption": "Empty",
+                "managedDisk": {
+                    "storageAccountType": "[parameters('storageAccountType')]"
+                }
+            },
+            {
+                "diskSizeGB": "[variables('diskSizeGB')]",
+                "lun": 9,
+                "caching": "[variables('dataDiskHostCaching')]",
+                "createOption": "Empty",
+                "managedDisk": {
+                    "storageAccountType": "[parameters('storageAccountType')]"
+                }
+            },
+            {
+                "diskSizeGB": "[variables('diskSizeGB')]",
+                "lun": 10,
+                "caching": "[variables('dataDiskHostCaching')]",
+                "createOption": "Empty",
+                "managedDisk": {
+                    "storageAccountType": "[parameters('storageAccountType')]"
+                }
+            },
+            {
+                "diskSizeGB": "[variables('diskSizeGB')]",
+                "lun": 11,
+                "caching": "[variables('dataDiskHostCaching')]",
+                "createOption": "Empty",
+                "managedDisk": {
+                    "storageAccountType": "[parameters('storageAccountType')]"
+                }
+            },
+            {
+                "diskSizeGB": "[variables('diskSizeGB')]",
+                "lun": 12,
+                "caching": "[variables('dataDiskHostCaching')]",
+                "createOption": "Empty",
+                "managedDisk": {
+                    "storageAccountType": "[parameters('storageAccountType')]"
+                }
+            },
+            {
+                "diskSizeGB": "[variables('diskSizeGB')]",
+                "lun": 13,
+                "caching": "[variables('dataDiskHostCaching')]",
+                "createOption": "Empty",
+                "managedDisk": {
+                    "storageAccountType": "[parameters('storageAccountType')]"
+                }
+            },
+            {
+                "diskSizeGB": "[variables('diskSizeGB')]",
+                "lun": 14,
+                "caching": "[variables('dataDiskHostCaching')]",
+                "createOption": "Empty",
+                "managedDisk": {
+                    "storageAccountType": "[parameters('storageAccountType')]"
+                }
+            },
+            {
+                "diskSizeGB": "[variables('diskSizeGB')]",
+                "lun": 15,
+                "caching": "[variables('dataDiskHostCaching')]",
+                "createOption": "Empty",
+                "managedDisk": {
+                    "storageAccountType": "[parameters('storageAccountType')]"
+                }
+            }
+        ],
+        "dataDisks": "[take(variables('diskArray'), parameters('numberOfDataDisks'))]",
+        "password_osProfile": {
+            "computername": "[parameters('vmName')]",
+            "adminUsername": "[parameters('adminUsername')]",
+            "adminPassword": "[parameters('adminPassword')]"
+        },
+        "sshPublicKey_osProfile": {
+            "computername": "[parameters('vmName')]",
+            "adminUsername": "[parameters('adminUsername')]",
+            "linuxConfiguration": {
+                "disablePasswordAuthentication": "true",
+                "ssh": {
+                    "publicKeys": [
+                        {
+                            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+                            "keyData": "[parameters('sshKey')]"
+                        }
+                    ]
+                }
+            }
+        },
+        "osProfile": "[variables(concat(parameters('authenticationType'), '_osProfile'))]"
+    },
+    "resources": [
+        {
+            "apiVersion": "2016-04-30-preview",
+            "tags": {
+                "provider": "[toUpper(parameters('providerID'))]"
+            },
+            "type": "Microsoft.Compute/virtualMachines",
+            "name": "[parameters('vmName')]",
+            "location": "[parameters('location')]",
+            "plan": {
+                "name": "[variables('imageSKU')]",
+                "publisher": "[variables('imagePublisher')]",
+                "product": "[variables('imageOffer')]"
+            },
+            "properties": {
+                "availabilitySet": {
+                    "id": "[resourceId('Microsoft.Compute/availabilitySets', parameters('availabilitySetName'))]"
+                },
+                "hardwareProfile": {
+                    "vmSize": "[parameters('vmSize')]"
+                },
+                "osProfile": "[variables('osProfile')]",
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "[variables('imagePublisher')]",
+                        "offer": "[variables('imageOffer')]",
+                        "sku": "[variables('imageSKU')]",
+                        "version": "[variables('imageVersion')]"
+                    },
+                    "osDisk": {
+                        "createOption": "FromImage",
+                        "caching": "ReadWrite",
+                        "managedDisk": {
+                            "storageAccountType": "[parameters('storageAccountType')]"
+                        }
+                    },
+                    "dataDisks": "[variables('dataDisks')]"
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', parameters('nicName'))]"
+                        }
+                    ]
+                }
+            }
+        }
+    ]
+}

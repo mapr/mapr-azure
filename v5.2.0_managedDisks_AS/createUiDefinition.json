@@ -1,0 +1,246 @@
+﻿{
+  "handler": "Microsoft.Compute.MultiVm",
+  "version": "0.0.1-preview",
+  "parameters": {
+    "basics": [
+      {
+        "name": "clusterName",
+        "type": "Microsoft.Common.TextBox",
+        "label": "MapR Cluster name",
+        "defaultValue": "maprcluster",
+        "toolTip": "Unique identifier for the MapR cluster.",
+        "constraints": {
+          "required": true,
+          "regex": "^[a-z0-9]{3,24}$",
+          "validationMessage": "Cluster names must be between 3 and 24 characters long, and can contain only numbers and lowercase letters."
+        }
+      },
+      {
+        "name": "adminUsername",
+        "type": "Microsoft.Compute.UserNameTextBox",
+        "label": "SysAdmin Username",
+        "defaultValue": "mapradmin",
+        "toolTip": "Admin username for the virtual machines. Same Credientials is to SSH to the box.",
+        "constraints": {
+          "required": true,
+          "regex": "^[A-z][A-z0-9]{4,15}$",
+          "validationMessage": "Admin username between 5 and 16 characters long, and can contain only letters and numbers."
+        },
+        "osPlatform": "Linux"
+      },
+      {
+        "name": "SSHCredntials",
+        "type": "Microsoft.Compute.CredentialsCombo",
+        "label": {
+                  "authenticationType": "Authentication type",
+                  "password": "Password",
+                  "confirmPassword": "Confirm password",
+                  "sshPublicKey": "SSH public key"
+                },
+        "toolTip": {
+                "authenticationType": "",
+                "password": "",
+                "sshPublicKey": ""
+              },
+         "constraints": {
+                "required": true
+              },
+"options": {
+  "hideConfirmation": false
+},
+"osPlatform": "Linux"
+}
+    ],
+    "steps": [
+      {
+        "name": "MapRClusterConfig",
+        "label": "Cluster settings",
+        "subLabel": {
+          "preValidation": "Configure the cluster",
+          "postValidation": "Done"
+        },
+        "bladeTitle": "Cluster cluster settings",
+        "elements": [
+          {
+            "name": "clusterNodeCount",
+            "type": "Microsoft.Common.TextBox",
+            "label": "Cluster size",
+            "defaultValue": "3",
+            "toolTip": "The number of virtual machines (nodes) to provision for the cluster.",
+            "constraints": {
+            "required": true,
+            "regex": "^([3-9]|[1-2][0-9]|30)$",
+            "validationMessage": "Cluster size must be between 3 and 30 nodes."
+            }
+          },
+          {
+            "name": "clusterVmSize",
+            "type": "Microsoft.Compute.SizeSelector",
+            "label": "Virtual machine size",
+            "toolTip": "The size of virtual machine to provision for each cluster node.",
+            "recommendedSizes": [
+              "Standard_D3",
+              "Standard_D4",
+              "Standard_D12",
+              "Standard_D13",
+              "Standard_D14"
+
+            ],
+            "constraints": {
+              "allowedSizes": [
+                "Standard_D3",
+                "Standard_D4",
+                "Standard_D12",
+                "Standard_D13",
+                "Standard_D14",
+                "Standard_DS3",
+                "Standard_DS4",
+                "Standard_DS12",
+                "Standard_DS13",
+                "Standard_DS14",
+                "Standard_D3_v2",
+                "Standard_D4_v2",
+                "Standard_D5_v2",
+                "Standard_D12_v2",
+                "Standard_D13_v2",
+                "Standard_D14_v2",
+                "Standard_D15_v2",
+                "Standard_DS3_v2",
+                "Standard_DS4_v2",
+                "Standard_DS5_v2",
+                "Standard_DS12_v2",
+                "Standard_DS13_v2",
+                "Standard_DS14_v2",
+                "Standard_DS15_v2",
+                "Standard_G2",
+                "Standard_G3",
+                "Standard_G4",
+                "Standard_G5",
+                "Standard_GS2",
+                "Standard_GS3",
+                "Standard_GS4",
+                "Standard_GS5"
+              ]
+            },
+            "osPlatform": "Linux",
+            "count": "[steps('MapRClusterConfig').clusterNodeCount]"
+          },
+          {
+            "name": "MapRVersion",
+            "type": "Microsoft.Common.DropDown",
+            "label": "MapR Version",
+            "defaultValue": "5.2.0",
+            "toolTip": "The version of MapR Software that you want to use for this cluster.",
+            "constraints": {
+              "allowedValues": [
+                {
+                  "label": "5.2.0",
+                  "value": "5.2.0"
+                }
+              ]
+            }
+
+          },
+          {
+
+            "name": "MapRPassword",
+            "type": "Microsoft.Common.PasswordBox",
+            "label": "MapR Admin password",
+            "toolTip": "The password for MapR administrator (i.e. user 'mapr').",
+            "constraints": {
+              "required": true,
+              "regex": "^(?:(?=.*[a-z])(?:(?=.*[A-Z])(?=.*[\\d\\W])|(?=.*\\W)(?=.*\\d))|(?=.*\\W)(?=.*[A-Z])(?=.*\\d)).{12,30}$",
+              "validationMessage": "The password must be between 12 and 30 characters long, and contain characters from at least 3 of the following groups: uppercase characters, lowercase characters, numbers, and special characters."
+            }
+          },
+          {
+
+            "name": "MapRLicenseType",
+            "type": "Microsoft.Common.DropDown",
+            "label": "MapR Edition",
+            "defaultValue": "Converged Community",
+            "toolTip": "MapR license edition for this deployment: Converged Community, Enterprise, or Converged Enterprise",
+            "constraints": {
+              "allowedValues": [
+                {
+                  "label": "Converged Community",
+                  "value": "convergedCommunity"
+                }
+              ]
+            }
+
+          }
+
+        ]
+      },
+      { 
+        "name": "networkInfo",
+        "label": "Network information",
+        "subLabel": {
+          "preValidation": "Provide network information",
+          "postValidation": "Done"
+        },
+        "bladeTitle": "Network information",
+        "elements": [
+          {          "name": "vnetSelector",
+          "type": "Microsoft.Network.VirtualNetworkCombo",
+          "label": {
+            "virtualNetwork": "Virtual network",
+            "subnets": "Subnets"
+          },
+          "toolTip": {
+            "virtualNetwork": "",
+            "subnets": ""
+          },
+          "defaultValue": {
+            "name": "vnet01",
+            "addressPrefixSize": "/27"
+          },
+          "constraints": {
+            "minAddressPrefixSize": "/27"
+          },
+          "options": {
+            "hideExisting": false
+          },
+          "subnets": {
+            "subnet1": {
+              "label": "Subnet",
+              "defaultValue": {
+                "name": "subnet-1",
+                "addressPrefixSize": "/27"
+              },
+              "constraints": {
+                "minAddressPrefixSize": "/27",
+                "minAddressCount": "[steps('MapRClusterConfig').clusterNodeCount]",
+                "requireContiguousAddresses": true
+              }
+            }
+          },
+          "visible": true
+        }
+      ]
+      }      
+    ],
+    "outputs": {
+      "clusterName": "[basics('clusterName')]",
+      "adminUsername": "[basics('adminUsername')]",
+      "clusterSize": "[int(steps('MapRClusterConfig').clusterNodeCount)]",
+      "VmSize": "[steps('MapRClusterConfig').clusterVmSize]",
+      "location": "[location()]",
+      "authenticationType":  "[basics('SSHCredntials').authenticationType]",
+      "adminPassword": "[basics('SSHCredntials').password]",
+      "sshKey": "[basics('SSHCredntials').sshPublicKey]",
+      "maprVersion": "[steps('MapRClusterConfig').MapRVersion]",
+      "clusterEdition": "[steps('MapRClusterConfig').MapRLicenseType]",
+      "maprPassword": "[steps('MapRClusterConfig').MapRPassword]",
+      "vnetNewOrExisting" : "[steps('networkInfo').vnetSelector.newOrExisting]",
+      "vnetAddressPrefix" : "[steps('networkInfo').vnetSelector.addressPrefix]",
+      "vnetName": "[steps('networkInfo').vnetSelector.name]",
+      "vnetRGName": "[steps('networkInfo').vnetSelector.resourceGroup]",      
+      "vnetSubnetName": "[steps('networkInfo').vnetSelector.subnets.subnet1.name]",
+      "vnetSubnetAddressPrefix": "[steps('networkInfo').vnetSelector.subnets.subnet1.addressPrefix]",
+      "vnetStartAddress": "[steps('networkInfo').vnetSelector.subnets.subnet1.startAddress]"
+    }
+  }
+}
+
