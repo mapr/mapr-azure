@@ -61,3 +61,6 @@ the cluster.   Because the namespace for storage accounts is global
 across Azure regions, you must be careful to specify a unique MapR
 cluster name in order to avoid errors during the deployment.
 
+This template is provided AS IS to the customers. Customers are welcome to
+download and modify to fit their own environments. MapR does not provide
+any support or liable to any outcome resulted from usage of these templates.
