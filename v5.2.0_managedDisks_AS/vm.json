@@ -4,7 +4,7 @@
     "parameters": {
         "vmSize": {
             "type": "string",
-            "defaultValue": "Standard_D3"
+            "defaultValue": "Standard_D4"
         },
         "providerID": {
             "type": "string"
@@ -238,11 +238,6 @@
             "type": "Microsoft.Compute/virtualMachines",
             "name": "[parameters('vmName')]",
             "location": "[parameters('location')]",
-            "plan": {
-                "name": "[variables('imageSKU')]",
-                "publisher": "[variables('imagePublisher')]",
-                "product": "[variables('imageOffer')]"
-            },
             "properties": {
                 "availabilitySet": {
                     "id": "[resourceId('Microsoft.Compute/availabilitySets', parameters('availabilitySetName'))]"
@@ -253,17 +248,16 @@
                 "osProfile": "[variables('osProfile')]",
                 "storageProfile": {
                     "imageReference": {
-                        "publisher": "[variables('imagePublisher')]",
-                        "offer": "[variables('imageOffer')]",
-                        "sku": "[variables('imageSKU')]",
-                        "version": "[variables('imageVersion')]"
+                      "id" : "/subscriptions/de018edb-82fa-4253-87a5-13f7c79e4e5a/resourceGroups/jsuntestsa/providers/Microsoft.Compute/images/mapr520-govt-170511"
                     },
                     "osDisk": {
-                        "createOption": "FromImage",
-                        "caching": "ReadWrite",
-                        "managedDisk": {
-                            "storageAccountType": "[parameters('storageAccountType')]"
-                        }
+                      "name" : "[concat(parameters('vmName'),'osdisk')]",
+                      "createOption": "FromImage",
+                      "osType": "Linux",
+                      "caching": "ReadWrite",
+                      "managedDisk": {
+                        "storageAccountType": "[parameters('storageAccountType')]"
+                      }
                     },
                     "dataDisks": "[variables('dataDisks')]"
                 },
