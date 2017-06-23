@@ -143,10 +143,7 @@
         "publicIPAddressBasename": "[concat(parameters('clusterName'),'-publicIP')]",
         "publicIPAddressType": "Dynamic",
         "providerID": "CD79582D-BEB4-4325-9DD6-34E684A304DB",
-        "uniqueString": "[substring(uniqueString(resourceGroup().id),0,8)]",
-        "cldbNodeCount": 3,
-        "nonCldbNodeCount": "[sub(parameters('clusterSize'), variables('cldbNodeCount'))]",
-        "nonCldbNodeDeploy": "[toLower(string(bool(variables('nonCldbNodeCount'))))]"
+        "uniqueString": "[substring(uniqueString(resourceGroup().id),0,8)]"
     },
     "resources": [
         {
@@ -209,7 +206,7 @@
             }
         },
         {
-            "name": "cldb",
+            "name": "role",
             "type": "Microsoft.Resources/deployments",
             "apiVersion": "2016-02-01",
             "dependsOn": [
@@ -218,18 +215,12 @@
             "properties": {
                 "mode": "Incremental",
                 "templateLink": {
-                    "uri": "[concat(variables('scriptsUri'), 'role_true.json')]",
+                    "uri": "[concat(variables('scriptsUri'), 'role.json')]",
                     "contentVersion": "1.0.0.0"
                 },
                 "parameters": {
-                    "roleType": {
-                        "value": "cldb"
-                    },
                     "clusterSize": {
-                        "value": "[variables('cldbNodeCount')]"
-                    },
-                    "nodeOffset": {
-                        "value": 0
+                        "value": "[parameters('clusterSize')]"
                     },
                     "providerID": {
                         "value": "[variables('providerID')]"
@@ -264,69 +255,12 @@
                 }
             }
         },
-{
-            "name": "nonCldb",
-            "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2016-02-01",
-            "dependsOn": [
-                "Microsoft.Resources/deployments/network"
-            ],
-            "properties": {
-                "mode": "Incremental",
-                "templateLink": {
-                    "uri": "[concat(variables('scriptsUri'), 'role_', variables('nonCldbNodeDeploy'), '.json')]",
-                    "contentVersion": "1.0.0.0"
-                },
-                "parameters": {
-                    "roleType": {
-                        "value": "nonCldb"
-                    },
-                    "clusterSize": {
-                        "value": "[variables('nonCldbNodeCount')]"
-                    },
-                    "nodeOffset": {
-                        "value": "[variables('cldbNodeCount')]"
-                    },
-                    "providerID": {
-                        "value": "[variables('providerID')]"
-                    },
-                    "clusterName": {
-                        "value": "[parameters('clusterName')]"
-                    },
-                    "vmSize": {
-                        "value": "[parameters('vmSize')]"
-                    },
-                    "adminUsername": {
-                        "value": "[parameters('adminUsername')]"
-                    },
-                    "adminPassword": {
-                        "value": "[parameters('adminPassword')]"
-                    },
-                    "sshKey": {
-                        "value": "[parameters('sshKey')]"
-                    },
-                    "authenticationType": {
-                        "value": "[parameters('authenticationType')]"
-                    },
-                    "nicBasename": {
-                        "value": "[variables('nicBasename')]"
-                    },
-                    "location": {
-                        "value": "[parameters('location')]"
-                    },
-                    "scriptsUri": {
-                        "value": "[variables('scriptsUri')]"
-                    }
-                }
-            }
-        },        
         {
             "name": "extensions",
             "type": "Microsoft.Resources/deployments",
             "apiVersion": "2016-02-01",
             "dependsOn": [
-                "Microsoft.Resources/deployments/cldb",
-                "Microsoft.Resources/deployments/nonCldb"
+                "Microsoft.Resources/deployments/role"
             ],
             "properties": {
                 "mode": "Incremental",

@@ -1,0 +1,209 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json# ",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "clusterSize": {
+            "type": "int"
+        },
+        "providerID": {
+            "type": "string"
+        },
+        "clusterName": {
+            "type": "string"
+        },
+        "nicBasename": {
+            "type": "string"
+        },
+        "vmSize": {
+            "type": "string"
+        },
+        "adminUsername": {
+            "type": "securestring"
+        },
+        "adminPassword": {
+            "type": "securestring",
+            "defaultValue": ""
+        },
+        "sshKey": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "authenticationType": {
+            "type": "string"
+        },
+        "location": {
+            "type": "string"
+        },
+        "scriptsUri": {
+            "type": "string"
+        }
+    },
+    "variables": {
+        "vmBasename": "[concat(parameters('clusterName'),'node')]",
+        "storageAccountTypeStandard_D3": "Standard_LRS",
+        "storageAccountTypeStandard_D4": "Standard_LRS",
+        "storageAccountTypeStandard_D12": "Standard_LRS",
+        "storageAccountTypeStandard_D13": "Standard_LRS",
+        "storageAccountTypeStandard_D14": "Standard_LRS",
+        "storageAccountTypeStandard_D3_v2": "Standard_LRS",
+        "storageAccountTypeStandard_D4_v2": "Standard_LRS",
+        "storageAccountTypeStandard_D5_v2": "Standard_LRS",
+        "storageAccountTypeStandard_D12_v2": "Standard_LRS",
+        "storageAccountTypeStandard_D13_v2": "Standard_LRS",
+        "storageAccountTypeStandard_D14_v2": "Standard_LRS",
+        "storageAccountTypeStandard_D15_v2": "Standard_LRS",
+        "storageAccountTypeStandard_DS3": "Premium_LRS",
+        "storageAccountTypeStandard_DS4": "Premium_LRS",
+        "storageAccountTypeStandard_DS12": "Premium_LRS",
+        "storageAccountTypeStandard_DS13": "Premium_LRS",
+        "storageAccountTypeStandard_DS14": "Premium_LRS",
+        "storageAccountTypeStandard_DS3_v2": "Premium_LRS",
+        "storageAccountTypeStandard_DS4_v2": "Premium_LRS",
+        "storageAccountTypeStandard_DS5_v2": "Premium_LRS",
+        "storageAccountTypeStandard_DS12_v2": "Premium_LRS",
+        "storageAccountTypeStandard_DS13_v2": "Premium_LRS",
+        "storageAccountTypeStandard_DS14_v2": "Premium_LRS",
+        "storageAccountTypeStandard_DS15_v2": "Premium_LRS",
+        "storageAccountTypeStandard_G2": "Standard_LRS",
+        "storageAccountTypeStandard_G3": "Standard_LRS",
+        "storageAccountTypeStandard_G4": "Standard_LRS",
+        "storageAccountTypeStandard_G5": "Standard_LRS",
+        "storageAccountTypeStandard_GS2": "Premium_LRS",
+        "storageAccountTypeStandard_GS3": "Premium_LRS",
+        "storageAccountTypeStandard_GS4": "Premium_LRS",
+        "storageAccountTypeStandard_GS5": "Premium_LRS",
+        "numberOfDataDisksStandard_D3": 2,
+        "numberOfDataDisksStandard_D4": 4,
+        "numberOfDataDisksStandard_D12": 4,
+        "numberOfDataDisksStandard_D13": 4,
+        "numberOfDataDisksStandard_D14": 8,
+        "numberOfDataDisksStandard_D3_v2": 2,
+        "numberOfDataDisksStandard_D4_v2": 4,
+        "numberOfDataDisksStandard_D5_v2": 8,
+        "numberOfDataDisksStandard_D12_v2": 2,
+        "numberOfDataDisksStandard_D13_v2": 4,
+        "numberOfDataDisksStandard_D14_v2": 8,
+        "numberOfDataDisksStandard_D15_v2": 10,
+        "numberOfDataDisksStandard_DS3": 2,
+        "numberOfDataDisksStandard_DS4": 4,
+        "numberOfDataDisksStandard_DS12": 2,
+        "numberOfDataDisksStandard_DS13": 4,
+        "numberOfDataDisksStandard_DS14": 8,
+        "numberOfDataDisksStandard_DS3_v2": 2,
+        "numberOfDataDisksStandard_DS4_v2": 4,
+        "numberOfDataDisksStandard_DS5_v2": 8,
+        "numberOfDataDisksStandard_DS12_v2": 2,
+        "numberOfDataDisksStandard_DS13_v2": 4,
+        "numberOfDataDisksStandard_DS14_v2": 8,
+        "numberOfDataDisksStandard_DS15_v2": 10,
+        "numberOfDataDisksStandard_G2": 2,
+        "numberOfDataDisksStandard_G3": 4,
+        "numberOfDataDisksStandard_G4": 8,
+        "numberOfDataDisksStandard_G5": 16,
+        "numberOfDataDisksStandard_GS2": 2,
+        "numberOfDataDisksStandard_GS3": 4,
+        "numberOfDataDisksStandard_GS4": 8,
+        "numberOfDataDisksStandard_GS5": 16,
+        "numberOfDataDisks": "[variables(concat('numberOfDataDisks', parameters('vmSize')))]",
+        "storageAccountType": "[variables(concat('storageAccountType', parameters('vmSize')))]",
+        "availabilitySetName": "[concat(parameters('clusterName'), '-as')]",
+        "location3FaultDomainArray": [
+            "eastus",
+            "east us",
+            "eastus2",
+            "east us 2",
+            "westus",
+            "west us",
+            "centralus",
+            "central us",
+            "northcentralus",
+            "north central us",
+            "southcentralus",
+            "south central us",
+            "northeurope",
+            "north europe",
+            "westeurope",
+            "west europe"
+        ],
+        "locationInArray": "[contains(variables('location3FaultDomainArray'), toLower(parameters('location')))]",
+        "faultDomainCount_true": 3,
+        "faultDomainCount_false": 2,
+        "faultDomainCount": "[variables(concat('faultDomainCount_', toLower(string(variables('locationInArray')))))]"
+    },
+    "resources": [
+        {
+            "apiVersion": "2016-04-30-preview",
+            "name": "[variables('availabilitySetName')]",
+            "type": "Microsoft.Compute/availabilitySets",
+            "location": "[parameters('location')]",
+            "tags": {
+                "provider": "[toUpper(parameters('providerID'))]"
+            },
+            "sku": {
+                "name": "Aligned"
+            },
+            "properties": {
+                "platformUpdateDomainCount": 20,
+                "platformFaultDomainCount": "[variables('faultDomainCount')]"
+            }
+        },
+        {
+            "name": "[concat(parameters('clusterName'), 'vm', copyIndex())]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2016-02-01",
+            "dependsOn": [
+                "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[concat(parameters('scriptsUri'), 'vm.json')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "vmSize": {
+                        "value": "[parameters('vmSize')]"
+                    },
+                    "storageAccountType": {
+                        "value": "[variables('storageAccountType')]"
+                    },
+                    "providerID": {
+                        "value": "[parameters('providerID')]"
+                    },
+                    "vmName": {
+                        "value": "[concat(variables('vmBasename'), copyIndex())]"
+                    },
+                    "adminUsername": {
+                        "value": "[parameters('adminUsername')]"
+                    },
+                    "adminPassword": {
+                        "value": "[parameters('adminPassword')]"
+                    },
+                    "sshKey": {
+                        "value": "[parameters('sshKey')]"
+                    },
+                    "authenticationType": {
+                        "value": "[parameters('authenticationType')]"
+                    },
+                    "numberOfDataDisks": {
+                        "value": "[variables('numberOfDataDisks')]"
+                    },
+                    "nicName": {
+                        "value": "[concat(parameters('nicBasename'), copyIndex())]"
+                    },
+                    "availabilitySetName": {
+                        "value": "[variables('availabilitySetName')]"
+                    },
+                    "location": {
+                        "value": "[parameters('location')]"
+                    }
+                }
+            },
+            "copy": {
+                "name": "vmLoop",
+                "count": "[parameters('clusterSize')]"
+            }
+        }
+    ],
+    "outputs": {}
+}
